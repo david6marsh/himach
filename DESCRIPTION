@@ -1,0 +1,14 @@
+Package: twospeed
+Type: Package
+Title: Find quickest route for supersonic aircraft. 
+Version: 0.0.0.9000
+Authors@R: person("David", "Marsh", email = "david.marsh@eurocontrol.int",
+  role = c("aut", "cre"))
+Description: For supersonic aircraft, flying subsonic over land
+    find the quickest route between airports. Allow for coastal buffer and 
+    potentially closed regions. Uses minimal model of aircraft performance:
+    focus is on time saved versus subsonic flight, rather than vertical flight
+    profile.
+License: Copyright EUROCONTROL
+Encoding: UTF-8
+LazyData: true
