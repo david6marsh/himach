@@ -1,0 +1,91 @@
+---
+title: "Introduction to Supersonic Routing"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{SupersonicRouting}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+## Introduction
+
+This vignette provides an end-to-end example of using the `twospeed` package to find the quickest route for a supersonic aircraft that is allowed to fly supersonic over sea, but only subsonic over land.
+
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(twospeed)
+library(dplyr)
+
+```
+
+
+## Aircraft
+
+You need a dataframe that defines one or more aircraft. This needs, at minimum, to have the following fields:
+
+* `id` and `type`: a very short, and longer text identifier for this aircraft
+* `over_sea_M` and `over_land_M`: the eponymous two speeds, given as a Mach number
+* `accel_Mpm`: acceleration in Mach per minute between these two
+* `arrdep_kph`: the speed on arrival and departure from aircraft, given in km per hour
+* `range_km`: range in km
+
+Other fields are optional, but it is recommended to include `notes` to give more information. 
+
+Run this minimum dataset through `expand_aircraft` to get the additional fields that are needed. Alternatively, if you run `expand_aircraft` with no parameters, it creates a set of test aircraft. 
+
+`expand_aircraft` also adds some additional fields, converting Mach to kph, and calculating the time to transition between the two speeds. This 'transition penalty' `trans_h` in hours, is used in the routing search as a time penalty whenever a transition from subsonic to supersonic (or vice versa) is needed; typically this is when switching from flying over land to flying over sea (or vice versa).
+
+
+```{r define aircraft} 
+
+# example for your own data
+# aircraft <- read.csv("data/aircraft.csv", stringAsFactors = FALSE)
+# aircraft <- expand_aircraft(aircraft)
+# strongly recommended to record the file name for later reference
+# attr(aircraft, "aircraftSet") <- "aircraft.csv"
+
+# example if you have no data of your own
+aircraft <- expand_aircraft()
+
+```
+
+## Airports
+
+Similarly, we need a dataset describing airports. This needs, at minimum, to have the following fields:
+
+* `APICAO`: the 4-character ICAO code for the airport
+* `long` and `lat`: the longitude and latitude, in decimal degrees (E and N being positive)
+
+Other fields are optional, but you might find it useful to include `ap_name` to give more information, as well as other fields containing geographical details, such as country. 
+
+As with the airports, you can load your own data set and then run it through `expand_airports` to add a geo-coded field to it. If you don't have a list, then `expand_airports` will use the dataset from `airportr` package.
+
+For this vignette, we use a very restricted set: just New Zealand.
+
+```{r define airports}
+
+# example for your own data
+# airports <- read.csv("data/airports.csv", stringAsFactors = FALSE)
+# airports <- expand_airports(airports)
+
+# example if you have no data of your own
+airports <- expand_airports() %>% 
+  filter(susbtr(APICAO,1,1)=="N") #just New Zealand
+
+```
+
+In fact you need two airport sets, because you need to say where flights can stop to refuel. If an aircraft cannot make a journey in a single leg, due to lack of range, `twospeed` automatically searches for the best refuelling option. This can easily multiply the number of searches by 5 or 10, so choose a limited number of likely 'good' options: islands, coastal points, or on narrow segments of land where the aircraft would have to slow down anyway. In our case, we have a test aircraft with an artifically reduced range, and we make just one refuel point available: coastal and central at the same time, Wellington.
+
+```{r define refuel points}
+
+refuel_ap <- airports %>% 
+  filter(APICAO=="NZWN")
+
+```
+

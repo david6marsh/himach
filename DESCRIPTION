@@ -9,6 +9,17 @@ Description: For supersonic aircraft, flying subsonic over land
     potentially closed regions. Uses minimal model of aircraft performance:
     focus is on time saved versus subsonic flight, rather than vertical flight
     profile.
-License: Copyright EUROCONTROL
+License: Copyright EUROCONTROL 2020
 Encoding: UTF-8
 LazyData: true
+Imports:
+    dplyr,
+    sf,
+    tidyr
+Suggests: 
+    airportr,
+    knitr,
+    rmarkdown,
+    testthat
+VignetteBuilder: knitr
+RoxygenNote: 7.1.0

@@ -1,0 +1,5 @@
+id,type,over_sea_M,over_land_M,arrdep_kph,accel_Mpm,range_km,notes
+M22,SST M2.2,2.2,0.95,350,0.1,8325,"Based on Boom Overture (public website), subsonic cruise from Aerion wikipedia"
+M16_9,SST M1.6 8.8,1.6,0.95,350,0.1,"8,800","Based on Aerion AS2 (wikipedia), inc. subsonic cruise "
+M084,777-300ER,0.84,0.84,350,0.1,13649,Subsonic example
+M22_short,Very short range SST,2.2,0.95,350,0.1,1000,"M22 but artificially short range, to test refuelling"
