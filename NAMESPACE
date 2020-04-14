@@ -2,5 +2,8 @@
 
 export(expand_aircraft)
 export(expand_airports)
+export(newLatLongGrid)
+exportClasses(GridLat)
+import(dplyr)
 import(sf)
 importFrom(magrittr,"%>%")

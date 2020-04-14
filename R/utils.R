@@ -3,7 +3,7 @@
 # that do not fit into the routes, grids or maps collections
 
 
-#helper to put European names first - assumes 4-letter ICAO code
+# helper to put European names first - assumes 4-letter ICAO code
 isEur <- function(x) substr(x,1,1) %in% c("E","L")
 
 #put ADEP ADES together with European first
@@ -71,6 +71,10 @@ prj <- function(x,crs=crs_map) {
 #'   \item \code{arrdep_kph}: the speed on arrival and departure from airports, given in km per hour
 #'   \item \code{range_km}: range in km
 #' }
+#'
+#' For more details see the help vignette:
+#' \code{vignette("SupersonicRouting", package = "twospeed")}
+#'
 #' @param ac Dataframe containing the minimum fields, or NA (default)
 #' @param sound_kph Speed of sound used to convert from Mach to kph, default 1062
 #'

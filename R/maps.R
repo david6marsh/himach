@@ -20,10 +20,10 @@ plot_map <- function(msf,
                      c_land = "green1",
                      c_border = "grey70",
                      w_border = 0.1){
-  ggplot(msf) +
-    geom_sf(size = w_border, colour = c_border, fill = c_land) +
+  ggplot2::ggplot(msf) +
+    ggplot2::geom_sf(size = w_border, colour = c_border, fill = c_land) +
     # coord_sf() + #not needed for already-projected feature sets
-    theme_minimal()
+    ggplot2::theme_minimal()
 }
 
 

@@ -9,7 +9,11 @@ Description: For supersonic aircraft, flying subsonic over land
     potentially closed regions. Uses minimal model of aircraft performance:
     focus is on time saved versus subsonic flight, rather than vertical flight
     profile.
-License: Copyright EUROCONTROL 2020
+Vignette: 
+License: Copyright EUROCONTROL 2020. 
+    New Zealand map in vignette: This work is based on Stats NZ's data 
+    which are licensed by Stats NZ for re-use under the Creative Commons 
+    Attribution 4.0 International licence.
 Encoding: UTF-8
 LazyData: true
 Imports:
@@ -18,8 +22,13 @@ Imports:
     tidyr
 Suggests: 
     airportr,
+    geosphere,
+    ggplot2,
     knitr,
     rmarkdown,
+    sp,
     testthat
 VignetteBuilder: knitr
 RoxygenNote: 7.1.0
+Depends: 
+    R (>= 2.10)

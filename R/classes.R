@@ -2,7 +2,12 @@
 #
 # S4 classes used in 2speed
 
-#a grid and lattice set
+#' A grid and lattice combination
+#'
+#' Keeps together a grid of points and a
+#' lattice of links between those points.
+#'
+#' @exportClass GridLat
 setClass("GridLat",
          slots = c(
            name = "character",

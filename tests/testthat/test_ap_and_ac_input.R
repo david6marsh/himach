@@ -22,3 +22,8 @@ test_that("Airport data loads", {
   airports <- data.frame(APICAO = "TEST", lat = 10, long = 10, stringsAsFactors = FALSE)
   expect_known_output(expand_airports(airports), "known/ap_load")
 })
+
+test_that("NZ maps available", {
+  expect_true("sfc_MULTIPOLYGON" %in% class(NZ_u))
+  expect_true("sfc_MULTIPOLYGON" %in% class(NZ_b))
+})
