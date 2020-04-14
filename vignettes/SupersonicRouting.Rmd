@@ -134,16 +134,16 @@ The route is constructed on a grid that covers the entire map. You could think o
 
 To this are added connections to airports. These connections have a nominal length, say 150km, to represent the distance covered when accelerating to cruise speed, or decelerating back when landing. In practice, the length varies, because it depends on the distance from airport to grid.
 
-It can take a very long time to construct a grid. For our much-reduced example the time might be a second or two.
+It can take a very long time to construct a global grid. For our much-reduced example the time might be 2-3 seconds.
 
 ```{r construct grid}
 
-target_km=100
+target_km=300
 system.time(
 p_grid <- newLatLongGrid(NZ_buffer,"NZ lat-long at 100km",
                              target_km = target_km, classify = TRUE,
                          lat_min = -49, lat_max = -32, 
-                         long_min = 160, long_max = 180)
+                         long_min = 162, long_max = 182)
 )
 
 ggplot(NZ_buffer) +

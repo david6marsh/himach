@@ -2,11 +2,14 @@
 #
 # grid-related functions
 
-
+# round longitude back to -180 <= x < 180
+mod_long <- function(x){
+  (x + 180) %% 360 - 180
+}
 
 #' Create lat-long grid for routes
 #'
-#' \code{newLatLongGrid} Create, and optionally classify, a lat-long route grid
+#' \code{newLatLongGrid} creates, and optionally classifies, a lat-long route grid
 #'
 #' This function creates a \code{gridLat} object that contains
 #' a set of point on a lat long grid (ie all the points are on
@@ -15,7 +18,7 @@
 #' or transition, with reference to a given map (typically including a
 #' coastal buffer).
 #'
-#' The definitions are:
+#' The definitions are
 #'
 #' \itemize{
 #'   \item land: both ends of the link are on land
@@ -23,34 +26,36 @@
 #'   \item transition: otherwise
 #' }
 #'
-#' The length of the links will be around \code{target_km} or 50% larger
+#' The length of the links will be around \code{target_km} or 50pct longer
 #' for the diagonal links.
 #'
 #' For more details see the help vignette:
 #' \code{vignette("Supersonic Routing", package = "twospeed")}
 #'
 #' @param onMap MULTIPOLYGON map defining land regions
-#' @param name Assigned to the name slot of the result
+#' @param name String assigned to the name slot of the result
 #' @param target_km Target length. Default 800km
 #'     only to avoid accidentally starting heavy compute.
 #'     30-50km would be more useful.
 #' @param lat_min,lat_max Latitude extent of grid
-#' @param long_min,long_max Longitude extend of grid
+#' @param long_min,long_max Longitude extend of grid.
+#'     Two allow small grids crossing the 180 boundary, the function
+#'     accepts values outside [-180,180), then rounds to within this
+#'     range.
 #' @param classify Whether to classify each link. Defaults to
 #'     FALSE only to avoid accidentally starting heavy compute.
 #'
 #' @return \code{gridLat} object containing points and lattice.
 #'
 #' @examples
-#' # do minimal version
-#' ac <- expand_aircraft()
-#'
-#' # on-the-fly example
-#' ac <- data.frame(id = "test", type = "test aircraft",
-#'                  over_sea_M = 2.0, over_land_M = 0.9, accel_Mpm = 0.2,
-#'                  arrdep_kph = 300, range_km = 6000, stringsAsFactors=FALSE)
-#' ac <- expand_aircraft(ac)
-#'
+#' crs_Pacific <- sp::CRS("+proj=robin +lon_0=150 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
+#' NZ_buffer <- sf::st_transform(twospeed::NZ_b, crs=crs_Pacific)
+#' system.time(
+#'   p_grid <- newLatLongGrid(NZ_buffer,"NZ lat-long at 100km",
+#'                            target_km = 100, classify = TRUE,
+#'                            lat_min = -49, lat_max = -32,
+#'                            long_min = 162, long_max = 182)
+#' )
 #'
 #' @import dplyr
 #' @import sf
@@ -98,6 +103,8 @@ newLatLongGrid <- function(onMap, name,
   #create the grid from this
   g@points <- ll_grid_seed %>%
     select(id, long, lat) %>%
+    # handle the 'overflow longitude' - slightly over the dateline
+    mutate(long = mod_long(long)) %>%
     mutate(xy = st_cast(st_transform(st_sfc(st_multipoint(matrix(c(long, lat), ncol=2)),
                                             crs=4326),
                                      crs=st_crs(onMap)),'POINT'))
@@ -144,6 +151,9 @@ newLatLongGrid <- function(onMap, name,
 
   g@lattice <- ll_lattice %>%
     # add geometry
+    # handle the 'overflow longitude' - slightly over the dateline
+    mutate(from_long = mod_long(from_long),
+           to_long = mod_long(to_long)) %>%
     rowwise() %>%
     mutate(geometry = st_transform(st_sfc(st_linestring(matrix(c(from_long, from_lat, to_long, to_lat),
                                                                ncol=2, byrow = TRUE)),
