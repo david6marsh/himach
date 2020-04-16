@@ -43,7 +43,7 @@ distFromLand <- function(long, lat, land){
 #this will be called recursively
 findGC <- function(subp, withMap, avoidMap){
 
-  if(getOption("quiet",default=0)>2) print(paste(first(subp$phase), first(subp$phaseID), nrow(subp))) #debug
+  if(getOption("quiet",default=0)>2) message(first(subp$phase), first(subp$phaseID), nrow(subp))
 
   #if is.na(avoidMap) then a simplified approach for the non-sea phases
   #for sea phases use withMap (avoiding land & avoid areas, already union)
@@ -136,16 +136,75 @@ emptyRoute <- function(ac, ap2, onMap,
 }
 
 
-# wrapper for routeAnAircraft, including refuelling
+#' Find quickest route between airports
+#'
+#' \code{findRoute} finds the quickest route between two airports, refuelling if
+#' necessary
+#'
+#' This function finds the quickest route between two airports. A 'route' is made up
+#' of one or two 'legs' (airport to airport without intermediate stop).
+#'
+#' It assumes that the routing grid, \code{pg}, has already been classified as
+#' land or sea using the map \code{onMap}. The map is further used when
+#' converting the grid-based route to one of great circles segments.
+#'
+#'
+#' @section Refuelling:
+#'
+#'   If either necessary, because the great circle distance is greater than the
+#'   aircraft range, or because \code{refuel_only_if} is FALSE, \code{findRoute}
+#'   searches through a list of refuelling airports and chooses the quickest one
+#'   (or \code{refuel_topN}).
+#'
+#' Circuitous refuelling is avoided, tested against
+#' total distance < \code{max_circuity} * great circle distance.
+#'
+#' Each refuelling stop costs \code{refuel_h} in addition to the time to descend
+#' to the airport and then to climb out again.
+#'
+#' @param ac One aircraft, as from \code{\link{expand_aircraft}}
+#' @param ap2 One airport pair, as from \code{\link{make_AP2}}
+#' @param onMap \code{sf::MULTIPOLYGON} map of land, including buffer
+#' @param avoid \code{sf::MULTIPOLYGON} map of areas not to fly over
+#' @param pg \code{GridLat} routing grid as from \code{\link{newLatLongGrid}}
+#' @param cf_sub Further aircraft to use as comparator, default NA. [not recommended]
+#' @param refuel Airports available for refuelling
+#' @param refuel_h Duration of refuelling stop, in hours
+#' @param refuel_only_if If TRUE (default) only test refuel options if
+#'   necessary because the great circle distance is too far for the aircraft
+#'   range
+#' @param refuel_topN Return the best N (default 1) refuelling options
+#' @param max_circuity Threshold for excluding refuelling stops (default 2.0)
+#' @param apLoc Airport locations as from \code{\link{expand_airports}}
+#' @param ... Other parameters, passed to TBD
+#'
+#'
+#' @return Dataframe with details of the route
+#'
+#' @examples
+#' # do minimal version
+#' airports <- expand_airports()
+#'
+#' # on-the-fly example
+#' airports <- data.frame(APICAO = "TEST", lat = 10, long = 10, stringsAsFactors = FALSE)
+#' airports <- expand_airports(airports)
+#'
+#' \dontrun{
+#' # example for your own data
+#' airports <- read.csv("data/airports.csv", stringsAsFactors = FALSE)
+#' airports <- expand_airports(airports)
+#' }
+#'
+#' @export
 findRoute <- function(ac, ap2, onMap, avoid, pg, cf_sub=NA,
-                      refuel=NA, refuel_h=1, refuel_only_if_nec=TRUE,
+                      refuel=NA, refuel_h=1, refuel_only_if=TRUE,
                       refuel_topN=1,
                       max_circuity=2.0,
                       apLoc, ...){
   #cf_sub is either NA or a line from the ac dataframe, like ac itself
   #refuel is either NA or a dataframe list APICAO, lat, long at least, with ap_locs
 
-  if (getOption("quiet",default=0)>0) print(paste("Route:-",ap2$AP2,"----")) #route header v refuel subroutes
+  if (getOption("quiet",default=0)>0) message("Route:-",ap2$AP2,"----") #route header v refuel subroutes
 
   # #debug  - find good crs
   # useCRS <- "+proj=laea +lon_0=150 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
@@ -166,25 +225,25 @@ findRoute <- function(ac, ap2, onMap, avoid, pg, cf_sub=NA,
   ap2range_ok <- ap2$gcdistance_km < ac$range_km
 
   #if yes - then get the route
-  if (ap2range_ok) routes <- routeAnAircraft(ac, ap2, apLoc = apLoc,
+  if (ap2range_ok) routes <- findLeg(ac, ap2, apLoc = apLoc,
                                              onMap=onMap, pg = pg, avoid = avoid, ...)
   else {
-    if (getOption("quiet",default=0)>1) print("Too far for one leg.")
+    if (getOption("quiet",default=0)>1) message("Too far for one leg.")
     routes <- emptyRoute(ac, ap2, onMap)
   }
 
   #do a parallel run for a subsonic aircraft - a true baseline?
   #not advised - just use the M084 estimate
   if (is.data.frame(cf_sub)) {
-    if (getOption("quiet",default=0)>1) print("Adding subsonic, without range bounds.")
-    r_subsonic <- routeAnAircraft(cf_sub, ap2, apLoc = apLoc,
+    if (getOption("quiet",default=0)>1) message("Adding subsonic, without range bounds.")
+    r_subsonic <- findLeg(cf_sub, ap2, apLoc = apLoc,
                                   enforceRange = FALSE,
                                   onMap=onMap, pg = pg, avoid=avoid, ...)
     routes <- rbind(routes, r_subsonic)
   }
 
   #look for options including refuelling
-  if (is.data.frame(refuel) & (!ap2range_ok || !refuel_only_if_nec)){
+  if (is.data.frame(refuel) & (!ap2range_ok || !refuel_only_if)){
     #find triples: AREF in range of ADEP and ADES
     r_ap3 <- ap2 %>%
       crossing(refuel %>%
@@ -203,98 +262,102 @@ findRoute <- function(ac, ap2, onMap, avoid, pg, cf_sub=NA,
              n_under_circ = sum(circuity < max_circuity)) %>%
       filter((n_under_circ<2)|(circuity < max_circuity))
 
-    #simplify to distinct AP2 (there may be some duplicates, eg Heathrow-Gander appearing for -SFO & -LAX)
-    r_ap2 <- r_ap3 %>%
-      select(ADEP, AREF, from_long, from_lat, ref_long, ref_lat) %>%
-      rename(ADES=AREF, to_long=ref_long, to_lat=ref_lat) %>%
-      rbind(r_ap3 %>%
-              select(AREF, ADES, ref_long, ref_lat, to_long, to_lat) %>%
-              rename(ADEP=AREF, from_long=ref_long, from_lat=ref_lat)) %>%
-      distinct() %>%
-      rowwise() %>%
-      mutate(gcdistance_km = distGeo(c(from_long, from_lat),
-                                     c(to_long, to_lat))/1000,
-             AP2=ifelse(unidirectional,
-                        paste(ADEP,ADES,sep=sep),
-                        concat_ADEPADES(ADEP, ADES, FALSE))) #get it in the 'right' order (for the cache)
+    if (nrow(r_ap3) < 1) {
+      message("No refuel options for ",ap2$AP2)
+    } else {
+      #simplify to distinct AP2 (there may be some duplicates, eg Heathrow-Gander appearing for -SFO & -LAX)
+      r_ap2 <- r_ap3 %>%
+        select(ADEP, AREF, from_long, from_lat, ref_long, ref_lat) %>%
+        rename(ADES=AREF, to_long=ref_long, to_lat=ref_lat) %>%
+        rbind(r_ap3 %>%
+                select(AREF, ADES, ref_long, ref_lat, to_long, to_lat) %>%
+                rename(ADEP=AREF, from_long=ref_long, from_lat=ref_lat)) %>%
+        distinct() %>%
+        rowwise() %>%
+        mutate(gcdistance_km = distGeo(c(from_long, from_lat),
+                                       c(to_long, to_lat))/1000,
+               AP2=ifelse(unidirectional,
+                          paste(ADEP,ADES,sep=sep),
+                          concat_ADEPADES(ADEP, ADES, FALSE))) #get it in the 'right' order (for the cache)
 
 
-    # w <- lapply(1:nrow(r_ap2), function(x) routeAnAircraft(ac, r_ap2[x, ], onMap=onMap, pg = pg, avoid=avoid,
-    #                                                             unidirectional=unidirectional, ...))
-    w <- lapply(1:nrow(r_ap2), function(x) routeAnAircraft(ac,
-                                                           make_AP2(r_ap2[x, ]$ADEP, r_ap2[x, ]$ADES, apLoc),
-                                                           pg = pg, onMap=onMap, avoid=avoid,
-                                                           apLoc = apLoc, ...))
-    refuel_options <- reduce(w, rbind)
+      # w <- lapply(1:nrow(r_ap2), function(x) findLeg(ac, r_ap2[x, ], onMap=onMap, pg = pg, avoid=avoid,
+      #                                                             unidirectional=unidirectional, ...))
+      w <- lapply(1:nrow(r_ap2), function(x) findLeg(ac,
+                                                     make_AP2(r_ap2[x, ]$ADEP, r_ap2[x, ]$ADES, apLoc),
+                                                     pg = pg, onMap=onMap, avoid=avoid,
+                                                     apLoc = apLoc, ...))
+      refuel_options <- reduce(w, rbind)
 
-    #extract the best from these options
-    #add some variables
-    refuel_options <- refuel_options %>%
-      mutate(legs=ifelse(routeID==ap2$AP2,1,2),
-             leg_id = ifelse(grepl(ap2$ADEP,routeID),1,2),
-             refuel_ap = str_remove_all(routeID,paste0("(",ap2$ADEP,")|(<>)|(>)|(",ap2$ADES,")")),
-             routeID = ap2$AP2,
-             fullRouteID=paste(ap2$ADEP,refuel_ap,ap2$ADES,sep=sep))
+      #extract the best from these options
+      #add some variables
+      refuel_options <- refuel_options %>%
+        mutate(legs=ifelse(routeID==ap2$AP2,1,2),
+               leg_id = ifelse(grepl(ap2$ADEP,routeID),1,2),
+               refuel_ap = str_remove_all(routeID,paste0("(",ap2$ADEP,")|(<>)|(>)|(",ap2$ADES,")")),
+               routeID = ap2$AP2,
+               fullRouteID=paste(ap2$ADEP,refuel_ap,ap2$ADES,sep=sep))
 
-    best_routes <- refuel_options %>%
-      group_by(fullRouteID) %>%
-      summarise(time_h = sum(time_h),
-                dist_km = sum(gcdist_km)) %>%
-      filter(!is.na(time_h)) %>%  #drop any failed direct route
-      top_n(-refuel_topN, time_h) %>%
-      pull(fullRouteID)
+      best_routes <- refuel_options %>%
+        group_by(fullRouteID) %>%
+        summarise(time_h = sum(time_h),
+                  dist_km = sum(gcdist_km)) %>%
+        filter(!is.na(time_h)) %>%  #drop any failed direct route
+        top_n(-refuel_topN, time_h) %>%
+        pull(fullRouteID)
 
-    #now re-order to get the sequence right (only really imporatnt for speed profile)
-    best_refuel_options <-  refuel_options %>%
-      filter(fullRouteID %in% best_routes) %>%
-      group_by(fullRouteID, leg_id) %>%
-      #now check if need to reverse order
-      #with refuelling we want the phases to be in the right order and join up in the middle
-      mutate(grid_s = head(grid[[1]],1),grid_e = tail(grid[[1]],1),
-             reverse = (leg_id==1 & grid_s != str_split(routeID,"(<>)|(>)",simplify=TRUE)[1])|
-               (leg_id==2 & grid_e!= str_split(routeID,"(<>)|(>)",simplify=TRUE)[2]),
-             order = if_else(reverse, -row_number(),row_number()),
-             temp = from,
-             from = if_else(reverse, to, from),
-             to = if_else(reverse, temp, to),
-             reverse = reverse & !(row_number()==n()), #don't reverse data in last row, since arr/dep leg is alway from AP
-             temp= from_lat,
-             from_lat = if_else(reverse, to_lat, from_lat),
-             to_lat = if_else(reverse, temp, to_lat),
-             temp= from_long,
-             from_long = if_else(reverse, to_long, from_long),
-             to_long = if_else(reverse, temp, to_long)) %>%
-      arrange(fullRouteID, leg_id, order) %>%
-      select(-grid_s, -grid_e, -reverse, -temp) #drop order later
+      #now re-order to get the sequence right (only really imporatnt for speed profile)
+      best_refuel_options <-  refuel_options %>%
+        filter(fullRouteID %in% best_routes) %>%
+        group_by(fullRouteID, leg_id) %>%
+        #now check if need to reverse order
+        #with refuelling we want the phases to be in the right order and join up in the middle
+        mutate(grid_s = head(grid[[1]],1),grid_e = tail(grid[[1]],1),
+               reverse = (leg_id==1 & grid_s != str_split(routeID,"(<>)|(>)",simplify=TRUE)[1])|
+                 (leg_id==2 & grid_e!= str_split(routeID,"(<>)|(>)",simplify=TRUE)[2]),
+               order = if_else(reverse, -row_number(),row_number()),
+               temp = from,
+               from = if_else(reverse, to, from),
+               to = if_else(reverse, temp, to),
+               reverse = reverse & !(row_number()==n()), #don't reverse data in last row, since arr/dep leg is alway from AP
+               temp= from_lat,
+               from_lat = if_else(reverse, to_lat, from_lat),
+               to_lat = if_else(reverse, temp, to_lat),
+               temp= from_long,
+               from_long = if_else(reverse, to_long, from_long),
+               to_long = if_else(reverse, temp, to_long)) %>%
+        arrange(fullRouteID, leg_id, order) %>%
+        select(-grid_s, -grid_e, -reverse, -temp) #drop order later
 
-    #base the refuel legs on the last row of the first leg - for lat long, etc
-    refuel_legs <- best_refuel_options %>%
-      group_by(fullRouteID) %>%
-      filter(leg_id==1) %>%
-      filter(row_number() == n()) %>%
-      mutate(phase = factor("refuel", levels = lattice_phases),
-             from=to,
-             time_h=refuel_h,
-             from_long=to_long, from_lat=to_lat,
-             gcdist_km=0,
-             speed_kph=0,
-             leg_id=1.5)
+      #base the refuel legs on the last row of the first leg - for lat long, etc
+      refuel_legs <- best_refuel_options %>%
+        group_by(fullRouteID) %>%
+        filter(leg_id==1) %>%
+        filter(row_number() == n()) %>%
+        mutate(phase = factor("refuel", levels = lattice_phases),
+               from=to,
+               time_h=refuel_h,
+               from_long=to_long, from_lat=to_lat,
+               gcdist_km=0,
+               speed_kph=0,
+               leg_id=1.5)
 
-    #need to use rbind not bind_rows because of the sf
-    sel_routes <- rbind.data.frame(best_refuel_options, refuel_legs)
-    sel_routes <-  sel_routes %>%
-      arrange(fullRouteID, leg_id, order) %>%
-      group_by(fullRouteID) %>%
-      #renumber the phases
-      mutate(phaseChange = case_when(
-        row_number() == 1 ~ 1L,
-        phase != lag(phase) ~ 1L,
-        TRUE ~ 0L),
-        phaseID = paste0(cumsum(phaseChange),".",str_split(phaseID,coll("."),simplify=TRUE)[,2]),
-        timestamp = first(timestamp)) %>%
-      select(-phaseChange, -order)
+      #need to use rbind not bind_rows because of the sf
+      sel_routes <- rbind.data.frame(best_refuel_options, refuel_legs)
+      sel_routes <-  sel_routes %>%
+        arrange(fullRouteID, leg_id, order) %>%
+        group_by(fullRouteID) %>%
+        #renumber the phases
+        mutate(phaseChange = case_when(
+          row_number() == 1 ~ 1L,
+          phase != lag(phase) ~ 1L,
+          TRUE ~ 0L),
+          phaseID = paste0(cumsum(phaseChange),".",str_split(phaseID,coll("."),simplify=TRUE)[,2]),
+          timestamp = first(timestamp)) %>%
+        select(-phaseChange, -order)
 
-    routes <- rbind.data.frame(routes, sel_routes)
+      routes <- rbind.data.frame(routes, sel_routes)
+    }
 
   }
   return(routes)
@@ -321,7 +384,7 @@ findToCToD <- function(ap, pg, onMap, ac,
 
   #if this query has not already been cached, calculate its value
   if (!exists(cache_as, envir=star_cache, inherits=F)) {
-    if (getOption("quiet",default=0)>2) print("TOC/TOD not cached: calculating...")
+    if (getOption("quiet",default=0)>2) message("TOC/TOD not cached: calculating...")
     assign(cache_as, findToCToD_really(ap, pg, onMap, ac,
                                        ad_dist, nearest), star_cache)
   }
@@ -455,7 +518,7 @@ pathToGC <- function(path, pg,
           phaseID = paste0(cumsum(phaseChange),".")) %>%
         select(-phaseChange)
     }
-    if(getOption("quiet",default=0)>1) print("Calculated phase changes")
+    if(getOption("quiet",default=0)>1) message("Calculated phase changes")
     p <- p %>%
       #now duplicate each row and simplify to a single id instead of from-to
       #deliberately create doubles then drop them
@@ -480,7 +543,7 @@ pathToGC <- function(path, pg,
     #loop for each phase
     #trim path to list of id pairs, each of which can be joined by a GC
     #reduce collapes a list of data.frames to a data.frame
-    if (getOption("quiet",default=0)>2) print("Ready to recurse")
+    if (getOption("quiet",default=0)>2) message("Ready to recurse")
 
     gcid <- purrr::reduce(lapply(unique(p$phaseID), function(i, m) findGC(p[p$phaseID==i,],
                                                                           onMap, avoid)),
@@ -490,7 +553,7 @@ pathToGC <- function(path, pg,
              to = coalesce(lead(id),last(p$id))) %>%
       rename(w_id = id)
 
-    if (getOption("quiet",default=0)>1) print("Done recursion")
+    if (getOption("quiet",default=0)>1) message("Done recursion")
 
     #code is split just because there's less to highlight in the debugger
     gcid <- gcid %>%
@@ -505,7 +568,7 @@ pathToGC <- function(path, pg,
     #post-processing
     #loop to look for shortcuts
     if (checkShortcuts) {
-      if (getOption("quiet",default=0)>1) print("Checking Shortcuts")
+      if (getOption("quiet",default=0)>1) message("Checking Shortcuts")
       baseID <- 1
       while (baseID < nrow(gcid)-1) {
         #skip this baseID if not 'sea'
@@ -525,7 +588,7 @@ pathToGC <- function(path, pg,
               all_sea <- ! as.logical(st_intersects(test_line, onMap, sparse=FALSE))
               if (all_sea) {
                 #can drop the intermediate points
-                if (getOption("quiet",default=0)>2) print(paste("Shortcut from",baseID,"to",farID))
+                if (getOption("quiet",default=0)>2) message("Shortcut from ",baseID," to ",farID)
                 #first update the 'next step' info in the baseID
                 gcid[baseID,c("to","to_long","to_lat")] <- gcid[farID,c("to","to_long","to_lat")]
                 #then skip the intermediate points
@@ -571,7 +634,7 @@ pathToGC <- function(path, pg,
 
 
 #this is the entry point, but it's a cache
-routeAnAircraft <- function(ac, ap2, pg, onMap, apLoc,
+findLeg <- function(ac, ap2, pg, onMap, apLoc,
                             avoid=NA, enforceRange=TRUE,
                             dijkstraByTime=TRUE, grace_km=NA,
                             unidirectional=FALSE,
@@ -596,8 +659,8 @@ routeAnAircraft <- function(ac, ap2, pg, onMap, apLoc,
 
   #if this query has not already been cached, calculate its value
   if (!exists(cache_as, envir=rte_cache, inherits=F)) {
-    if (getOption("quiet",default=0)>2) print("Not cached: calculating...")
-    r <- routeAnAircraft_really(ac, ap2, pg, onMap, apLoc, avoid,
+    if (getOption("quiet",default=0)>2) message("Not cached: calculating...")
+    r <- findLeg_really(ac, ap2, pg, onMap, apLoc, avoid,
                                 enforceRange, dijkstraByTime, grace_km,
                                 checkShortcuts,...)
     if (is.na(r[1,1]))(return(r)) #quick end without caching if it's an empty route.
@@ -610,7 +673,7 @@ routeAnAircraft <- function(ac, ap2, pg, onMap, apLoc,
 
 
 #find a single route
-routeAnAircraft_really <- function(ac, ap2, pg, onMap,
+findLeg_really <- function(ac, ap2, pg, onMap,
                                    apLoc,
                                    avoid=NA,
                                    enforceRange=TRUE,
@@ -628,7 +691,7 @@ routeAnAircraft_really <- function(ac, ap2, pg, onMap,
   tstart <- Sys.time()
   stopifnot(class(pg)=="GridLat")
 
-  if (getOption("quiet",default=0)>0) print(paste("Leg:",ap2$AP2," Aircraft:",ac$type))
+  if (getOption("quiet",default=0)>0) message("Leg: ",ap2$AP2," Aircraft: ",ac$type)
 
   #get crow-flies
   crow <- st_gcIntermediate(p1=c(ap2$from_long,ap2$from_lat),
@@ -641,12 +704,13 @@ routeAnAircraft_really <- function(ac, ap2, pg, onMap,
                     c(ap2$to_long,ap2$to_lat))/1000
 
   if ((gcdist > ac$range_km) & enforceRange) {
-    if (getOption("quiet",default=0)>0) print(paste0("Distance ",round(gcdist,1),"km exceeds range ",round(ac$range_km,1),"km."))
+    if (getOption("quiet",default=0)>0) message("Distance ",round(gcdist,1),"km exceeds range ",
+                                                round(ac$range_km,1),"km.")
     #return something mostly empty
     return(emptyRoute(ac, ap2, onMap))
   }
 
-  if (getOption("quiet",default=0)>2) print(paste("Starting envelope:",round(Sys.time() - tstart,1)))
+  if (getOption("quiet",default=0)>2) message("Starting envelope: ",round(Sys.time() - tstart,1))
   #make the envelope - so can plot even if don't enforce it
   #we work with the envelope in map CRS, then save at last stage in crs_latlong
   envelope <-  st_sfc(st_polygon(),crs=st_crs(onMap)) #null by default
@@ -666,7 +730,7 @@ routeAnAircraft_really <- function(ac, ap2, pg, onMap,
         inner_join(pg@points %>% select(id), by=c("from"="id")) %>%
         inner_join(pg@points %>% select(id), by=c("to"="id"))
 
-      if (getOption("quiet",default=0)>1) print(paste("Cut envelope from lattice:",round(Sys.time() - tstart,1)))
+      if (getOption("quiet",default=0)>1) message("Cut envelope from lattice: ",round(Sys.time() - tstart,1))
     }
   }
 
@@ -681,7 +745,7 @@ routeAnAircraft_really <- function(ac, ap2, pg, onMap,
     #need an extra map
     #for over-sea flight ensure the avoid areas are included, so they are not allowed
     onMap <- st_union(onMap, avoid)
-    if (getOption("quiet",default=0)>2) print(paste("Merged map and avoid areas:",round(Sys.time() - tstart,1)))
+    if (getOption("quiet",default=0)>2) message("Merged map and avoid areas: ",round(Sys.time() - tstart,1))
     #and for non-seas flight, also need to avoid 'avoid'
   }
 
@@ -700,7 +764,7 @@ routeAnAircraft_really <- function(ac, ap2, pg, onMap,
   if (!dijkstraByTime) {costed_lattice <- costed_lattice %>%
     mutate(cost = dist_km) #if !bytime, just use distance..
   }
-  if (getOption("quiet",default=0)>2) print(paste("Got costed lattice:",round(Sys.time() - tstart,1)))
+  if (getOption("quiet",default=0)>2) message("Got costed lattice: ",round(Sys.time() - tstart,1))
 
 
   gr <- makegraph(costed_lattice %>% select(from, to, cost),
@@ -714,10 +778,11 @@ routeAnAircraft_really <- function(ac, ap2, pg, onMap,
   path <- get_path_pair(gr, ap2$ADEP, ap2$ADES)
 
   if (length(path[[1]])>1) {
-    if(getOption("quiet",default=0)>2) print(paste("Got path:",round(Sys.time() - tstart,1)))
+    if(getOption("quiet",default=0)>2) message("Got path: ",round(Sys.time() - tstart,1))
   }
   else if (length(path[[1]])<2 ) {
-    if (getOption("quiet",default=0)>0) {print(paste0("Failed to find path for ",ap2$AP2," (too far, or higher envelope_points)"))}
+    if (getOption("quiet",default=0)>0) {message("Failed to find path for ",ap2$AP2,
+                                                 " (too far, or higher envelope_points)")}
     #return something mostly empty
     return(emptyRoute(ac, ap2, onMap))
   }
