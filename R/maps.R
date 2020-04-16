@@ -51,25 +51,54 @@ rangeEnvelope <- function(ac, pg, ap2, onMap,
 }
 
 
-#all-singing layered map with lots of options
+#' Plot a map of routes
+#'
+#' \code{route_map} plots routes, with many options
+#'
+#' This function plots the routes, with options for additional layers.
+#'
+#'
+#' @param ac,ap2,pg,onMap,apLoc,avoid See \code{\link{findRoute}}
+#' @param enforceRange If TRUE (default) then leg is constrained to aircraft range,
+#'     otherwise routes of excess range can be found.
+#' @param dijkstraByTime If TRUE (default) then the quickest route is found,
+#'     else the shortest distance.
+#' @param grace_km Default NA. Otherwise, if great circle distance is with 3% of aircraft
+#'     range, then add this amount to the envelope.
+#' @param checkShortcuts If TRUE (default) then path will be checked for great circle shortcuts.
+#' @param ad_dist The length of arrival/departure links, in m. (Default 100,000=100km)
+#' @param nearest The number of arrival/departure links to create (Default 12)
+#' @param ... Other parameters, passed to \code{\link{routeEnvelope}}
+#'
+#'
+#' @return Dataframe with details of the leg
+#'
+#' @import sf
+#' @import dplyr
+#' @import tidyr
+#' @import ggplot2
+#'
+#' @examples
+#' TBD
+#'
+#' @export
 route_map <- function(
-  routes=NA, show_route="time",
+  thin_map, routes=NA, show_route="time",
   crow=FALSE, range_envelope=FALSE, #show crow-flies
-  crs=54030, #projection default
+  crs=crs_Atlantic, #projection default
   bound=TRUE, bound_margin_km=200, #by default bound on the set of gc and add 1000km
-  fat_map=NA, thin_map_file="data/Map4326 simp pt03deg no Ant.RDS", #map defaults
-  avoid_map=m_avoid_u,
+  fat_map=NA,
+  avoid_map=NA,
   land_f="grey90", buffer_f="grey70", avoid_f="grey80", #fill colours for map
   l_alpha=0.6, l_size=0.4, #line settings
   crow_col="grey70", crow_size=0.2, #crow line settings
-  airports=TRUE, refuel_airports=TRUE, ap_locations=ap_loc, #plot or not
+  ap_locations=NA, refuel_airports=NA,  #plot or not
   ap_col="darkblue", ap_size=0.4, #airport settings
   rap_col="red", rap_size=0.4 #airport settings
 ){
   (stopifnot(is.na(show_route) || show_route %in% c("speed","aircraft","time")))
 
   #thin map is the one without buffer
-  thin_map <- readRDS(thin_map_file) #simplified
   thin_map <- prj(thin_map, crs=crs) #force to CRS used for this map
 
   #layer 1 (one or two base maps)
@@ -116,20 +145,21 @@ route_map <- function(
   # }
 
   #layer 6: airports
-  if (airports){
-    APs <- sort(unique(unlist(lapply(unique(routes$routeID),
+  if (!is.na(ap_locations)){
+    used_APs <- sort(unique(unlist(lapply(unique(routes$routeID),
                                      function(x)strsplit(x, "<>")))))
     m <- m +
-      geom_sf(data = ap_locations %>% filter(APICAO %in% APs),
-              aes(geometry=prj(ap_locs, crs=crs)), colour=ap_col, size=ap_size)
+      geom_sf(data = ap_locations %>% filter(APICAO %in% used_APs),
+              aes(geometry=prj(ap_locations, crs=crs)), colour=ap_col, size=ap_size)
   }
 
   #layer 7: refuel airports
-  if (refuel_airports){
-    refuel_APs <- sort(unique(routes$refuel_ap))
+  if (!is.na(refuel_airports)){
+    used_refuel_APs <- sort(unique(routes$refuel_ap))
     m <- m +
-      geom_sf(data = ap_locations %>% filter(APICAO %in% refuel_APs),
-              aes(geometry=prj(ap_locs, crs=crs)), colour=rap_col, size=rap_size)
+      geom_sf(data = refuel_airports %>% filter(APICAO %in% used_refuel_APs),
+              aes(geometry=prj(refuel_airports, crs=crs)),
+              colour=rap_col, size=rap_size)
   }
 
   #apply bounds?
@@ -152,7 +182,7 @@ route_map <- function(
 
 #wrapper for st_wrap_dateline, because it needs lat-longs
 st_wrap <- function(m){
-  #4326 is in lat-long
   #this can be used wihtin a geom_sf plot statement
-  st_transform(st_wrap_dateline(st_transform(m, crs=4326)),crs=st_crs(m))
+  st_transform(st_wrap_dateline(st_transform(m, crs=twospeed:::crs_latlong)),
+               crs=st_crs(m))
 }

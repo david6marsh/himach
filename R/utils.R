@@ -115,11 +115,17 @@ prj <- function(x,crs=crs_map) {
 #'   \item \code{range_km}: range in km
 #' }
 #'
+#' An attribute is set to help keep track of where the aircraft data came from
+#' (and whether a new cache is needed). If the \code{aircraftSet} attribute of
+#' the \code{ac} parameter is not set, the set is treated as 'disposable'.
+#'
+#'
 #' For more details see the help vignette:
 #' \code{vignette("SupersonicRouting", package = "twospeed")}
 #'
 #' @param ac Dataframe containing the minimum fields, or NA (default)
-#' @param sound_kph Speed of sound used to convert from Mach to kph, default 1062
+#' @param sound_kph Speed of sound used to convert from Mach to kph, default
+#'     \code{mach_kph}=1062 at a suitable altitude.
 #'
 #' @return Dataframe with at least 11 variables describing the performance of one or
 #'      more aircraft
@@ -145,7 +151,7 @@ prj <- function(x,crs=crs_map) {
 #' @importFrom dplyr %>%
 #'
 #' @export
-expand_aircraft <- function(ac = NA, sound_kph = 1062){
+expand_aircraft <- function(ac = NA, sound_kph = mach_kph){
   if (is.na(ac[1])) {
     warning("Using default aircraft file.")
     file <- system.file("extdata", "test_aircraft.csv", package = "twospeed", mustWork = TRUE)
@@ -174,8 +180,12 @@ expand_aircraft <- function(ac = NA, sound_kph = 1062){
            #transition penalty is time to change from over_sea to over_land speed (or v.v)
            trans_h = (over_sea_M - over_land_M)/(accel_Mpm * 60))
 
-  attr(ac_full, "aircraftSet") <- attr(ac, "aircraftSet")
+  if (is.null(attr(ac, "aircraftSet"))) {
+    attr(ac_full, "aircraftSet") <- paste("Dummy aircraft", as.character(Sys.time()))
+  } else {
+    attr(ac_full, "aircraftSet") <- attr(ac, "aircraftSet")
 
+  }
   return(ac_full)
 }
 

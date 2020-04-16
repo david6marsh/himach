@@ -22,6 +22,7 @@ knitr::opts_chunk$set(
 library(twospeed)
 library(dplyr)
 library(ggplot2)
+library(sp)
 
 ```
 
@@ -55,6 +56,7 @@ Run this minimum dataset through `expand_aircraft` to get the additional fields 
 aircraft <- expand_aircraft()
 
 ```
+  
 
 ## Airports
 
@@ -162,14 +164,21 @@ Finally we're ready to do some routing of aircraft.
 
 options("quiet" = 4) #for some output
 # from Auckland to Christchurch
-ap2 <- make_AP2("NZAA","NZDN",airports)
+ap2 <- make_AP2("NZAA","NZCH",airports)
 
-route <- findRoute(aircraft[1,], 
+routes <- findRoute(aircraft[4,], 
                      ap2,
                      onMap = NZ_buffer, 
                      pg = p_grid, 
                      apLoc = airports)
 
+
+rtes <- summarise_routes(routes, airports)
+routes <- routes %>% 
+  left_join(rtes, by = "fullRouteID") %>% 
+  arrange(advantage_h)
+
+route_map(NZ_coast, routes, crs = crs_Pacific)
 
 ```
 

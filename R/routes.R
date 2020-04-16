@@ -1006,3 +1006,65 @@ smoothSpeed <- function(r, ac){
 
   return(r %>% select(-penalty))
 }
+
+
+#' Summarise a set of routes
+#'
+#' Reduce a set of routes to a one-line per route summary
+#'
+#' This function takes the output of \code{\link{findRoute}} and summarises
+#' to one line per (full) route.
+#'
+#' With refuelling, there can be multiple 'full routes' for each 'route'. The
+#' \code{best} column indicates the best route for each \code{routeID}.
+#'
+#' The results are rounded to a reasonable number of significant figures. After
+#' all this is an approximate model. The \code{arrdep_h} has been checked against actual
+#' and is reasonable (observed range roughly 0.3-0.5).
+#'
+#' @param route Each segment in each route, as produced by
+#'   \code{\link{findRoute}} or \code{\link{findLeg}}
+#' @param ap_loc List of airport locations, output of
+#'   \code{\link{expand_airports}}
+#' @param arrdep_h Time for the M084 comparator to arrive & depart in hours.
+#'   Default 0.5.
+#'
+#' @return Dataframe with summary of the route
+#'
+#' @import dplyr
+#' @import tidyr
+#'
+#' @examples
+#' TBD
+#'
+#' @export
+summarise_routes <- function(route,
+                            ap_loc,
+                            arrdep_h = 0.5){
+  #include 30 mins for arr/dep - based on 777ER examples
+  route_summary <- route %>%
+    group_by(routeID) %>%
+    mutate(gcdistance_km = make_AP2(substr(first(routeID),1,4),
+                                    substr(first(routeID),7,10),
+                                    ap_loc)$gcdistance_km,
+           M084_h = round(gcdistance_km/(0.85 * mach_kph),2) + arrdep_h,
+           gcdistance_km = round(gcdistance_km,1)) %>%
+    group_by(timestamp, fullRouteID, routeID, refuel_ap,
+             acID, acType, M084_h, gcdistance_km) %>%
+    summarise(sea_time_frac =
+                round(sum(if_else(phase=="sea",time_h,0))/sum(time_h), 3),
+              sea_dist_frac =
+                round(sum(if_else(phase=="sea", gcdist_km, 0))/sum(gcdist_km), 3),
+              dist_km = round(sum(gcdist_km), 1),
+              time_h = round(sum(time_h), 2),
+              n_phases =
+                as.integer(last(phaseID)) - as.integer(first(phaseID)) + 1) %>%
+    mutate(advantage_h = M084_h - time_h) %>%
+    arrange(routeID, acType, time_h) %>%
+    #add best for routeID, refuelling or not
+    group_by(routeID, acID) %>%
+    mutate(best = (advantage_h == max(advantage_h))) %>%
+    ungroup() %>%
+    arrange(advantage_h)
+
+}
