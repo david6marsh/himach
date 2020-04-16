@@ -11,10 +11,10 @@ concat_ADEPADES <- function(ADEP, ADES, unidirectional=FALSE){
   #vector adep ades is ok
   sep <- if_else(unidirectional, ">", "<>")
   AP2 <- case_when(
-    isEur(ADEP) & isEur(ADES) ~ paste(pmin(ADEP,ADES),pmax(ADEP,ADES),sep=sep),
-    isEur(ADEP) ~ paste(ADEP,ADES,sep=sep),
-    isEur(ADES) ~ paste(ADES,ADEP,sep=sep),
-    TRUE ~ paste(pmin(ADEP,ADES),pmax(ADEP,ADES),sep=sep))
+    isEur(ADEP) & isEur(ADES) ~ paste(pmin(ADEP, ADES), pmax(ADEP, ADES), sep=sep),
+    isEur(ADEP) ~ paste(ADEP, ADES, sep=sep),
+    isEur(ADES) ~ paste(ADES, ADEP, sep=sep),
+    TRUE ~ paste(pmin(ADEP, ADES), pmax(ADEP, ADES), sep=sep))
 }
 
 
@@ -32,18 +32,61 @@ copy_attr <- function(from, to, atts){
   return(to)
 }
 
-#for vectors adep, ades, make AP2 list (ie including long lat)
-make_AP2 <- function(adep, ades, ap, ...){
+#' Get details for airport-pairs
+#'
+#' \code{make_AP2} creates an airport-pair set from two sets of airports
+#'
+#' This function takes two lists of airports (of the same length), specified
+#' as 4-letter codes and combines them, adding the fields:
+#'
+#' \itemize{
+#'   \item \code{from_long, from_lat, to_long, to_lat}: the airport lat-longs
+#'    with adep first
+#'   \item \code{AP2}: a name for the route in a specific order
+#'   \item \code{gcdistance_km}: the great circle distance in km
+#' }
+#'
+#' In \code{AP2} European airports (crudely, from starting letter = 'E' or 'L')
+#' are listed first, otherwise in alphabetical order. If unidirectional is TRUE,
+#' then ">" is the separator, otherwise "<>".
+#' (Unidirectional not currently supported)
+#'
+#' For more details see the help vignette:
+#' \code{vignette("Supersonic Routing", package = "twospeed")}
+#'
+#' @param adep,ades Identical-length lists of airport codes
+#' @param ap List of locations of airports, defaults to the output
+#'     of \code{onespeed::expand_airports}.
+#'
+#' @return Dataframe with at least 11 variables describing the performance of one or
+#'      more aircraft
+#'
+#' @examples
+#'
+#' airports <- twospeed::expand_airports() #get a default set of lat-longs
+#' ap2 <- make_AP2("NZAA","NZCH", airports)
+#'
+#' @importFrom magrittr %>%
+#'
+#' @export
+make_AP2 <- function(adep, ades, ap=expand_airports()){
   stopifnot(length(adep)==length(ades))
 
+  #only bidirectional is currently supported
+  unidirectional=FALSE
+
   data.frame(ADEP=adep, ADES=ades, stringsAsFactors = FALSE) %>%
-    left_join(ap %>% dplyr::select(APICAO, long, lat) %>% dplyr::rename(ADEP=APICAO, from_long=long, from_lat=lat),
+    left_join(ap %>%
+                dplyr::select(APICAO, long, lat) %>%
+                dplyr::rename(ADEP=APICAO, from_long=long, from_lat=lat),
               by="ADEP") %>%
-    left_join(ap %>% dplyr::select(APICAO, long, lat) %>% dplyr::rename(ADES=APICAO, to_long=long, to_lat=lat),
+    left_join(ap %>%
+                dplyr::select(APICAO, long, lat) %>%
+                dplyr::rename(ADES=APICAO, to_long=long, to_lat=lat),
               by="ADES") %>%
-    dplyr::mutate(AP2 = concat_ADEPADES(ADEP, ADES, ...),
-           gcdistance_km = distGeo(c(from_long, from_lat),
-                                   c(to_long, to_lat))/1000)
+    dplyr::mutate(AP2 = concat_ADEPADES(ADEP, ADES, unidirectional),
+                  gcdistance_km = geosphere::distGeo(c(from_long, from_lat),
+                                                     c(to_long, to_lat))/1000)
 }
 
 
@@ -99,7 +142,7 @@ prj <- function(x,crs=crs_map) {
 #' attr(aircraft, "aircraftSet") <- "aircraft.csv"
 #' }
 #'
-#' @importFrom magrittr %>%
+#' @importFrom dplyr %>%
 #'
 #' @export
 expand_aircraft <- function(ac = NA, sound_kph = 1062){
@@ -116,7 +159,15 @@ expand_aircraft <- function(ac = NA, sound_kph = 1062){
   if (length(miss_vbls) > 0) stop("Aircraft definition is missing: ",
                                   paste(miss_vbls, collapse = " "))
 
+  num_vbls <- c("over_sea_M",  "over_land_M",
+                "accel_Mpm", "arrdep_kph", "range_km")
+  miss_vbls <- setdiff(num_vbls, names(dplyr::select_if(ac, is.numeric)))
+  if (length(miss_vbls) > 0) stop("These variables should be numeric: ",
+                                  paste(miss_vbls, collapse = " "))
+
   ac_full <- ac %>%
+    #make sure all the same type - double, not integer
+    dplyr::mutate_if(is.numeric, as.double) %>%
     dplyr::mutate(over_sea_kph = over_sea_M*sound_kph,
            over_land_kph = over_land_M*sound_kph,
            trans_kph = (over_sea_kph + over_land_kph)/2,
@@ -146,6 +197,8 @@ expand_aircraft <- function(ac = NA, sound_kph = 1062){
 #' }
 #'
 #' @param ap Dataframe containing the minimum fields, or NA (default)
+#' @param crs Coordinate reference system for the coded lat-longs.
+#'     Default 4326.
 #'
 #' @return Dataframe with, in addition, a geocoded lat-long.
 #'
@@ -167,9 +220,9 @@ expand_aircraft <- function(ac = NA, sound_kph = 1062){
 #' @importFrom magrittr %>%
 #'
 #' @export
-expand_airports <- function(ap = NA){
+expand_airports <- function(ap = NA, crs = 4326){
   if (is.na(ap[1])) {
-    warning("Using default airport file.")
+    message("Using default airport data: airportr::airport.")
     ap <- airportr::airports %>%
       dplyr::filter(Type == "airport") %>%
       dplyr::select(ICAO, Latitude, Longitude) %>%
@@ -183,9 +236,11 @@ expand_airports <- function(ap = NA){
 
   ap <- ap %>%
     #convert to map feature
-    # 4326 is a lat-long format
-    dplyr::mutate(ap_locs = st_cast(st_sfc(
-      st_multipoint(matrix(c(long, lat),ncol=2)),crs=4326),'POINT'))
+    # 4326 is a lat-long format, for input, then transform to required crs
+    dplyr::mutate(ap_locs = st_transform(
+      st_cast(st_sfc(
+        st_multipoint(matrix(c(long, lat),ncol=2)),crs=twospeed:::crs_latlong),
+        'POINT'), crs = crs))
 }
 
 #rename a dataset in an environment, replacing *one* find with replace
@@ -206,7 +261,7 @@ st_gcIntermediate <- function(crs, ...){
   #not vector-clever for n, which is (single) integer
   #starts with 4326 - any old lat long and then transform to the required crs
   st_transform(
-    st_sfc(st_linestring(gcIntermediate(...)),crs=4326),
+    st_sfc(st_linestring(geosphere::gcIntermediate(...)),crs=4326),
     crs)
 }
 

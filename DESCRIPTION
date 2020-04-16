@@ -17,6 +17,7 @@ License: Copyright EUROCONTROL 2020.
 Encoding: UTF-8
 LazyData: true
 Imports:
+    cppRouting,
     dplyr,
     sf,
     tidyr
@@ -25,9 +26,12 @@ Suggests:
     geosphere,
     ggplot2,
     knitr,
+    purrr,
     rmarkdown,
     sp,
-    testthat
+    stringr,
+    testthat,
+    units
 VignetteBuilder: knitr
 RoxygenNote: 7.1.0
 Depends: 

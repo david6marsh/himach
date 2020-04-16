@@ -67,7 +67,7 @@ Other fields are optional, but you might find it useful to include `ap_name` to 
 
 As with the airports, you can load your own data set and then run it through `expand_airports` to add a geo-coded field to it. If you don't have a list, then `expand_airports` will use the dataset from `airportr` package.
 
-For this vignette, we use a very restricted set: just New Zealand.
+For this vignette, we use a very restricted set: just New Zealand. We geocode the airports using a built-in coordinate reference system (CRS) `crs_Pacific`; the maps will have the same.
 
 ```{r define airports}
 
@@ -76,7 +76,7 @@ For this vignette, we use a very restricted set: just New Zealand.
 # airports <- expand_airports(airports)
 
 # example if you have no data of your own
-airports <- expand_airports() %>% 
+airports <- expand_airports(crs = crs_Pacific) %>% 
   filter(substr(APICAO,1,1)=="N") #just New Zealand
 
 ```
@@ -102,8 +102,8 @@ In fact, we need two files: one is the basic outline of the land, largely used f
 
 Since the shape file is large, we provide a simplified outline `NZ_u` and also the buffer `NZ_b`. These are in the original projection used by Stats NZ `sf::st_crs(NZ_u)`. It's strongly recommended to use one of the following:
 
-* Robinson 54030, a mid 20C classic view, with Atlantic centre
-* A Pacific-centred variant on this with `crs=CRS("+proj=robin +lon_0=150 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")`.
+* `crs_Atlantic`: Robinson 54030, a mid 20C classic view, with Atlantic centre
+* `crs_Pacific`: A Pacific-centred variant on this with `crs=CRS("+proj=robin +lon_0=150 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")`.
 
 We leave this tranformation step in the process to emphasise the need to think about which projection to use.
 
@@ -113,8 +113,6 @@ We leave this tranformation step in the process to emphasise the need to think a
 # NZ_shp <- sf::read_sf("...../territorial-authority-2020-clipped-generalised.shp")
 # NZ_u <- sf::st_union(sf::st_simplify(NZ_shp, dTolerance = 1000))
 # NZ_b <- sf::st_union(sf::st_buffer(NZ_u, 30 * 1000))
-
-crs_Pacific <- sp::CRS("+proj=robin +lon_0=150 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
 
 # We project the in-built test maps
 NZ_coast <- sf::st_transform(twospeed::NZ_u, crs=crs_Pacific)
@@ -138,7 +136,7 @@ It can take a very long time to construct a global grid. For our much-reduced ex
 
 ```{r construct grid}
 
-target_km=300
+target_km=100
 system.time(
 p_grid <- newLatLongGrid(NZ_buffer,"NZ lat-long at 100km",
                              target_km = target_km, classify = TRUE,
@@ -153,6 +151,25 @@ ggplot(NZ_buffer) +
           aes(geometry=geometry), colour="lightblue", size = 0.2) +
 
     theme_minimal()
+
+```
+
+## Routes!
+
+Finally we're ready to do some routing of aircraft.
+
+```{r a simple route}
+
+options("quiet" = 4) #for some output
+# from Auckland to Christchurch
+ap2 <- make_AP2("NZAA","NZDN",airports)
+
+route <- findRoute(aircraft[1,], 
+                     ap2,
+                     onMap = NZ_buffer, 
+                     pg = p_grid, 
+                     apLoc = airports)
+
 
 ```
 
