@@ -112,7 +112,7 @@ route_map <- function(
   #layer 1b (no fly-zone)
   if (!is.na(avoid_map)){
     m <- m +
-      geom_sf(data = prj(m_avoid_u, crs=crs), colour=avoid_f, fill=avoid_f)
+      geom_sf(data = prj(avoid_map, crs=crs), colour=avoid_f, fill=avoid_f)
   }
 
   #layer 2 (main lines)
@@ -121,14 +121,14 @@ route_map <- function(
       geom_sf(data = routes,
               aes(geometry=st_wrap(prj(gc, crs=crs)), colour=advantage_h), fill="white",
               size=l_size, lineend="round", alpha=l_alpha) +
-      scale_colour_viridis_c()
+      scale_colour_viridis_c(end = 0.95)
   }
   if (show_route=="speed"){
     m <- m +  labs(colour="Average speed on segment (kph)") +
       geom_sf(data = routes,
               aes(geometry=st_wrap(prj(gc, crs=crs)), colour=speed_kph),
               size=l_size, lineend="round", alpha=l_alpha) +
-      scale_colour_viridis_c()
+      scale_colour_viridis_c(end = 0.95)
   }
 
   #layer 3: crow-flies

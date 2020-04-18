@@ -1,0 +1,182 @@
+---
+title: "Advanced Supersonic Routing"
+author: "David Marsh"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette  
+vignette: >
+  %\VignetteIndexEntry{Advanced supersonic routing}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+## Introduction
+
+[Supersonic Routing](SupersonicRouting.html) provides a quick end-to-end introduction to using the `twospeed` package and is the place to start. This vignette provides advice on more advanced use, explaining details that the introduction skates over.
+
+Much of this vignette is optional or for occasional use, but the advice on saving and reading the caches is likely to be _essential_ for a speedy workflow. 
+
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+#the libraries needed for the vignette are
+library(twospeed)
+library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
+library(ggplot2)
+library(sp)
+
+```
+
+
+## Caches
+
+`twospeed` uses caching to speed things up. Legs are cached in `.rte_cache` and arrival-departure links to airports are cached in `.star_cache` (STAR is short for standard arrival route, its counterpart being SID the standard instrument departure).
+
+Normally the caches just do the job. But you will want to save and load them as part of your standard workflow. Quite where you save them is up to you, but a set of routes is sensitive to (a) the route grid on which it is calculated (b) the list of aircraft used, and their performance. 
+
+So it is recommended to include the `name` of the grid, and the `aircraftSet` attribute of your aircraft set in the file name. Everything else is up to you.
+
+We don't execute this code chunk here, since the files aren't available.
+
+```{r cache saving, eval=FALSE} 
+# at the beginning of the session
+# some data loading including
+# load a GridLat: p_grid_a
+# load an aircraft set: ac
+# and then...
+
+#not run
+rte_cache <- readRDS(paste("data/Route cache", p_grid_a@name, 
+                           attr(ac,"aircraftSet"), " 2050v3.RDS"))
+star_cache <- readRDS(paste("data/STAR cache", p_grid_a@name, 
+                            attr(ac,"aircraftSet"), " 2050v3.RDS"))
+
+# then calculate however many new routes
+
+#not run
+#Save the cache ----
+saveRDS(rte_cache,paste("data/Route cache", attr(rte_cache,"map"),
+                        attr(ac,"aircraftSet"), " 2050v3.RDS"))
+saveRDS(star_cache,paste("data/STAR cache",attr(star_cache,"map"),
+                         attr(ac,"aircraftSet"), " 2050v3.RDS"))
+
+```
+  
+Usually, the caches just work invisibly in the background - you will notice they speed up finding of routes no end. They also help with refuelling, because the `rte_cache` quickly remembers the routes from major hub airports to the main refuelling points, so they don't need to be calculated again.
+
+Incidentally, if you add a new refuelling point, then the caches remain _valid_ because only **legs are cached, not routes**. With a new refuelling point, `findRoute` will check both old legs and new, cached or not, before selecting the best combination of legs to make the route.
+
+Here we illustrate a few use cases for more general management of the cache. First, the code chunk takes a little time to generate a few routes, and hence the two caches. The use cases are:
+
+1. How big is my cache? How many legs or arrival/departure links does it contain?
+1. Remove a single item. If you think the input data were wrong, for example. Two steps, list the possible candidates using a search string, then copy paste the name of the one you want (usually obvious based on aircraft and airport-pair) into the code for deletion.
+1. Remove all legs for a single airport, for example if the location turned out to be wrong. Then update the lat-long and re-run. This pattern is easily adapted to airport pairs (all different aircraft), or all for a given aircraft.
+1. If you think you have merged caches from 2 different versions of `twospeed` in which the contents of a route dataframe have changed, then this is for you. Of course that never happens.
+
+
+```{r inspecting the cache}
+#first create a cache ----
+# need to load some of the built-in data
+ac <- expand_aircraft()
+airports <- expand_airports(crs = crs_Pacific) 
+refuel_ap <- airports %>%
+  filter(APICAO=="NZWN")
+NZ_buffer <- sf::st_transform(twospeed::NZ_b, crs=crs_Pacific)
+
+aps <- rbind(make_AP2("NZAA","NZCH",airports), make_AP2("NZAA","NZDN",airports),
+             make_AP2("NZAA","NZQN",airports), make_AP2("NZWN","NZQN",airports),
+             make_AP2("NZGS","NZCH",airports))
+
+options("quiet"= 1)
+NZ_routes <- purrr::reduce(lapply(
+  1:nrow(aps),
+  function(x) findRoute(ac[4,],
+                        aps[x,],
+                        NZ_buffer,
+                        refuel = refuel_ap, refuel_topN = 1,
+                        refuel_only_if = TRUE,
+                        pg = NZ_grid,
+                        apLoc = airports)),
+  rbind)
+
+# now have the 2 caches ----
+
+# Use case 1: How big is my cache?
+length(rte_cache)
+length(star_cache)
+
+# Use case 2: find and remove a single leg
+# find matching elements in the rte cache - here for NZAA
+ls(rte_cache, pattern = "NZAA")
+# copy paste from the results into here to remove a single item
+rm("M22_test-NZAA-NZCH--TRUE-TRUE-NA-TRUE-100-12", envir = rte_cache)
+
+# Use case 3: remove all legs for a given airport
+length(rte_cache)
+rm(list=ls(rte_cache, pattern="NZCH"), envir = rte_cache)
+length(rte_cache)
+
+# Use case 4: check for out-of-date elements in the cache
+# get number of variables in each element in rte cache
+rte_cols <- lapply(1:length(rte_cache), function(x) length(get(ls(rte_cache)[1], rte_cache)))
+wrong <- which(rte_cols != 24)
+
+```
+
+
+# No-fly zones
+
+It is not unusual for parts of the airspace to be closed, or be considered unsafe for flying. `twospeed` allows regions to be marked as 'avoid'. They will not feature in the grid, so routes will avoid them, with one exception: an arrival or departure airport can be inside a no-fly zone, as long as the connection point to the grid is outside. So they might more precisely be called 'no-overfly' zones.
+
+A no-fly zone is prepared in the same way as a map of land. If specific countries are to be avoided, this is where having a country name in the geographic data comes in handy.
+
+One essential item is the `avoid` attribute of the no-fly zone. This is used to distinguish sets of legs with different, or no, no-fly zone.
+
+In this example, no offence is intended to the citizens of Buller District; it is a convenient example for showing how routes are forced to change when airspace is unavailable.
+
+```{r createBuffer}
+# using your own shp file 
+# NZ_Buller <- sf::read_sf("...../territorial-authority-2020-clipped-generalised.shp") %>% 
+#     filter(TA2020_V_1 == "Buller District")
+# NZ_Buller_u <- sf::st_union(sf::st_simplify(NZ_Buller, dTolerance = 1000))
+# NZ_Buller_buffer50 <- sf::st_union(sf::st_buffer(NZ_Buller_u, 50 * 1000))
+# attr(NZ_Buller_buffer50, "avoid") <- "Buller+50km"
+# give the details of this
+Buller_nofly <- sf::st_transform(NZ_Buller_buffer40, crs=crs_Pacific)
+attr(Buller_nofly, "avoid") <- "Buller+40km" #required for correct caching
+
+# run the same routes, but with the avoid region
+options("quiet"= 1)
+routes <- purrr::reduce(lapply(
+  1:nrow(aps),
+  function(x) findRoute(ac[4,],
+                        aps[x,],
+                        NZ_buffer,
+                        refuel = refuel_ap, refuel_topN = 1,
+                        refuel_only_if = TRUE,
+                        pg = NZ_grid,
+                        apLoc = airports,
+                        avoid = Buller_nofly)),
+  rbind)
+
+#this shows versions of the legs with and without no-fly
+ls(rte_cache, pattern = "NZCH")
+
+# create route summary
+rtes <- summarise_routes(routes, airports)
+# add each route's 'advantage_h' field to the detailed segments, so that it can be mapped
+routes <- routes %>% 
+  left_join(rtes, by = "fullRouteID") %>% 
+  arrange(advantage_h)
+
+# draw a basic map
+NZ_coast <- sf::st_transform(twospeed::NZ_u, crs=crs_Pacific)
+route_map(NZ_coast, routes, crs = crs_Pacific, fat_map = NZ_buffer,
+          avoid_map = Buller_nofly)
+
+```
+

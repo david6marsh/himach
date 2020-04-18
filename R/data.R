@@ -25,6 +25,19 @@
 #'
 "NZ_b"
 
+#' New Zealand Buller district plus 40km buffer
+#'
+#' Chosen purely for convenience of examples, a subset of \code{link{NZ_u}} for
+#' Buller District only to which a buffer of 40km has been added. This forces
+#' deviation in routes, when used as an 'avoid' dataset.
+#'
+#' @format MULTIPOLYGON in original coordinates EPSG 2193
+#'
+#' @source
+#' \url{https://datafinder.stats.govt.nz/layer/104266-territorial-authority-2020-clipped-generalised//}
+#'
+"NZ_Buller_buffer40"
+
 #' Atlantic-centred coordinate reference system
 #'
 #' Coordinate reference system (CRS) for plotting and analysing maps.
