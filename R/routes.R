@@ -181,8 +181,8 @@ emptyRoute <- function(ac, ap2, onMap,
 #' @param refuel_topN Return the best N (default 1) refuelling options
 #' @param max_circuity Threshold for excluding refuelling stops (default 2.0)
 #' @param apLoc Airport locations as from \code{\link{expand_airports}}
-#' @param ... Other parameters, passed to \code{\link{findLeg}} and thence to
-#'     to \code{\link{routeEnvelope}}.
+#' @param ... Other parameters, passed to \code{\link{findLeg}} and thence to to
+#'   \code{\link{routeEnvelope}}.
 #'
 #'
 #' @return Dataframe with details of the route
@@ -194,7 +194,20 @@ emptyRoute <- function(ac, ap2, onMap,
 #' @import tidyr
 #'
 #' @examples
-#' TBD
+#' # need to load some of the built-in data
+#' aircraft <- expand_aircraft()
+#' airports <- expand_airports(crs = crs_Pacific) %>%
+#'     filter(substr(APICAO,1,1)=="N") #just around New Zealand
+#' NZ_buffer <- sf::st_transform(NZ_b, crs=crs_Pacific)
+#'
+#' options("quiet" = 4) #for heavy reporting
+#' # from Auckland to Christchurch
+#' ap2 <- make_AP2("NZAA","NZCH",airports)
+#' routes <- findRoute(aircraft[4,],
+#'                     ap2,
+#'                     onMap = NZ_buffer,
+#'                     pg = NZ_grid,
+#'                     apLoc = airports)
 #'
 #' @export
 findRoute <- function(ac, ap2, onMap, avoid=NA, pg, cf_sub=NA,
@@ -356,7 +369,9 @@ findRoute <- function(ac, ap2, onMap, avoid=NA, pg, cf_sub=NA,
           row_number() == 1 ~ 1L,
           phase != lag(phase) ~ 1L,
           TRUE ~ 0L),
-          phaseID = paste0(cumsum(phaseChange),".",stringr::str_split(phaseID,coll("."),simplify=TRUE)[,2]),
+          phaseID = paste0(cumsum(phaseChange),".",stringr::str_split(phaseID,
+                                                                      stringr::coll("."),
+                                                                      simplify=TRUE)[,2]),
           timestamp = first(timestamp)) %>%
         select(-phaseChange, -order)
 
@@ -655,12 +670,14 @@ pathToGC <- function(path, pg,
 #' converting the grid-based route to one of great circles segments.
 #'
 #' In fact \code{findLeg} finds up to 4 versions of the path:
-#' * A great circle, direct between the airports
-#' * A grid path, consisting of segment of the routing grid, plus departure
+#' \enumerate{
+#'     \item A great circle, direct between the airports
+#'     \item A grid path, consisting of segments of the routing grid, plus departure
 #'     and arrival routes from the airports
-#' * A simplification of the grid path to great circle segments
-#' * An optional (but recommended because it's quick) further simplification
+#'     \item A simplification of the grid path to great circle segments
+#'     \item An optional (but recommended because it's quick) further simplification
 #'     of this last path. \code{checkShortcuts} defaults to TRUE.
+#' }
 #'
 #' Legs are automatically saved in \code{rte_cache} and retrieved from here if available
 #' rather than re-calculated. See vignette TBD for cache management.
@@ -687,7 +704,20 @@ pathToGC <- function(path, pg,
 #' @import tidyr
 #'
 #' @examples
-#' TBD
+#' # need to load some of the built-in data
+#' aircraft <- expand_aircraft()
+#' airports <- expand_airports(crs = crs_Pacific) %>%
+#'     filter(substr(APICAO,1,1)=="N") #just around New Zealand
+#' NZ_buffer <- sf::st_transform(NZ_b, crs=crs_Pacific)
+#'
+#' options("quiet" = 4) #for heavy reporting
+#' # from Auckland to Christchurch
+#' ap2 <- make_AP2("NZAA","NZCH",airports)
+#' routes <- findLeg(aircraft[4,],
+#'                     ap2,
+#'                     onMap = NZ_buffer,
+#'                     pg = NZ_grid,
+#'                     apLoc = airports)
 #'
 #' @export
 findLeg <- function(ac, ap2, pg, onMap, apLoc,
@@ -708,13 +738,15 @@ findLeg <- function(ac, ap2, pg, onMap, apLoc,
   if (unidirectional) {
     #note we use a different separator here, but not < > which file systems might reject
     cache_as <- paste(ac$id, ap2$ADEP, ap2$ADES, attr(avoid,"avoid"),
-                      enforceRange, dijkstraByTime, grace_km, checkShortcuts, sep="_")
+                      enforceRange, dijkstraByTime, grace_km, checkShortcuts,
+                      ad_dist/1000, nearest, sep="_")
   }
   else {
     #cache the route with data name which is the ACID and AP2
     cache_as <- paste(ac$id, min(ap2$ADEP, ap2$ADES), max(ap2$ADEP, ap2$ADES),
                       attr(avoid,"avoid"), enforceRange,
-                      dijkstraByTime, grace_km, checkShortcuts, sep="-")
+                      dijkstraByTime, grace_km, checkShortcuts,
+                      ad_dist/1000, nearest, sep="-")
   }
 
   #if this query has not already been cached, calculate its value
@@ -1012,30 +1044,51 @@ smoothSpeed <- function(r, ac){
 #'
 #' Reduce a set of routes to a one-line per route summary
 #'
-#' This function takes the output of \code{\link{findRoute}} and summarises
-#' to one line per (full) route.
+#' This function takes the output of \code{\link{findRoute}} and summarises to
+#' one line per (full) route.
 #'
 #' With refuelling, there can be multiple 'full routes' for each 'route'. The
 #' \code{best} column indicates the best route for each \code{routeID}.
 #'
 #' The results are rounded to a reasonable number of significant figures. After
-#' all this is an approximate model. The \code{arrdep_h} has been checked against actual
-#' and is reasonable (observed range roughly 0.3-0.5).
+#' all this is just an approximate model. The \code{arrdep_h} has been checked
+#' against actual and is reasonable (observed range roughly 0.3-0.5).
 #'
 #' @param route Each segment in each route, as produced by
 #'   \code{\link{findRoute}} or \code{\link{findLeg}}
 #' @param ap_loc List of airport locations, output of
 #'   \code{\link{expand_airports}}
-#' @param arrdep_h Time for the M084 comparator to arrive & depart in hours.
-#'   Default 0.5.
+#' @param arrdep_h Total time for the M084 comparator aircraft to arrive &
+#'   depart in hours. Default 0.5.
 #'
-#' @return Dataframe with summary of the route
+#' @return Dataframe with summary of the route, sorted in ascending order of \code{advantage_h}
+#' so that the best route are plotted on top. The fields are:
+#' \itemize{
+#'   \item \code{timestamp}: when the leg was originally generated (it may have been cached)
+#'   \item \code{fullRouteID}: including the refuel stop if any
+#'   \item \code{routeID}: origin and destination airport, in \code{\link{concatenate_ADEPADES}} order
+#'   \item \code{refuel_ap}: code for the refuelling airport, or NA
+#'   \item \code{acID, acType}: aircraft identifiers taken from the aircraft set
+#'   \item \code{M084_h}: flight time for a Mach 0.84 comparator aircraft (including \code{2*arrdep_h})
+#'   \item \code{gcdistance_km}: great circle distance between the origin and destination airports
+#'   \item \code{sea_time_frac}: Fraction of \code{time_h} time spent over sea, hence at supersonic speed,
+#'     or accelerating to, or decelerating from supersonic speed
+#'   \item \code{sea_dist_frac}: as sea_time_frac, but fraction of \code{dist_km}
+#'   \item \code{dist_km}: total length of the route, in km
+#'   \item \code{time_h}: total time, in hours
+#'   \item \code{n_phases}: number of distinct phases: arr/dep, transition, land, sea, refuel.
+#'   \item \code{advantage_h}: \code{M084_h - time_h}
+#'   \item \code{best}: for each \code{routeID}, the \code{fullrouteID} with maximum \code{advantage_h}
+#' }
 #'
 #' @import dplyr
 #' @import tidyr
 #'
 #' @examples
-#' TBD
+#' # here we use a built-in set of routes
+#' # see vignette for more details of how to obtain it
+#' airports <- expand_airports(crs = crs_Pacific)
+#' sumy <- summarise_routes(NZ_routes, airports)
 #'
 #' @export
 summarise_routes <- function(route,
@@ -1063,7 +1116,7 @@ summarise_routes <- function(route,
     arrange(routeID, acType, time_h) %>%
     #add best for routeID, refuelling or not
     group_by(routeID, acID) %>%
-    mutate(best = (advantage_h == max(advantage_h))) %>%
+    mutate(best = (advantage_h == max(advantage_h, na.rm = TRUE))) %>%
     ungroup() %>%
     arrange(advantage_h)
 

@@ -126,6 +126,7 @@ prj <- function(x,crs=crs_map) {
 #' @param ac Dataframe containing the minimum fields, or NA (default)
 #' @param sound_kph Speed of sound used to convert from Mach to kph, default
 #'     \code{mach_kph}=1062 at a suitable altitude.
+#' @param warn Warn if no \code{ac} supplied, so default set is used. Default TRUE.
 #'
 #' @return Dataframe with at least 11 variables describing the performance of one or
 #'      more aircraft
@@ -151,9 +152,9 @@ prj <- function(x,crs=crs_map) {
 #' @importFrom dplyr %>%
 #'
 #' @export
-expand_aircraft <- function(ac = NA, sound_kph = mach_kph){
+expand_aircraft <- function(ac = NA, sound_kph = mach_kph, warn = TRUE){
   if (is.na(ac[1])) {
-    warning("Using default aircraft file.")
+    if (warn) warning("Using default aircraft file.")
     file <- system.file("extdata", "test_aircraft.csv", package = "twospeed", mustWork = TRUE)
     ac <- read.csv(file, stringsAsFactors = FALSE)
     attr(ac, "aircraftSet") <- "test_aircraft" #keep track

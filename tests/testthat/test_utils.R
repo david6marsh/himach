@@ -3,7 +3,7 @@ library(twospeed)
 
 test_that("Default aircraft data loads", {
   expect_warning(expand_aircraft())
-  expect_known_output(expand_aircraft(), "known/ac_default_load")
+  expect_known_output(expand_aircraft(warn = FALSE), "known/ac_default_load")
 })
 
 test_that("Aircraft data loads", {
