@@ -32,7 +32,7 @@ mod_long <- function(x){
 #' For more details see the help vignette:
 #' \code{vignette("Supersonic Routing", package = "twospeed")}
 #'
-#' @param onMap MULTIPOLYGON map defining land regions
+#' @param fat_map MULTIPOLYGON map defining land regions
 #' @param name String assigned to the name slot of the result
 #' @param target_km Target length. Default 800km
 #'     only to avoid accidentally starting heavy compute.
@@ -61,7 +61,7 @@ mod_long <- function(x){
 #' @import sf
 #'
 #' @export
-make_route_grid <- function(onMap, name,
+make_route_grid <- function(fat_map, name,
                            target_km=800,
                            lat_min= -60.0, lat_max = 86.0,
                            long_min = -180.0, long_max = 179.95,
@@ -107,7 +107,7 @@ make_route_grid <- function(onMap, name,
     mutate(long = mod_long(long)) %>%
     mutate(xy = st_cast(st_transform(st_sfc(st_multipoint(matrix(c(long, lat), ncol=2)),
                                             crs=4326),
-                                     crs=st_crs(onMap)),'POINT'))
+                                     crs=st_crs(fat_map)),'POINT'))
   if (getOption("quiet", default=0)>0) message("Made the grid:", round(Sys.time() - tstart, 1))
 
   #and also the lattice
@@ -158,7 +158,7 @@ make_route_grid <- function(onMap, name,
     mutate(geometry = st_transform(st_sfc(st_linestring(matrix(c(from_long, from_lat, to_long, to_lat),
                                                                ncol=2, byrow = TRUE)),
                                           crs=4326),
-                                   crs=st_crs(onMap))) %>%
+                                   crs=st_crs(fat_map))) %>%
     ungroup() %>%
     #calculate distance
     mutate(dist_km = geosphere::distGeo(matrix(c(from_long, from_lat), ncol=2),
@@ -168,7 +168,7 @@ make_route_grid <- function(onMap, name,
 
   #classify the points as sea or not
   if (classify){
-    g@points$land <- as.vector(st_within(g@points$xy, onMap, sparse=FALSE, prepared = TRUE))
+    g@points$land <- as.vector(st_within(g@points$xy, fat_map, sparse=FALSE, prepared = TRUE))
     id_land <- g@points %>%
       as.data.frame() %>%
       select(id, land)
@@ -179,7 +179,7 @@ make_route_grid <- function(onMap, name,
   #simpler than old version, since only pure-sea and sea-land is of real interest
   if (classify) {
     if (getOption("quiet", default=0)>0) message("Classifying lines in the lattice as land.")
-    g@lattice$Xland <- as.vector(st_intersects(g@lattice$geometry, onMap, sparse=FALSE, prepared = TRUE))
+    g@lattice$Xland <- as.vector(st_intersects(g@lattice$geometry, fat_map, sparse=FALSE, prepared = TRUE))
     if (getOption("quiet",default=0)>0) message("Classified as land:", round(Sys.time() - tstart,1))
     z <- g@lattice %>%
       left_join(id_land, by=c("from"="id")) %>%

@@ -56,17 +56,16 @@ copy_attr <- function(from, to, atts){
 #'
 #' @param adep,ades Identical-length lists of airport codes
 #' @param ap List of locations of airports, defaults to the output
-#'     of \code{onespeed::make_airports}.
+#'     of \url{../doc/SupersonicRouting.html}.
 #'
-#' @return Dataframe with at least 11 variables describing the performance of one or
-#'      more aircraft
+#' @return Dataframe with additional variables as described above.
 #'
 #' @examples
 #'
 #' airports <- twospeed::make_airports() #get a default set of lat-longs
 #' ap2 <- make_AP2("NZAA","NZCH", airports)
 #'
-#' @importFrom magrittr %>%
+#' @importFrom dplyr %>%
 #'
 #' @export
 make_AP2 <- function(adep, ades, ap=make_airports()){
@@ -229,7 +228,7 @@ make_aircraft <- function(ac = NA, sound_kph = mach_kph, warn = TRUE){
 #' }
 #'
 #' @import sf
-#' @importFrom magrittr %>%
+#' @importFrom dplyr %>%
 #'
 #' @export
 make_airports <- function(ap = NA, crs = 4326, warn = TRUE){

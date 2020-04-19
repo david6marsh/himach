@@ -17,5 +17,13 @@ test_that("Route mapping", {
   expect_known_output(map_routes(NZ_thin, routes,
                                 crs = crs_Pacific),
                       "known/NZ time map")
+
+  # time advantage + frills
+  # expect_known_output(map_routes(NZ_thin, routes,
+  #                                crs = crs_Pacific,
+  #                                ap_loc = airports,
+  #                                crow = TRUE),
+  #                     "known/NZ time map")
+
 })
 

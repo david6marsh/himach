@@ -40,17 +40,17 @@ test_that("Find Leg",{
   expect_error(
   routes <- find_leg(aircraft[4,],
                     make_AP2("NZAA","NZCH",airports),
-                    onMap = NZ_buffer_Pac,
-                    pg = NZ_grid,
-                    apLoc = airports))
+                    fat_map = NZ_buffer_Pac,
+                    route_grid = NZ_grid,
+                    ap_loc = airports))
 
   airports <- make_airports(crs = crs_Pacific)
   expect_known_output(
     routes <- find_leg(aircraft[4,],
                       make_AP2("NZAA","NZCH",airports),
-                      onMap = NZ_buffer_Pac,
-                      pg = NZ_grid,
-                      apLoc = airports),
+                      fat_map = NZ_buffer_Pac,
+                      route_grid = NZ_grid,
+                      ap_loc = airports),
     "known/find_leg_default")
 
   options("quiet" = old_quiet)
@@ -69,17 +69,17 @@ test_that("Find Route",{
 #   expect_error(
 #     routes <- find_route(aircraft[4,],
 #                       make_AP2("NZAA","NZCH", airports),
-#                       onMap = NZ_buffer_Pac,
-#                       pg = NZ_grid,
-#                       apLoc = airports))
+#                       fat_map = NZ_buffer_Pac,
+#                       route_grid = NZ_grid,
+#                       ap_loc = airports))
 
   airports <- make_airports(crs = crs_Pacific)
   expect_known_output(
     routes <- find_route(aircraft[4,],
                       make_AP2("NZAA","NZCH",airports),
-                      onMap = NZ_buffer_Pac,
-                      pg = NZ_grid,
-                      apLoc = airports),
+                      fat_map = NZ_buffer_Pac,
+                      route_grid = NZ_grid,
+                      ap_loc = airports),
     "known/find_route_default")
 
   options("quiet" = old_quiet)

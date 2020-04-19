@@ -29,7 +29,7 @@ plot_map <- function(msf,
 
 # achievable range from a point
 # not used for route finding
-rangeEnvelope <- function(ac, pg, ap2, onMap,
+rangeEnvelope <- function(ac, route_grid, ap2, fat_map,
                           envelope_points=70){
   #range envelope shows how far from an airport you can go  with a given range
   #it takes the first airport of the given airport pair
@@ -37,7 +37,7 @@ rangeEnvelope <- function(ac, pg, ap2, onMap,
   #transform the origin
   projC <- st_transform(st_sfc(st_point(
     c(ap2$from_long, ap2$from_lat)),
-    crs=4326),crs=st_crs(onMap))
+    crs=4326),crs=st_crs(fat_map))
 
   r <- ac$range_km * 1000
 
@@ -47,7 +47,7 @@ rangeEnvelope <- function(ac, pg, ap2, onMap,
   ellipse <- t(circle) +
     as.vector(st_coordinates(projC))
 
-  st_convex_hull(st_sfc(st_multipoint(t(ellipse)),crs=st_crs(onMap)))
+  st_convex_hull(st_sfc(st_multipoint(t(ellipse)),crs=st_crs(fat_map)))
 }
 
 
@@ -67,7 +67,7 @@ rangeEnvelope <- function(ac, pg, ap2, onMap,
 #'   goes in the legend.
 #' @param \code{fat_map} optional coast + buffer map, default NA.
 #' @param \code{avoid_map} optional map of no-fly zones, default NA.
-#' @param \code{ap_locations} Show used origin and destination airports if this
+#' @param \code{ap_loc} Show used origin and destination airports if this
 #'   is a set of airports from \code{\link{make_airports}}, or not if NA
 #'   (default). This dataset can be all airports, and is filtered to those used
 #'   by \code{routes}.
@@ -103,7 +103,7 @@ rangeEnvelope <- function(ac, pg, ap2, onMap,
 map_routes <- function(
   thin_map, routes=NA, crs=crs_Atlantic, show_route="time",
   fat_map=NA, avoid_map=NA,
-  ap_locations=NA, ap_col="darkblue", ap_size=0.4,
+  ap_loc=NA, ap_col="darkblue", ap_size=0.4,
   crow=FALSE, crow_col="grey70", crow_size=0.2,
   range_envelope=FALSE,
   bound=TRUE, bound_margin_km=200,
@@ -149,7 +149,7 @@ map_routes <- function(
   #layer 3: crow-flies
   if (crow){
     m <- m +
-      geom_sf(data = st_wrap(prj(route$crow, crs=crs)), colour=crow_col, size = crow_size)
+      geom_sf(data = st_wrap(prj(routes$crow, crs=crs)), colour=crow_col, size = crow_size)
   }
 
   # #layer 4: range envelope
@@ -160,12 +160,12 @@ map_routes <- function(
   # }
 
   #layer 6: airports
-  if (!is.na(ap_locations)){
+  if (!is.na(ap_loc)){
     used_APs <- sort(unique(unlist(lapply(unique(routes$routeID),
                                      function(x)strsplit(x, "<>")))))
     m <- m +
-      geom_sf(data = ap_locations %>% filter(APICAO %in% used_APs),
-              aes(geometry=prj(ap_locations, crs=crs)), colour=ap_col, size=ap_size)
+      geom_sf(data = ap_loc %>% filter(APICAO %in% used_APs),
+              aes(geometry=prj(ap_loc, crs=crs)), colour=ap_col, size=ap_size)
   }
 
   #layer 7: refuel airports

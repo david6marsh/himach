@@ -178,9 +178,9 @@ rm(star_cache)
 
 routes <- find_route(aircraft[4,], 
                      ap2,
-                     onMap = NZ_buffer_Pac, 
-                     pg = p_grid, 
-                     apLoc = airports)
+                     fat_map = NZ_buffer_Pac, 
+                     route_grid = p_grid, 
+                     ap_loc = airports)
 
 ```
 

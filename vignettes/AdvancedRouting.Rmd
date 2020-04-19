@@ -99,8 +99,8 @@ NZ_routes <- purrr::reduce(lapply(
                         NZ_buffer_Pac,
                         refuel = refuel_ap, refuel_topN = 1,
                         refuel_only_if = TRUE,
-                        pg = NZ_grid,
-                        apLoc = airports)),
+                        route_grid = NZ_grid,
+                        ap_loc = airports)),
   rbind)
 
 # now have the 2 caches ----
@@ -158,8 +158,8 @@ routes <- purrr::reduce(lapply(
                         NZ_buffer_Pac,
                         refuel = refuel_ap, refuel_topN = 1,
                         refuel_only_if = TRUE,
-                        pg = NZ_grid,
-                        apLoc = airports,
+                        route_grid = NZ_grid,
+                        ap_loc = airports,
                         avoid = Buller_nofly)),
   rbind)
 
