@@ -210,6 +210,7 @@ expand_aircraft <- function(ac = NA, sound_kph = mach_kph, warn = TRUE){
 #' @param ap Dataframe containing the minimum fields, or NA (default)
 #' @param crs Coordinate reference system for the coded lat-longs.
 #'     Default 4326.
+#' @param warn warn if default set is used (default = TRUE)
 #'
 #' @return Dataframe with, in addition, a geocoded lat-long.
 #'
@@ -231,9 +232,9 @@ expand_aircraft <- function(ac = NA, sound_kph = mach_kph, warn = TRUE){
 #' @importFrom magrittr %>%
 #'
 #' @export
-expand_airports <- function(ap = NA, crs = 4326){
+expand_airports <- function(ap = NA, crs = 4326, warn = TRUE){
   if (is.na(ap[1])) {
-    message("Using default airport data: airportr::airport.")
+    if (warn) message("Using default airport data: airportr::airport.")
     ap <- airportr::airports %>%
       dplyr::filter(Type == "airport") %>%
       dplyr::select(ICAO, Latitude, Longitude) %>%
