@@ -32,7 +32,7 @@ copy_attr <- function(from, to, atts){
   return(to)
 }
 
-#' Get details for airport-pairs
+#' Make airport-pair dataset
 #'
 #' \code{make_AP2} creates an airport-pair set from two sets of airports
 #'
@@ -56,20 +56,20 @@ copy_attr <- function(from, to, atts){
 #'
 #' @param adep,ades Identical-length lists of airport codes
 #' @param ap List of locations of airports, defaults to the output
-#'     of \code{onespeed::expand_airports}.
+#'     of \code{onespeed::make_airports}.
 #'
 #' @return Dataframe with at least 11 variables describing the performance of one or
 #'      more aircraft
 #'
 #' @examples
 #'
-#' airports <- twospeed::expand_airports() #get a default set of lat-longs
+#' airports <- twospeed::make_airports() #get a default set of lat-longs
 #' ap2 <- make_AP2("NZAA","NZCH", airports)
 #'
 #' @importFrom magrittr %>%
 #'
 #' @export
-make_AP2 <- function(adep, ades, ap=expand_airports()){
+make_AP2 <- function(adep, ades, ap=make_airports()){
   stopifnot(length(adep)==length(ades))
 
   #only bidirectional is currently supported
@@ -98,9 +98,9 @@ prj <- function(x,crs=crs_map) {
   st_transform(x, crs=crs, quiet=FALSE)
 }
 
-#' Expand minimum set of aircraft data
+#' Make aircraft data from minimum dataset
 #'
-#' \code{expand_aircraft} ensures a minimum set of variables describing aircraft
+#' \code{make_aircraft} ensures a minimum set of variables describing aircraft
 #'
 #' This function provides a test set of aircraft if necessary and adds variables
 #' to a minimal set of data to give all the information that will be needed.
@@ -133,18 +133,18 @@ prj <- function(x,crs=crs_map) {
 #'
 #' @examples
 #' # do minimal version
-#' ac <- expand_aircraft()
+#' ac <- make_aircraft()
 #'
 #' # on-the-fly example
 #' ac <- data.frame(id = "test", type = "test aircraft",
 #'                  over_sea_M = 2.0, over_land_M = 0.9, accel_Mpm = 0.2,
 #'                  arrdep_kph = 300, range_km = 6000, stringsAsFactors=FALSE)
-#' ac <- expand_aircraft(ac)
+#' ac <- make_aircraft(ac)
 #'
 #' \dontrun{
 #' # example for your own data
 #' aircraft <- read.csv("data/aircraft.csv", stringsAsFactors = FALSE)
-#' aircraft <- expand_aircraft(aircraft)
+#' aircraft <- make_aircraft(aircraft)
 #' # strongly recommended to record the file name for later reference
 #' attr(aircraft, "aircraftSet") <- "aircraft.csv"
 #' }
@@ -152,7 +152,7 @@ prj <- function(x,crs=crs_map) {
 #' @importFrom dplyr %>%
 #'
 #' @export
-expand_aircraft <- function(ac = NA, sound_kph = mach_kph, warn = TRUE){
+make_aircraft <- function(ac = NA, sound_kph = mach_kph, warn = TRUE){
   if (is.na(ac[1])) {
     if (warn) warning("Using default aircraft file.")
     file <- system.file("extdata", "test_aircraft.csv", package = "twospeed", mustWork = TRUE)
@@ -191,9 +191,9 @@ expand_aircraft <- function(ac = NA, sound_kph = mach_kph, warn = TRUE){
 }
 
 
-#' Expand minimum set of airport data
+#' Make or load airport data
 #'
-#' \code{expand_airports} ensures a minimum set of variables describing airports
+#' \code{make_airports} ensures a minimum set of variables describing airports
 #'
 #' This function provides a test set of airports if necessary from
 #' \code{airportr::airports} and geocodes the lat-long of this or the dataset
@@ -216,23 +216,23 @@ expand_aircraft <- function(ac = NA, sound_kph = mach_kph, warn = TRUE){
 #'
 #' @examples
 #' # do minimal version
-#' airports <- expand_airports()
+#' airports <- make_airports()
 #'
 #' # on-the-fly example
 #' airports <- data.frame(APICAO = "TEST", lat = 10, long = 10, stringsAsFactors = FALSE)
-#' airports <- expand_airports(airports)
+#' airports <- make_airports(airports)
 #'
 #' \dontrun{
 #' # example for your own data
 #' airports <- read.csv("data/airports.csv", stringsAsFactors = FALSE)
-#' airports <- expand_airports(airports)
+#' airports <- make_airports(airports)
 #' }
 #'
 #' @import sf
 #' @importFrom magrittr %>%
 #'
 #' @export
-expand_airports <- function(ap = NA, crs = 4326, warn = TRUE){
+make_airports <- function(ap = NA, crs = 4326, warn = TRUE){
   if (is.na(ap[1])) {
     if (warn) message("Using default airport data: airportr::airport.")
     ap <- airportr::airports %>%

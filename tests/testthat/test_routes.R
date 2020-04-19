@@ -2,9 +2,9 @@ library(testthat)
 library(twospeed)
 
 test_that("Route envelope", {
-  ac <- expand_aircraft(warn = FALSE)
-  ap <- expand_airports()
-  z <- routeEnvelope(ac[1,],NA, make_AP2("EGLL","KJFK",ap),4326)
+  ac <- make_aircraft(warn = FALSE)
+  ap <- make_airports()
+  z <- make_route_envelope(ac[1,],NA, make_AP2("EGLL","KJFK",ap),4326)
   expect_type(z, "list")
   expect_s3_class(z, "sfc_POLYGON")
   # default is 200 points
@@ -15,7 +15,7 @@ test_that("Route envelope", {
 # adding fields later, which is likely
 # so - add fields but don't fiddle with the list of test routes ;-)
 test_that("Route summary", {
-  ap <- expand_airports(crs=crs_Pacific)
+  ap <- make_airports(crs=crs_Pacific)
   rs1 <- summarise_routes(NZ_routes, ap)
   expect_equal(rs1[1, ]$refuel_ap, "NZWN")
   expect_equal(rs1[2, ]$M084_h, 1.68)
@@ -32,26 +32,26 @@ test_that("Find Leg",{
   old_quiet <- getOption("quiet", default=0)
   options("quiet" = 0) #for no reporting
   # need to load some of the built-in data
-  aircraft <- expand_aircraft(warn = FALSE)
-  airports <- expand_airports()
-  NZ_buffer <- sf::st_transform(NZ_b, crs=crs_Pacific)
+  aircraft <- make_aircraft(warn = FALSE)
+  airports <- make_airports()
+  NZ_buffer_Pac <- sf::st_transform(NZ_buffer30, crs=crs_Pacific)
 
   # fail with unmatched CRS
   expect_error(
-  routes <- findLeg(aircraft[4,],
+  routes <- find_leg(aircraft[4,],
                     make_AP2("NZAA","NZCH",airports),
-                    onMap = NZ_buffer,
+                    onMap = NZ_buffer_Pac,
                     pg = NZ_grid,
                     apLoc = airports))
 
-  airports <- expand_airports(crs = crs_Pacific)
+  airports <- make_airports(crs = crs_Pacific)
   expect_known_output(
-    routes <- findLeg(aircraft[4,],
+    routes <- find_leg(aircraft[4,],
                       make_AP2("NZAA","NZCH",airports),
-                      onMap = NZ_buffer,
+                      onMap = NZ_buffer_Pac,
                       pg = NZ_grid,
                       apLoc = airports),
-    "known/findLeg_default")
+    "known/find_leg_default")
 
   options("quiet" = old_quiet)
 })
@@ -61,26 +61,26 @@ test_that("Find Route",{
   old_quiet <- getOption("quiet", default=0)
   options("quiet" = 0) #for no reporting
   # need to load some of the built-in data
-  aircraft <- expand_aircraft(warn = FALSE)
-  airports <- expand_airports()
-  NZ_buffer <- sf::st_transform(NZ_b, crs=crs_Pacific)
+  aircraft <- make_aircraft(warn = FALSE)
+  airports <- make_airports()
+  NZ_buffer_Pac <- sf::st_transform(NZ_buffer30, crs=crs_Pacific)
 #
 #   # fail with unmatched CRS - ??fails
 #   expect_error(
-#     routes <- findRoute(aircraft[4,],
+#     routes <- find_route(aircraft[4,],
 #                       make_AP2("NZAA","NZCH", airports),
-#                       onMap = NZ_buffer,
+#                       onMap = NZ_buffer_Pac,
 #                       pg = NZ_grid,
 #                       apLoc = airports))
 
-  airports <- expand_airports(crs = crs_Pacific)
+  airports <- make_airports(crs = crs_Pacific)
   expect_known_output(
-    routes <- findRoute(aircraft[4,],
+    routes <- find_route(aircraft[4,],
                       make_AP2("NZAA","NZCH",airports),
-                      onMap = NZ_buffer,
+                      onMap = NZ_buffer_Pac,
                       pg = NZ_grid,
                       apLoc = airports),
-    "known/findRoute_default")
+    "known/find_route_default")
 
   options("quiet" = old_quiet)
 })

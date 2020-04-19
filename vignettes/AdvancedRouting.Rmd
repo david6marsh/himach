@@ -68,7 +68,7 @@ saveRDS(star_cache,paste("data/STAR cache",attr(star_cache,"map"),
   
 Usually, the caches just work invisibly in the background - you will notice they speed up finding of routes no end. They also help with refuelling, because the `rte_cache` quickly remembers the routes from major hub airports to the main refuelling points, so they don't need to be calculated again.
 
-Incidentally, if you add a new refuelling point, then the caches remain _valid_ because only **legs are cached, not routes**. With a new refuelling point, `findRoute` will check both old legs and new, cached or not, before selecting the best combination of legs to make the route.
+Incidentally, if you add a new refuelling point, then the caches remain _valid_ because only **legs are cached, not routes**. With a new refuelling point, `find_route` will check both old legs and new, cached or not, before selecting the best combination of legs to make the route.
 
 Here we illustrate a few use cases for more general management of the cache. First, the code chunk takes a little time to generate a few routes, and hence the two caches. The use cases are:
 
@@ -81,11 +81,11 @@ Here we illustrate a few use cases for more general management of the cache. Fir
 ```{r inspecting the cache}
 #first create a cache ----
 # need to load some of the built-in data
-ac <- expand_aircraft()
-airports <- expand_airports(crs = crs_Pacific) 
+ac <- make_aircraft()
+airports <- make_airports(crs = crs_Pacific) 
 refuel_ap <- airports %>%
   filter(APICAO=="NZWN")
-NZ_buffer <- sf::st_transform(twospeed::NZ_b, crs=crs_Pacific)
+NZ_buffer_Pac <- sf::st_transform(twospeed::NZ_buffer30, crs=crs_Pacific)
 
 aps <- rbind(make_AP2("NZAA","NZCH",airports), make_AP2("NZAA","NZDN",airports),
              make_AP2("NZAA","NZQN",airports), make_AP2("NZWN","NZQN",airports),
@@ -94,9 +94,9 @@ aps <- rbind(make_AP2("NZAA","NZCH",airports), make_AP2("NZAA","NZDN",airports),
 options("quiet"= 1)
 NZ_routes <- purrr::reduce(lapply(
   1:nrow(aps),
-  function(x) findRoute(ac[4,],
+  function(x) find_route(ac[4,],
                         aps[x,],
-                        NZ_buffer,
+                        NZ_buffer_Pac,
                         refuel = refuel_ap, refuel_topN = 1,
                         refuel_only_if = TRUE,
                         pg = NZ_grid,
@@ -153,9 +153,9 @@ attr(Buller_nofly, "avoid") <- "Buller+40km" #required for correct caching
 options("quiet"= 1)
 routes <- purrr::reduce(lapply(
   1:nrow(aps),
-  function(x) findRoute(ac[4,],
+  function(x) find_route(ac[4,],
                         aps[x,],
-                        NZ_buffer,
+                        NZ_buffer_Pac,
                         refuel = refuel_ap, refuel_topN = 1,
                         refuel_only_if = TRUE,
                         pg = NZ_grid,
@@ -174,8 +174,8 @@ routes <- routes %>%
   arrange(advantage_h)
 
 # draw a basic map
-NZ_coast <- sf::st_transform(twospeed::NZ_u, crs=crs_Pacific)
-route_map(NZ_coast, routes, crs = crs_Pacific, fat_map = NZ_buffer,
+NZ_coast_Pac <- sf::st_transform(twospeed::NZ_coast, crs=crs_Pacific)
+map_routes(NZ_coast_Pac, routes, crs = crs_Pacific, fat_map = NZ_buffer_Pac,
           avoid_map = Buller_nofly)
 
 ```

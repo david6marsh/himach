@@ -137,14 +137,14 @@ emptyRoute <- function(ac, ap2, onMap,
 }
 
 
-#' Find quickest route between airports
+#' Find best route between 2 airports
 #'
-#' \code{findRoute} finds the quickest route between two airports, refuelling if
+#' \code{find_route} finds the quickest route between two airports, refuelling if
 #' necessary
 #'
 #' This function finds the quickest route between two airports. A 'route' is
 #' made up of one or two 'legs' (airport to airport without intermediate stop).
-#' \code{findRoute} makes one or more calls to \code{findLeg} as required.
+#' \code{find_route} makes one or more calls to \code{find_leg} as required.
 #'
 #' It assumes that the routing grid, \code{pg}, has already been classified as
 #' land or sea using the map \code{onMap}. The map is further used when
@@ -154,7 +154,7 @@ emptyRoute <- function(ac, ap2, onMap,
 #' @section Refuelling:
 #'
 #'   If either necessary, because the great circle distance is greater than the
-#'   aircraft range, or because \code{refuel_only_if} is FALSE, \code{findRoute}
+#'   aircraft range, or because \code{refuel_only_if} is FALSE, \code{find_route}
 #'   searches through a list of refuelling airports and chooses the quickest one
 #'   (or \code{refuel_topN}).
 #'
@@ -167,11 +167,11 @@ emptyRoute <- function(ac, ap2, onMap,
 #'   Each refuelling stop costs \code{refuel_h} in addition to the time to
 #'   descend to the airport and then to climb out again.
 #'
-#' @param ac One aircraft, as from \code{\link{expand_aircraft}}
+#' @param ac One aircraft, as from \code{\link{make_aircraft}}
 #' @param ap2 One airport pair, as from \code{\link{make_AP2}}
 #' @param onMap \code{sf::MULTIPOLYGON} map of land, including buffer
 #' @param avoid \code{sf::MULTIPOLYGON} map of areas not to fly over
-#' @param pg \code{GridLat} routing grid as from \code{\link{newLatLongGrid}}
+#' @param pg \code{GridLat} routing grid as from \code{\link{make_route_grid}}
 #' @param cf_sub Further aircraft to use as comparator, default NA. [not
 #'   recommended]
 #' @param refuel Airports available for refuelling
@@ -180,9 +180,9 @@ emptyRoute <- function(ac, ap2, onMap,
 #'   because the great circle distance is too far for the aircraft range
 #' @param refuel_topN Return the best N (default 1) refuelling options
 #' @param max_circuity Threshold for excluding refuelling stops (default 2.0)
-#' @param apLoc Airport locations as from \code{\link{expand_airports}}
-#' @param ... Other parameters, passed to \code{\link{findLeg}} and thence to to
-#'   \code{\link{routeEnvelope}}.
+#' @param apLoc Airport locations as from \code{\link{make_airports}}
+#' @param ... Other parameters, passed to \code{\link{find_leg}} and thence to to
+#'   \code{\link{make_route_envelope}}.
 #'
 #'
 #' @return Dataframe with details of the route
@@ -195,22 +195,22 @@ emptyRoute <- function(ac, ap2, onMap,
 #'
 #' @examples
 #' # need to load some of the built-in data
-#' aircraft <- expand_aircraft()
-#' airports <- expand_airports(crs = crs_Pacific) %>%
+#' aircraft <- make_aircraft()
+#' airports <- make_airports(crs = crs_Pacific) %>%
 #'     filter(substr(APICAO,1,1)=="N") #just around New Zealand
 #' NZ_buffer <- sf::st_transform(NZ_b, crs=crs_Pacific)
 #'
 #' options("quiet" = 4) #for heavy reporting
 #' # from Auckland to Christchurch
 #' ap2 <- make_AP2("NZAA","NZCH",airports)
-#' routes <- findRoute(aircraft[4,],
+#' routes <- find_route(aircraft[4,],
 #'                     ap2,
 #'                     onMap = NZ_buffer,
 #'                     pg = NZ_grid,
 #'                     apLoc = airports)
 #'
 #' @export
-findRoute <- function(ac, ap2, onMap, avoid=NA, pg, cf_sub=NA,
+find_route <- function(ac, ap2, onMap, avoid=NA, pg, cf_sub=NA,
                       refuel=NA, refuel_h=1, refuel_only_if=TRUE,
                       refuel_topN=1,
                       max_circuity=2.0,
@@ -239,7 +239,7 @@ findRoute <- function(ac, ap2, onMap, avoid=NA, pg, cf_sub=NA,
   ap2range_ok <- ap2$gcdistance_km < ac$range_km
 
   #if yes - then get the route
-  if (ap2range_ok) routes <- findLeg(ac, ap2, apLoc = apLoc,
+  if (ap2range_ok) routes <- find_leg(ac, ap2, apLoc = apLoc,
                                              onMap=onMap, pg = pg, avoid = avoid, ...)
   else {
     if (getOption("quiet",default=0)>1) message(" Too far for one leg.")
@@ -250,7 +250,7 @@ findRoute <- function(ac, ap2, onMap, avoid=NA, pg, cf_sub=NA,
   #not advised - just use the M084 estimate
   if (is.data.frame(cf_sub)) {
     if (getOption("quiet",default=0)>1) message(" Adding subsonic, without range bounds.")
-    r_subsonic <- findLeg(cf_sub, ap2, apLoc = apLoc,
+    r_subsonic <- find_leg(cf_sub, ap2, apLoc = apLoc,
                                   enforceRange = FALSE,
                                   onMap=onMap, pg = pg, avoid=avoid, ...)
     routes <- rbind(routes, r_subsonic)
@@ -295,9 +295,9 @@ findRoute <- function(ac, ap2, onMap, avoid=NA, pg, cf_sub=NA,
                           concat_ADEPADES(ADEP, ADES, FALSE))) #get it in the 'right' order (for the cache)
 
 
-      # w <- lapply(1:nrow(r_ap2), function(x) findLeg(ac, r_ap2[x, ], onMap=onMap, pg = pg, avoid=avoid,
+      # w <- lapply(1:nrow(r_ap2), function(x) find_leg(ac, r_ap2[x, ], onMap=onMap, pg = pg, avoid=avoid,
       #                                                             unidirectional=unidirectional, ...))
-      w <- lapply(1:nrow(r_ap2), function(x) findLeg(ac,
+      w <- lapply(1:nrow(r_ap2), function(x) find_leg(ac,
                                                      make_AP2(r_ap2[x, ]$ADEP, r_ap2[x, ]$ADES, apLoc),
                                                      pg = pg, onMap=onMap, avoid=avoid,
                                                      apLoc = apLoc, ...))
@@ -656,20 +656,20 @@ pathToGC <- function(path, pg,
 }
 
 
-#' Find quickest non-stop route between airports
+#' Find best non-stop route between 2 airports
 #'
-#' \code{findLeg} finds the quickest non-stop route between two airports
+#' \code{find_leg} finds the quickest non-stop route between two airports
 #'
 #' This function finds the quickest non-stop route between two airports. A
 #' 'route' is made up of one or two 'legs' (airport to airport without
-#' intermediate stop). \code{\link{findRoute}} makes one or more calls to
-#' \code{findLeg} as required.
+#' intermediate stop). \code{\link{find_route}} makes one or more calls to
+#' \code{find_leg} as required.
 #'
 #' It assumes that the routing grid, \code{pg}, has already been classified as
 #' land or sea using the map \code{onMap}. The map is further used when
 #' converting the grid-based route to one of great circles segments.
 #'
-#' In fact \code{findLeg} finds up to 4 versions of the path:
+#' In fact \code{find_leg} finds up to 4 versions of the path:
 #' \enumerate{
 #'     \item A great circle, direct between the airports
 #'     \item A grid path, consisting of segments of the routing grid, plus departure
@@ -683,7 +683,7 @@ pathToGC <- function(path, pg,
 #' rather than re-calculated. See vignette TBD for cache management.
 #
 #'
-#' @param ac,ap2,pg,onMap,apLoc,avoid See \code{\link{findRoute}}
+#' @param ac,ap2,pg,onMap,apLoc,avoid See \code{\link{find_route}}
 #' @param enforceRange If TRUE (default) then leg is constrained to aircraft range,
 #'     otherwise routes of excess range can be found.
 #' @param dijkstraByTime If TRUE (default) then the quickest route is found,
@@ -693,7 +693,7 @@ pathToGC <- function(path, pg,
 #' @param checkShortcuts If TRUE (default) then path will be checked for great circle shortcuts.
 #' @param ad_dist The length of arrival/departure links, in m. (Default 100,000=100km)
 #' @param nearest The number of arrival/departure links to create (Default 12)
-#' @param ... Other parameters, passed to \code{\link{routeEnvelope}}
+#' @param ... Other parameters, passed to \code{\link{make_route_envelope}}
 #'
 #'
 #' @return Dataframe with details of the leg
@@ -705,22 +705,22 @@ pathToGC <- function(path, pg,
 #'
 #' @examples
 #' # need to load some of the built-in data
-#' aircraft <- expand_aircraft()
-#' airports <- expand_airports(crs = crs_Pacific) %>%
+#' aircraft <- make_aircraft()
+#' airports <- make_airports(crs = crs_Pacific) %>%
 #'     filter(substr(APICAO,1,1)=="N") #just around New Zealand
 #' NZ_buffer <- sf::st_transform(NZ_b, crs=crs_Pacific)
 #'
 #' options("quiet" = 4) #for heavy reporting
 #' # from Auckland to Christchurch
 #' ap2 <- make_AP2("NZAA","NZCH",airports)
-#' routes <- findLeg(aircraft[4,],
+#' routes <- find_leg(aircraft[4,],
 #'                     ap2,
 #'                     onMap = NZ_buffer,
 #'                     pg = NZ_grid,
 #'                     apLoc = airports)
 #'
 #' @export
-findLeg <- function(ac, ap2, pg, onMap, apLoc,
+find_leg <- function(ac, ap2, pg, onMap, apLoc,
                     avoid=NA, enforceRange=TRUE,
                     dijkstraByTime=TRUE, grace_km=NA,
                     checkShortcuts=TRUE,
@@ -752,7 +752,7 @@ findLeg <- function(ac, ap2, pg, onMap, apLoc,
   #if this query has not already been cached, calculate its value
   if (!exists(cache_as, envir=rte_cache, inherits=F)) {
     if (getOption("quiet", default=0)>2) message("  Not cached: calculating...")
-    r <- findLeg_really(ac, ap2, pg, onMap, apLoc, avoid,
+    r <- find_leg_really(ac, ap2, pg, onMap, apLoc, avoid,
                                 enforceRange, dijkstraByTime, grace_km,
                                 checkShortcuts, ad_dist, nearest, ...)
     if (is.na(r[1,1]))(return(r)) #quick end without caching if it's an empty route.
@@ -768,7 +768,7 @@ findLeg <- function(ac, ap2, pg, onMap, apLoc,
 #' @import sf
 #' @import dplyr
 #'
-findLeg_really <- function(ac, ap2, pg, onMap,
+find_leg_really <- function(ac, ap2, pg, onMap,
                                    apLoc,
                                    avoid=NA,
                                    enforceRange=TRUE,
@@ -817,7 +817,7 @@ findLeg_really <- function(ac, ap2, pg, onMap,
 
     if (enforceRange) {
       #trim the points to the route Envelope
-      envelope <-  routeEnvelope(ac, pg, ap2, st_crs(onMap), ...)
+      envelope <-  make_route_envelope(ac, pg, ap2, st_crs(onMap), ...)
 
       #reduce the lattice - but do it via the points, because we don't want to cut lines up
       pg@points <- pg@points %>%
@@ -910,9 +910,9 @@ findLeg_really <- function(ac, ap2, pg, onMap,
 }
 
 
-#' Find the aircraft range envelope for a route
+#' Make range-constrained envelope between 2 airports
 #'
-#' \code{routeEnvelope} finds the range envelope for a given route
+#' \code{make_route_envelope} finds the range envelope for a given route
 #'
 #' The 'route envelope' is the region within which a route from A to B must
 #' remain. This is an ellipse.
@@ -921,7 +921,7 @@ findLeg_really <- function(ac, ap2, pg, onMap,
 #' aircraft can reach from a given airport.
 #'
 #'
-#' @param ac,ap2,pg See \code{\link{findRoute}} (\code{pg} not used)
+#' @param ac,ap2,pg See \code{\link{find_route}} (\code{pg} not used)
 #' @param crs The CRS of the reference map \code{st_crs(onMap)}
 #' @param envelope_points How many points are used to define the ellipse? Default
 #'   200.
@@ -934,12 +934,12 @@ findLeg_really <- function(ac, ap2, pg, onMap,
 #'
 #' @examples
 #' # Need aircraft and airport datasets
-#' ac <- expand_aircraft()
-#' ap <- expand_airports()
-#' z <- routeEnvelope(ac[1,], NA, make_AP2("EGLL","KJFK",ap), 4326)
+#' ac <- make_aircraft()
+#' ap <- make_airports()
+#' z <- make_route_envelope(ac[1,], NA, make_AP2("EGLL","KJFK",ap), 4326)
 #'
 #' @export
-routeEnvelope <- function(ac, pg, ap2, crs,
+make_route_envelope <- function(ac, pg, ap2, crs,
                           envelope_points=200,
                           fuzz=0.005){
   #add a 0.5% fuzz to allow longest range to be flown
@@ -1044,7 +1044,7 @@ smoothSpeed <- function(r, ac){
 #'
 #' Reduce a set of routes to a one-line per route summary
 #'
-#' This function takes the output of \code{\link{findRoute}} and summarises to
+#' This function takes the output of \code{\link{find_route}} and summarises to
 #' one line per (full) route.
 #'
 #' With refuelling, there can be multiple 'full routes' for each 'route'. The
@@ -1055,9 +1055,9 @@ smoothSpeed <- function(r, ac){
 #' against actual and is reasonable (observed range roughly 0.3-0.5).
 #'
 #' @param route Each segment in each route, as produced by
-#'   \code{\link{findRoute}} or \code{\link{findLeg}}
+#'   \code{\link{find_route}} or \code{\link{find_leg}}
 #' @param ap_loc List of airport locations, output of
-#'   \code{\link{expand_airports}}
+#'   \code{\link{make_airports}}
 #' @param arrdep_h Total time for the M084 comparator aircraft to arrive &
 #'   depart in hours. Default 0.5.
 #'
@@ -1087,7 +1087,7 @@ smoothSpeed <- function(r, ac){
 #' @examples
 #' # here we use a built-in set of routes
 #' # see vignette for more details of how to obtain it
-#' airports <- expand_airports(crs = crs_Pacific)
+#' airports <- make_airports(crs = crs_Pacific)
 #' sumy <- summarise_routes(NZ_routes, airports)
 #'
 #' @export

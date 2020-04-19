@@ -42,20 +42,20 @@ You need a dataframe that defines one or more aircraft. This needs, at minimum, 
 
 Other fields are optional, but it is recommended to include `notes` to give more information. 
 
-Run this minimum dataset through `expand_aircraft` to get the additional fields that are needed. Alternatively, if you run `expand_aircraft` with no parameters, it creates a set of test aircraft. This test set is based on public data for 3 aircraft (though the `accel_Mpm`, `arrdep_kph` are educated guesses), and fantasy for the 4th one, which has been designed for testing purposes and might not be pleasant to fly in.
+Run this minimum dataset through `make_aircraft` to get the additional fields that are needed. Alternatively, if you run `make_aircraft` with no parameters, it creates a set of test aircraft. This test set is based on public data for 3 aircraft (though the `accel_Mpm`, `arrdep_kph` are educated guesses), and fantasy for the 4th one, which has been designed for testing purposes and might not be pleasant to fly in.
 
-`expand_aircraft` adds some fields, converting Mach to kph, and calculating the time to transition between the two speeds. This 'transition penalty' `trans_h` in hours, is used in the routing search as a time penalty whenever a transition from subsonic to supersonic (or vice versa) is needed; typically this is when switching from flying over land to flying over sea (or vice versa).
+`make_aircraft` adds some fields, converting Mach to kph, and calculating the time to transition between the two speeds. This 'transition penalty' `trans_h` in hours, is used in the routing search as a time penalty whenever a transition from subsonic to supersonic (or vice versa) is needed; typically this is when switching from flying over land to flying over sea (or vice versa).
 
 
 ```{r define aircraft} 
 # example for your own data
 # aircraft <- read.csv("data/aircraft.csv", stringAsFactors = FALSE)
-# aircraft <- expand_aircraft(aircraft)
+# aircraft <- make_aircraft(aircraft)
 # strongly recommended to record the file name for later reference
 # attr(aircraft, "aircraftSet") <- "aircraft.csv"
 
 # example if you have no data of your own
-aircraft <- expand_aircraft()
+aircraft <- make_aircraft()
 
 ```
   
@@ -69,17 +69,17 @@ Similarly, we need a dataset describing airports. This needs, at minimum, to hav
 
 Other fields are optional, but you might find it useful to include `ap_name` to give more information, as well as other fields containing geographical details, such as country. 
 
-As with the aircraft, you can load your own data set and then run it through `expand_airports` to add a geo-coded field to it. If you don't have a list, then `expand_airports` will use the dataset from `airportr` package.
+As with the aircraft, you can load your own data set and then run it through `make_airports` to add a geo-coded field to it. If you don't have a list, then `make_airports` will use the dataset from `airportr` package.
 
 For this vignette, we use a very restricted set: just New Zealand. We geocode the airports using a built-in coordinate reference system (CRS) `crs_Pacific`; the maps will have the same.
 
 ```{r define airports}
 # example for your own data
 # airports <- read.csv("data/airports.csv", stringAsFactors = FALSE)
-# airports <- expand_airports(airports)
+# airports <- make_airports(airports)
 
 # example if you have no data of your own
-airports <- expand_airports(crs = crs_Pacific) %>% 
+airports <- make_airports(crs = crs_Pacific) %>% 
   filter(substr(APICAO,1,1)=="N") #just New Zealand, and neighbours
 
 ```
@@ -106,7 +106,7 @@ For the purpose of testing and this vignette, we use a map which is provided by 
 
 In fact, we need two files: one is the basic outline of the land, largely used for visualisation; the second is derived from this, and adds a 30km buffer around the coastline to indicate the area where supersonic flight is not allowed. A different buffer is possible, though 30km is about right for the expected width of the footprint of the supersonic boom.
 
-Since the shape file is large, we provide a simplified outline `NZ_u` and also the buffer `NZ_b`. These are in the original projection used by Stats NZ (in full: `r sf::st_crs(NZ_u)`). It's strongly recommended to use one of the following:
+Since the shape file is large, we provide a simplified outline `NZ_coast` and also the buffer `NZ_buffer30`. These are in the original projection used by Stats NZ (in full: `r sf::st_crs(NZ_coast)`). It's strongly recommended to use one of the following:
 
 * `crs_Atlantic`: Robinson 54030, a mid 20C classic view, with Atlantic centre
 * `crs_Pacific`: A Pacific-centred variant on this with `crs=CRS("+proj=robin +lon_0=150 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")`.
@@ -116,17 +116,17 @@ We leave this tranformation step in the process to emphasise the need to think a
 ```{r load maps}
 # if you are using your own shp file 
 # NZ_shp <- sf::read_sf("...../territorial-authority-2020-clipped-generalised.shp")
-# NZ_u <- sf::st_union(sf::st_simplify(NZ_shp, dTolerance = 1000))
-# NZ_b <- sf::st_union(sf::st_buffer(NZ_u, 30 * 1000))
+# NZ_coast <- sf::st_union(sf::st_simplify(NZ_shp, dTolerance = 1000))
+# NZ_buffer30 <- sf::st_union(sf::st_buffer(NZ_coast, 30 * 1000))
 
 # We project the in-built test maps
-NZ_coast <- sf::st_transform(twospeed::NZ_u, crs=crs_Pacific)
-NZ_buffer <- sf::st_transform(twospeed::NZ_b, crs=crs_Pacific)
+NZ_coast_Pac <- sf::st_transform(twospeed::NZ_coast, crs=crs_Pacific)
+NZ_buffer_Pac <- sf::st_transform(twospeed::NZ_buffer30, crs=crs_Pacific)
 
 # All that remains is to illustrate the land and buffer
-ggplot(NZ_buffer) +
+ggplot(NZ_buffer_Pac) +
     geom_sf(colour = NA, fill = "grey75")  +
-      geom_sf(data = NZ_coast, fill = "grey90", colour = NA)+
+      geom_sf(data = NZ_coast_Pac, fill = "grey90", colour = NA)+
     theme_minimal()
 
 ```
@@ -144,16 +144,16 @@ Normally the grid is too large to plot helpfully, but in this very limited set, 
 ```{r construct grid}
 target_km=100
 system.time(
-p_grid <- newLatLongGrid(NZ_buffer,"NZ lat-long at 100km",
+p_grid <- make_route_grid(NZ_buffer_Pac,"NZ lat-long at 100km",
                              target_km = target_km, classify = TRUE,
                          lat_min = -49, lat_max = -32, 
                          long_min = 162, long_max = 182)
 )
 
 # whether this map is useful depends on the target_km v the overall size of the map
-ggplot(NZ_buffer) +
+ggplot(NZ_buffer_Pac) +
     geom_sf(colour = NA, fill = "grey75")  +
-      geom_sf(data = NZ_coast, fill = "grey90", colour = NA) +
+      geom_sf(data = NZ_coast_Pac, fill = "grey90", colour = NA) +
   geom_sf(data = p_grid@lattice,
           aes(geometry=geometry), colour="lightblue", size = 0.2) +
 
@@ -176,9 +176,9 @@ ap2 <- make_AP2("NZAA","NZCH",airports)
 rm(rte_cache)
 rm(star_cache)
 
-routes <- findRoute(aircraft[4,], 
+routes <- find_route(aircraft[4,], 
                      ap2,
-                     onMap = NZ_buffer, 
+                     onMap = NZ_buffer_Pac, 
                      pg = p_grid, 
                      apLoc = airports)
 
@@ -197,7 +197,7 @@ routes <- routes %>%
   arrange(advantage_h)
 
 # draw a basic map
-route_map(NZ_coast, routes, crs = crs_Pacific, fat_map = NZ_buffer)
+map_routes(NZ_coast_Pac, routes, crs = crs_Pacific, fat_map = NZ_buffer_Pac)
 
 ```
 

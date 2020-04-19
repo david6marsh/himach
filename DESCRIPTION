@@ -1,7 +1,7 @@
 Package: twospeed
 Type: Package
 Title: Find quickest route for supersonic aircraft. 
-Version: 0.0.0.9000
+Version: 0.0.0.9001
 Authors@R: person("David", "Marsh", email = "david.marsh@eurocontrol.int",
   role = c("aut", "cre"))
 Description: For supersonic aircraft, flying subsonic over land

@@ -51,9 +51,9 @@ rangeEnvelope <- function(ac, pg, ap2, onMap,
 }
 
 
-#' Plot a map of routes
+#' Map a set of routes
 #'
-#' \code{route_map} plots routes, with many options
+#' \code{map_routes} plots routes, with many options
 #'
 #' This function plots the routes, with options for additional layers. Multiple
 #' routes are expected, and they can be coloured by time advantage, by speed
@@ -68,7 +68,7 @@ rangeEnvelope <- function(ac, pg, ap2, onMap,
 #' @param \code{fat_map} optional coast + buffer map, default NA.
 #' @param \code{avoid_map} optional map of no-fly zones, default NA.
 #' @param \code{ap_locations} Show used origin and destination airports if this
-#'   is a set of airports from \code{\link{expand_airports}}, or not if NA
+#'   is a set of airports from \code{\link{make_airports}}, or not if NA
 #'   (default). This dataset can be all airports, and is filtered to those used
 #'   by \code{routes}.
 #' @param \code{ap_col,ap_size} Colour and size of used airport markers (dark
@@ -100,7 +100,7 @@ rangeEnvelope <- function(ac, pg, ap2, onMap,
 #' #see introductory vignette
 #'
 #' @export
-route_map <- function(
+map_routes <- function(
   thin_map, routes=NA, crs=crs_Atlantic, show_route="time",
   fat_map=NA, avoid_map=NA,
   ap_locations=NA, ap_col="darkblue", ap_size=0.4,

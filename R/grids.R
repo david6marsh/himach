@@ -7,9 +7,9 @@ mod_long <- function(x){
   (x + 180) %% 360 - 180
 }
 
-#' Create lat-long grid for routes
+#' Make lat-long grid for route finding
 #'
-#' \code{newLatLongGrid} creates, and optionally classifies, a lat-long route grid
+#' \code{make_route_grid} creates, and optionally classifies, a lat-long route grid
 #'
 #' This function creates a \code{gridLat} object that contains
 #' a set of point on a lat long grid (ie all the points are on
@@ -51,7 +51,7 @@ mod_long <- function(x){
 #' crs_Pacific <- sp::CRS("+proj=robin +lon_0=150 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
 #' NZ_buffer <- sf::st_transform(twospeed::NZ_b, crs=crs_Pacific)
 #' system.time(
-#'   p_grid <- newLatLongGrid(NZ_buffer,"NZ lat-long at 100km",
+#'   p_grid <- make_route_grid(NZ_buffer,"NZ lat-long at 100km",
 #'                            target_km = 100, classify = TRUE,
 #'                            lat_min = -49, lat_max = -32,
 #'                            long_min = 162, long_max = 182)
@@ -61,7 +61,7 @@ mod_long <- function(x){
 #' @import sf
 #'
 #' @export
-newLatLongGrid <- function(onMap, name,
+make_route_grid <- function(onMap, name,
                            target_km=800,
                            lat_min= -60.0, lat_max = 86.0,
                            long_min = -180.0, long_max = 179.95,
