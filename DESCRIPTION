@@ -1,14 +1,14 @@
 Package: twospeed
 Type: Package
 Title: Find quickest route for supersonic aircraft. 
-Version: 0.0.0.9002
+Version: 0.0.0.9003
 Authors@R: person("David", "Marsh", email = "david.marsh@eurocontrol.int",
   role = c("aut", "cre"))
-Description: For supersonic aircraft, flying subsonic over land
+Description: For supersonic aircraft, flying subsonic over land,
     find the quickest route between airports. Allow for coastal buffer and 
     potentially closed regions. Uses minimal model of aircraft performance:
     focus is on time saved versus subsonic flight, rather than vertical flight
-    profile.
+    profile. For modelling, not for planning your flight.
 Vignette: 
 License: Copyright EUROCONTROL 2020. 
     New Zealand map in vignette: This work is based on Stats NZ's data 
