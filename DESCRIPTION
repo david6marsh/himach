@@ -28,6 +28,7 @@ Suggests:
     knitr,
     purrr,
     rmarkdown,
+    rnaturalearthdata,
     sp,
     stringr,
     testthat,

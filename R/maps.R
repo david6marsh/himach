@@ -299,7 +299,42 @@ st_bbox_longlat <- function(m){
 # expect m to be a map data frame, with geometry
 # splits prior to an st_transform
 # marg is a small amount in degrees trimmed off the side
-wrap <- function(m, crs, marg = 0.05){
+
+#' Wrap the 'dateline' before \code{st_tranform}
+#'
+#' \code{st_wrap_transform} handles the 'far side' break first, then \code{st_tranform}
+#'
+#' \code{\link{sf::st_wrap_dateline}} should handle the break in a map projection
+#' but uses `GDAL` for this. Given persistent issues in installing  GDAL,
+#' \code{st_wrap_transform} achieves the same, at least for simple map projections,
+#' without needing GDAL.
+#'
+#' Here 'simple' means, with a dateline that is a single line of longitude: ie
+#' the proj4string contains either "longitude_of_center", so the dateline is that +180;
+#' or not, in which case it assumes the "longitude_of_center" is 0.
+#'
+#'
+#' @param \code{m} A map dataframe, ie of class \code{sf} and \code{data.frame}
+#' @param \code{crs} Destination coordinate reference system, as in \code{st_tranform}
+#' @param \code{marg} Any polygons that cross the dateline lose a small margin, for safety
+#'
+#' @return \code{sf} dataframe, same as the parameter \code{m}
+#'
+#' @import sf
+#' @import dplyr
+#' @import tidyr
+#'
+#' @examples
+#' world <- st_as_sf(rnaturalearthdata::coastline110)
+#' w_pacific <- st_wrap_transform(world, crs_Pacific)
+#' ggplot2::ggplot(w_pacific) + ggplot2::geom_sf()
+#'
+#' # bad - not run - dateline problem example
+#' # ggplot2::ggplot(st_transform(world, crs_Pacific)) +
+#' #   ggplot2::geom_sf()
+#'
+#' @export
+st_wrap_transform <- function(m, crs, marg = 0.05){
   # need the bounding boxes in lat-long
   len <- nrow(m)
   # get 'dateline' of original map proj in longitude
