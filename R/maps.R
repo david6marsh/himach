@@ -268,44 +268,52 @@ st_wrap <- function(m){
 
 # wrap a single SF object
 # m, with bb (in long-lat)
-wrap_ <- function(m, m2, break_long, margin){
-  bb <- st_bbox(m2)
+wrap_ <- function(m, break_long, marg){
+  bb <- st_bbox_longlat(m)
   long_prob <- ( break_long > bb$xmin & break_long < bb$xmax )
   if (!st_is_empty(m) && long_prob) {
     # in case bounding box is very small
-    margin <- min(margin, (bb$xmax - bb$xmin)/20)
+    marg <- min(marg, (bb$xmax - bb$xmin)/20)
     # get West and East parts
     # in the _current_ crs of m
-    box_W <- edges_to_poly(c(bb$xmin, break_long - margin, bb$ymin, bb$ymax))
+    box_W <- edges_to_poly(c(bb$xmin, break_long - marg, bb$ymin, bb$ymax))
     m_W <- st_intersection(st_transform(box_W, st_crs(m)), m)
-    box_E <- edges_to_poly(c(break_long + margin, bb$xmax,  bb$ymin, bb$ymax))
+    box_E <- edges_to_poly(c(break_long + marg, bb$xmax,  bb$ymin, bb$ymax))
     m_E <- st_intersection(st_transform(box_E, st_crs(m)), m)
-    return(st_union(m_W, m_E))
-  } else {
-    return(m)
+    m <- st_union(m_W, m_E)
   }
+  return(st_geometry(m))
+}
+
+#wrapper for st_bbox that always returns lat-longs
+st_bbox_longlat <- function(m){
+  bb <- st_bbox(m)
+  if (!st_is_longlat(bb)) {
+    bb <- st_transform(bb,
+                       crs=twospeed:::crs_latlong)
+  }
+  return(bb)
 }
 
 # handle wrapping of objects around the 'dateline' or opposite end of the map
-# expect m to be a list of length >= 1 (map$geometry...)
+# expect m to be a map data frame, with geometry
 # splits prior to an st_transform
-# margin is a small amount in degrees trimmed off the side
-wrap <- function(m, crs, margin = 0.05){
+# marg is a small amount in degrees trimmed off the side
+wrap <- function(m, crs, marg = 0.05){
   # need the bounding boxes in lat-long
-  # if not currently lat-long, make whole list lat-long
-  if (!st_is_longlat(m)) {
-    m2 <- st_transform(m, crs=twospeed:::crs_latlong)
-    } else   m2 <- m
+  len <- nrow(m)
   # get 'dateline' of original map proj in longitude
   # where the break in the map will be after a transformation
   # to get the crs as a string, transform a small box...
   small_box <- twospeed:::edges_to_poly(c(1,2,1,2), to_crs = crs)
   break_long <- twospeed:::mod_long(long_cent(small_box) + 180)
-  # to keep as sf object, use lapply with index, rather than mapply
-  m_new <- lapply(1:length(m),
-                  function(x){wrap_(m[x], m2[x], break_long, margin)})
-  # finally safe to transform
-  st_transform(m_new, crs)
+  new_geo <-  m %>%
+    split(1:len)  %>%
+    purrr::modify( wrap_,
+                break_long = break_long, marg = marg) %>%
+    unsplit(1:len)
+  st_geometry(m) <- new_geo
+  st_transform(m, crs)
 }
 
 #find the longitude of centre

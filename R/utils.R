@@ -43,7 +43,7 @@ copy_attr <- function(from, to, atts){
 #'   \item \code{from_long, from_lat, to_long, to_lat}: the airport lat-longs
 #'    with adep first
 #'   \item \code{AP2}: a name for the route in a specific order
-#'   \item \code{gcdistance_km}: the great circle distance in km
+#'   \item \code{gcdist_km}: the great circle distance in km
 #' }
 #'
 #' In \code{AP2} European airports (crudely, from starting letter = 'E' or 'L')
@@ -84,7 +84,7 @@ make_AP2 <- function(adep, ades, ap=make_airports()){
                 dplyr::rename(ADES=APICAO, to_long=long, to_lat=lat),
               by="ADES") %>%
     dplyr::mutate(AP2 = concat_ADEPADES(ADEP, ADES, unidirectional),
-                  gcdistance_km = geosphere::distGeo(c(from_long, from_lat),
+                  gcdist_km = geosphere::distGeo(c(from_long, from_lat),
                                                      c(to_long, to_lat))/1000)
 }
 

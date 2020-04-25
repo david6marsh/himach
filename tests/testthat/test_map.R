@@ -14,6 +14,10 @@ test_that("Route mapping", {
                                 crs = crs_Pacific),
                       "known/NZ time map")
 
+ # circuity - auto calculated - on crs_Atlantic
+ expect_known_output(map_routes(NZ_thin, NZ_routes),
+                     "known/NZ circuity Atl map")
+
  # time advantage calculated explicitly + frills
  rtes <- summarise_routes(NZ_routes, airports)
  routes <- NZ_routes %>%

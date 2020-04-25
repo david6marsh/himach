@@ -42,7 +42,7 @@ test_that("NZ maps available", {
 test_that("can make AP2",{
   z <- make_AP2("EGLL","NZCH")
   expect_equal(z$AP2, "EGLL<>NZCH")
-  expect_equal(signif(z$gcdistance_km,3), 19000)
+  expect_equal(signif(z$gcdist_km,3), 19000)
   #don't mind which order they're in
   expect_setequal(round(z[1,c("from_long", "to_long")],2),
                   c(-0.46, 172.53))

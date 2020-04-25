@@ -229,14 +229,14 @@ find_route <- function(ac, ap2, fat_map, avoid=NA, route_grid, cf_subsonic=NA,
   #note ap2$routeID is in a specific order, but ADEP/ADES might not reflect that
   #switch if necessary
   ap2 <- ap2 %>%
-    select(AP2, ADEP, ADES, ends_with("_long"), ends_with("_lat"), gcdistance_km) %>%
+    select(AP2, ADEP, ADES, ends_with("_long"), ends_with("_lat"), gcdist_km) %>%
     mutate(ADEP= stringr::str_split(AP2,"(<>)|(>)|(<)", simplify=TRUE)[1],
            ADES= stringr::str_split(AP2,"(<>)|(>)|(<)", simplify=TRUE)[2])
   sep <- stringr::str_remove_all(ap2$AP2,paste0("(",ap2$ADEP,")|(",ap2$ADES,")")) #get separator "<>",">"
   unidirectional <- (sep==">")
 
   #can aircraft make it without refuelling?
-  ap2range_ok <- ap2$gcdistance_km < ac$range_km
+  ap2range_ok <- ap2$gcdist_km < ac$range_km
 
   #if yes - then get the route
   if (ap2range_ok) routes <- find_leg(ac, ap2, ap_loc = ap_loc,
@@ -272,7 +272,7 @@ find_route <- function(ac, ap2, fat_map, avoid=NA, route_grid, cf_subsonic=NA,
       filter(dep_ref_km < ac$range_km & ref_des_km < ac$range_km) %>%
       filter((AREF != ADEP) & (AREF != ADES)) %>% #can't refuel at start or end!
       #if 1 or more under circuity then filter
-      mutate(circuity = (dep_ref_km + ref_des_km)/ap2$gcdistance_km,
+      mutate(circuity = (dep_ref_km + ref_des_km)/ap2$gcdist_km,
              n_under_circ = sum(circuity < max_circuity)) %>%
       filter((n_under_circ<2)|(circuity < max_circuity))
 
@@ -288,7 +288,7 @@ find_route <- function(ac, ap2, fat_map, avoid=NA, route_grid, cf_subsonic=NA,
                 rename(ADEP=AREF, from_long=ref_long, from_lat=ref_lat)) %>%
         distinct() %>%
         rowwise() %>%
-        mutate(gcdistance_km = geosphere::distGeo(c(from_long, from_lat),
+        mutate(gcdist_km = geosphere::distGeo(c(from_long, from_lat),
                                        c(to_long, to_lat))/1000,
                AP2=ifelse(unidirectional,
                           paste(ADEP,ADES,sep=sep),
@@ -1071,7 +1071,7 @@ smoothSpeed <- function(r, ac){
 #'   \item \code{refuel_ap}: code for the refuelling airport, or NA
 #'   \item \code{acID, acType}: aircraft identifiers taken from the aircraft set
 #'   \item \code{M084_h}: flight time for a Mach 0.84 comparator aircraft (including \code{2*arrdep_h})
-#'   \item \code{gcdistance_km}: great circle distance between the origin and destination airports
+#'   \item \code{gcdist_km}: great circle distance between the origin and destination airports
 #'   \item \code{sea_time_frac}: Fraction of \code{time_h} time spent over sea, hence at supersonic speed,
 #'     or accelerating to, or decelerating from supersonic speed
 #'   \item \code{sea_dist_frac}: as sea_time_frac, but fraction of \code{dist_km}
@@ -1079,6 +1079,8 @@ smoothSpeed <- function(r, ac){
 #'   \item \code{time_h}: total time, in hours
 #'   \item \code{n_phases}: number of distinct phases: arr/dep, transition, land, sea, refuel.
 #'   \item \code{advantage_h}: \code{M084_h - time_h}
+#'
+#'   \item \code{circuity}: the route distance extension (1 = perfect) \code{dist_km / gcdist_km}
 #'   \item \code{best}: for each \code{routeID}, the \code{fullrouteID} with maximum \code{advantage_h}
 #' }
 #'
@@ -1098,22 +1100,24 @@ summarise_routes <- function(routes,
   #include 30 mins for arr/dep - based on 777ER examples
   route_summary <- routes %>%
     group_by(routeID) %>%
-    mutate(gcdistance_km = make_AP2(substr(first(routeID),1,4),
+    rename(segdist_km = gcdist_km) %>%
+    mutate(gcdist_km = make_AP2(substr(first(routeID),1,4),
                                     substr(first(routeID),7,10),
-                                    ap_loc)$gcdistance_km,
-           M084_h = round(gcdistance_km/(0.85 * mach_kph),2) + arrdep_h,
-           gcdistance_km = round(gcdistance_km,1)) %>%
+                                    ap_loc)$gcdist_km,
+           M084_h = round(gcdist_km/(0.85 * mach_kph),2) + arrdep_h,
+           gcdist_km = round(gcdist_km,1)) %>%
     group_by(timestamp, fullRouteID, routeID, refuel_ap,
-             acID, acType, M084_h, gcdistance_km) %>%
+             acID, acType, M084_h, gcdist_km) %>%
     summarise(sea_time_frac =
                 round(sum(if_else(phase=="sea",time_h,0))/sum(time_h), 3),
               sea_dist_frac =
-                round(sum(if_else(phase=="sea", gcdist_km, 0))/sum(gcdist_km), 3),
-              dist_km = round(sum(gcdist_km), 1),
+                round(sum(if_else(phase=="sea", segdist_km, 0))/sum(segdist_km), 3),
+              dist_km = round(sum(segdist_km), 1),
               time_h = round(sum(time_h), 2),
               n_phases =
                 as.integer(last(phaseID)) - as.integer(first(phaseID)) + 1) %>%
-    mutate(advantage_h = M084_h - time_h) %>%
+    mutate(advantage_h = M084_h - time_h,
+           circuity = round(dist_km/gcdist_km, 2)) %>%
     arrange(routeID, acType, time_h) %>%
     #add best for routeID, refuelling or not
     group_by(routeID, acID) %>%

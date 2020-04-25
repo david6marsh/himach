@@ -31,7 +31,8 @@ Suggests:
     sp,
     stringr,
     testthat,
-    units
+    units,
+    viridis
 VignetteBuilder: knitr
 RoxygenNote: 7.1.0
 Depends: 

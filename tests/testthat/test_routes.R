@@ -19,8 +19,10 @@ test_that("Route summary", {
   rs1 <- summarise_routes(NZ_routes, ap)
   expect_equal(rs1[1, ]$refuel_ap, "NZWN")
   expect_equal(rs1[2, ]$M084_h, 1.68)
+  expect_equal(rs1[2, ]$advantage_h, -0.88)
   expect_equal(rs1[3, ]$sea_dist_frac, 0.753)
   expect_equal(rs1[4, ]$n_phases, 5)
+  expect_equal(rs1[4, ]$circuity, 1.21)
   expect_true(rs1[5, ]$best)
   expect_true(is.na(rs1[6, ]$time_h))
   # parameter behaviour?
