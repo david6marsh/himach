@@ -36,7 +36,7 @@ test_that("Route mapping", {
 })
 
 test_that("World wrapping", {
-  world <- st_as_sf(rnaturalearthdata::coastline110)
+  world <- st_as_sf(rnaturalearthdata::countries110)
 
   expect_known_output(st_wrap_transform(world,
                                         crs_Pacific),

@@ -141,7 +141,7 @@ map_routes <- function(
   # if (is.data.frame(routes)) routes <- routes %>% filter(!is.na(time_h))
 
   #thin map is the one without buffer
-  thin_map <- prj(st_wrap(thin_map), crs=crs) #force to CRS used for this map
+  thin_map <- st_wrap_transform(thin_map, crs=crs) #force to CRS used for this map
 
   #layer 1 (one or two base maps)
   if (is.na(fat_map)) {
@@ -258,7 +258,8 @@ map_routes <- function(
 
 
 
-#wrapper for st_wrap_dateline, because it needs lat-longs
+# wrapper for st_wrap_dateline, because it needs lat-longs
+# works for multilines without GDAL problems
 st_wrap <- function(m){
   #this can be used wihtin a geom_sf plot statement
   st_transform(st_wrap_dateline(st_transform(m, crs=twospeed:::crs_latlong),
@@ -267,30 +268,34 @@ st_wrap <- function(m){
 }
 
 # wrap a single SF object
-# m, with bb (in long-lat)
-wrap_ <- function(m, break_long, marg){
-  bb <- st_bbox_longlat(m)
-  long_prob <- ( break_long > bb$xmin & break_long < bb$xmax )
-  if (!st_is_empty(m) && long_prob) {
-    # in case bounding box is very small
-    marg <- min(marg, (bb$xmax - bb$xmin)/20)
-    # get West and East parts
-    # in the _current_ crs of m
-    box_W <- edges_to_poly(c(bb$xmin, break_long - marg, bb$ymin, bb$ymax))
-    m_W <- st_intersection(st_transform(box_W, st_crs(m)), m)
-    box_E <- edges_to_poly(c(break_long + marg, bb$xmax,  bb$ymin, bb$ymax))
-    m_E <- st_intersection(st_transform(box_E, st_crs(m)), m)
-    m <- st_union(m_W, m_E)
-  }
-  return(st_geometry(m))
+# geom, with bb (in long-lat)
+wrap_ <- function(geom, break_long, marg){
+  # if (st_is(geom, "POLYGON")){
+  #     (st_is(geom, "MULTIPOLYGON") && length(geom[[1]]) == 1)) {
+  # if (TRUE) {
+    bb <- st_bbox_longlat(geom)
+    long_prob <- ( break_long > bb$xmin & break_long < bb$xmax )
+    if (!st_is_empty(geom) && long_prob) {
+      # in case bounding box is very small
+      marg <- min(marg, (bb$xmax - bb$xmin)/20)
+      # get West and East parts
+      # in the _current_ crs of geom
+      box_W <- edges_to_poly(c(bb$xmin, break_long - marg, bb$ymin, bb$ymax))
+      geom_W <- st_intersection(st_transform(box_W, st_crs(geom)), geom)
+      box_E <- edges_to_poly(c(break_long + marg, bb$xmax,  bb$ymin, bb$ymax))
+      geom_E <- st_intersection(st_transform(box_E, st_crs(geom)), geom)
+      geom <- st_union(geom_W, geom_E)
+    }
+    return(geom)
+  # }
 }
 
 #wrapper for st_bbox that always returns lat-longs
 st_bbox_longlat <- function(m){
   bb <- st_bbox(m)
   if (!st_is_longlat(bb)) {
-    bb <- st_transform(bb,
-                       crs=twospeed:::crs_latlong)
+    bb <- st_bbox(st_transform(m,
+                       crs=twospeed:::crs_latlong))
   }
   return(bb)
 }
@@ -307,7 +312,8 @@ st_bbox_longlat <- function(m){
 #' \code{\link{sf::st_wrap_dateline}} should handle the break in a map projection
 #' but uses `GDAL` for this. Given persistent issues in installing  GDAL,
 #' \code{st_wrap_transform} achieves the same, at least for simple map projections,
-#' without needing GDAL.
+#' without needing GDAL. This is only needed for polygons, otherwise \code{\link{sf::st_wrap_dateline}}
+#' works without the GDAL issues.
 #'
 #' Here 'simple' means, with a dateline that is a single line of longitude: ie
 #' the proj4string contains either "longitude_of_center", so the dateline is that +180;
@@ -335,19 +341,30 @@ st_bbox_longlat <- function(m){
 #'
 #' @export
 st_wrap_transform <- function(m, crs, marg = 0.05){
-  # need the bounding boxes in lat-long
-  len <- nrow(m)
   # get 'dateline' of original map proj in longitude
   # where the break in the map will be after a transformation
   # to get the crs as a string, transform a small box...
   small_box <- twospeed:::edges_to_poly(c(1,2,1,2), to_crs = crs)
   break_long <- twospeed:::mod_long(long_cent(small_box) + 180)
-  new_geo <-  m %>%
-    split(1:len)  %>%
-    purrr::modify( wrap_,
-                break_long = break_long, marg = marg) %>%
-    unsplit(1:len)
-  st_geometry(m) <- new_geo
+
+  if ("sf" %in% class(m) && "data.frame" %in% class(m) &&
+      all(st_is(m, c("POLYGON", "MULTIPOLYGON")))) {
+    # loop over dataframe rows
+    len <- nrow(m)
+    new_geo <-  m %>%
+      st_geometry() %>%
+      split(1:len)  %>%
+      purrr::modify( wrap_,
+                     break_long = break_long, marg = marg) %>%
+      unsplit(1:len)
+    st_geometry(m) <- new_geo
+  } else if (all(st_is(m, c("POLYGON", "MULTIPOLYGON")))) {
+    # simpler case
+    m <- wrap_(m, break_long = break_long, marg = marg)
+  } else {
+    warning("only handles single (multi)polygons or sf of polygons")
+  }
+
   st_transform(m, crs)
 }
 
