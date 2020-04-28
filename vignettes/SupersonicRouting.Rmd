@@ -189,9 +189,9 @@ In fact, normally you'll want to run a select of routes. While `find_route` take
 There is a progress bar, though this interacts
 
 ```{r find multiple routes}
-options("quiet" = 1) # anything more than 1 is messy, because of the progress bar
-ap2 <- as.data.frame(matrix(c("NZAA","NZCH","NZAA","NZDN","NZGS","NZCH"), 
-              ncol = 2, byrow = TRUE), stringsAsFactors = FALSE)
+options("quiet" = 2) # anything more than 1 is messy, because of the progress bar
+ap2 <- matrix(c("NZAA","NZCH","NZAA","NZDN","NZGS","NZCH"), 
+              ncol = 2, byrow = TRUE)
 ac <- aircraft[c(1,4), ]$id
 
 routes <- find_routes(ac, ap2, aircraft, airports,

@@ -86,3 +86,27 @@ test_that("Find Route",{
 
   options("quiet" = old_quiet)
 })
+
+test_that("Find Routes",{
+  old_quiet <- getOption("quiet", default=0)
+  options("quiet" = 0) #for no reporting
+  # need to load some of the built-in data
+  aircraft <- make_aircraft(warn = FALSE)
+  airports <- make_airports(crs = crs_Pacific)
+  refuel_ap <- airports %>%
+    filter(APICAO=="NZWN")
+  NZ_buffer_Pac <- sf::st_transform(NZ_buffer30, crs=crs_Pacific)
+
+  ap2 <- as.data.frame(matrix(c("NZAA","NZCH","NZAA","NZDN"),
+                              ncol = 2, byrow = TRUE), stringsAsFactors = FALSE)
+  ac <- aircraft[c(1,4), ]$id
+
+  expect_known_output(
+    routes <- find_routes(ac, ap2, aircraft, airports,
+                         fat_map = NZ_buffer_Pac,
+                         route_grid = NZ_grid,
+                         refuel = refuel_ap),
+    "known/find_routes_default")
+
+  options("quiet" = old_quiet)
+})

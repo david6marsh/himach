@@ -182,6 +182,8 @@ emptyRoute <- function(ac, ap2, fat_map,
 #' @export
 find_routes <- function(ac_ids, ap2_ids, aircraft, airports, ...){
   stopifnot(ncol(ap2_ids)==2)
+  if (!is.data.frame(ap2_ids)) ap2_ids <- as.data.frame(ap2_ids, stringsAsFactors = FALSE)
+
   combos <- tidyr::crossing(ac_ids, ap2_ids)
   names(combos) <- c("ac","ap1","ap2")
   pb <- txtProgressBar(max = nrow(combos), style = 3)
