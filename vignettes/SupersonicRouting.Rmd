@@ -98,7 +98,7 @@ For the vignette, we'll assume that Wellington has a long enough runway. In fact
 
 Next you need a set of shapefiles covering your area of interest (usually worldwide). These need only to distinguish land and sea, but starting off at country level can be useful, for example to filter out the Antarctic, which is not likely to see traffic. You can save time by ignoring airspace South of 60S, for example.
 
-Finer resolution is better, because small islands can become larger obstacles. After a no-fly coastal buffer, typically around 30km wide, is applied, even a 1km wide island is an obstacle 61km wide. 
+Finer resolution is better, because small islands can become larger obstacles. After a no-fly coastal buffer, typically around 30km wide, is applied, even a 1km wide island is an obstacle 61km wide. There are some useful starter maps in `rnaturalearth` (use the `countries` versions), but you need to decide what is good enough for your purposes. One test - if you have a 30km buffer do you have aircraft passing between Crete and mainland Greece without slowing down? Then you're missing the island of Antikythera.
 
 Licensing and your intended use may influence which maps are available to you. We have used data from Eurostat in the past (at 1:1M scale, [Eurostat country shape files](https://ec.europa.eu/eurostat/web/gisco/geodata/reference-data/administrative-units-statistical-units/countries)). 
 
@@ -183,6 +183,25 @@ routes <- find_route(aircraft[4,],
                      ap_loc = airports)
 
 ```
+
+In fact, normally you'll want to run a select of routes. While `find_route` takes only one aircraft and one airport-pair, there is a wrapper which takes a list of aircraft ids (as in the first column in the aircraft data), and a 2-column matrix or dataframe of 4-letter ICAO codes. It creates all combinations of these, and runs `find_route` for each. This is called `find_routes`.
+
+There is a progress bar, though this interacts
+
+```{r find multiple routes}
+options("quiet" = 1) # anything more than 1 is messy, because of the progress bar
+ap2 <- as.data.frame(matrix(c("NZAA","NZCH","NZAA","NZDN","NZGS","NZCH"), 
+              ncol = 2, byrow = TRUE), stringsAsFactors = FALSE)
+ac <- aircraft[c(1,4), ]$id
+
+routes <- find_routes(ac, ap2, aircraft, airports,
+                      fat_map = NZ_buffer_Pac, 
+                     route_grid = p_grid,
+                     refuel = refuel_ap)
+
+```
+
+
 
 Once you have some routes, you will probably want (a) a summary of the routes created (b) a map. There are functions for both of these.
 

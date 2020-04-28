@@ -137,6 +137,73 @@ emptyRoute <- function(ac, ap2, fat_map,
 }
 
 
+
+#' Find best routes between airport-pair & aircraft combinations
+#'
+#' \code{find_routes} combines an aircraft and airport-pair list and finds the best routes between them,
+#' refuelling if necessary
+#'
+#' This function finds is a wrapper for the single-case function \code{find_route}.
+#' It takes (text) lists of aircraft and airport codes, combines them,
+#' then repeatedly finds routes for these. A 'route' is
+#' made up of one or two 'legs' (airport to airport without intermediate stop).
+#'
+#' For more details see \code{\link{find_route}}
+#'
+#'
+#' @param ac A vector of aircraft IDs, as column 'id' from \code{\link{make_aircraft}}
+#' @param ap2 A 2-column matrix or dataframe of airport pair text IDs
+#' @param aircraft Specification of the aircraft, see \code{\link{make_aircraft}}
+#' @param airports Airport locations as from \code{\link{make_airports}}
+#' @param ... Other parameters, passed to \code{\link{find_route}}.
+#'
+#'
+#' @return Dataframe with details of the routes
+#'
+#' @import dplyr
+#' @import tidyr
+#'
+#' @examples
+#' # need to load some of the built-in data
+#' aircraft <- make_aircraft()
+#' airports <- make_airports(crs = crs_Pacific) %>%
+#'     filter(substr(APICAO,1,1)=="N") #just around New Zealand
+#' NZ_buffer <- sf::st_transform(NZ_b, crs=crs_Pacific)
+#'
+#' options("quiet" = 4) #for heavy reporting
+#' # from Auckland to Christchurch
+#' ap2 <- make_AP2("NZAA","NZCH",airports)
+#' routes <- find_route(aircraft[4,],
+#'                     ap2,
+#'                     fat_map = NZ_buffer,
+#'                     route_grid = NZ_grid,
+#'                     ap_loc = airports)
+#'
+#' @export
+find_routes <- function(ac_ids, ap2_ids, aircraft, airports, ...){
+  stopifnot(ncol(ap2_ids)==2)
+  combos <- tidyr::crossing(ac_ids, ap2_ids)
+  names(combos) <- c("ac","ap1","ap2")
+  pb <- txtProgressBar(max = nrow(combos), style = 3)
+  routes <- purrr::reduce(lapply(1:nrow(combos),
+                                 function(x) {
+                                   ac <- aircraft[aircraft$id == combos$ac[x], ]
+                                   ap2 <- make_AP2(combos$ap1[x],
+                                                   combos$ap2[x],
+                                                   airports)
+                                   r <- find_route(ac, ap2,
+                                                   ap_loc = airports, ...)
+                                   setTxtProgressBar(pb, x)
+                                   message("") # new line
+                                   return(r)
+                                 }
+  ),
+  rbind)
+  close(pb)
+  return(routes)
+}
+
+
 #' Find best route between 2 airports
 #'
 #' \code{find_route} finds the quickest route between two airports, refuelling if
@@ -392,8 +459,8 @@ findToCToD <- function(ap, route_grid, fat_map, ac,
   #can save and load the cache, with loadRDS readRDS
   #use attr "map" of fat_map, and AircraftSet of ac to ensure it's the right cache
   #if cache doesn't exist, create it as a child of Global (so persists outside this function!)
-  if (!exists("star_cache") || attr(star_cache,"map") != route_grid@name ||
-      attr(star_cache,"aircraftSet") != attr(ac,"aircraftSet")) {
+  if (!exists("star_cache") || (attr(star_cache,"map") != route_grid@name) ||
+      (attr(star_cache,"aircraftSet") != attr(ac,"aircraftSet"))) {
     assign("star_cache", new.env(parent=.GlobalEnv), .GlobalEnv)
     attr(star_cache,"map") <- route_grid@name
     attr(star_cache,"aircraftSet") <- attr(ac,"aircraftSet")}
@@ -732,7 +799,7 @@ find_leg <- function(ac, ap2, route_grid, fat_map, ap_loc,
 
   #can save and load the cache, with loadRDS readRDS
   #if cache doesn't exist, create it as a child of Global (so persists outside this function!)
-  if (!exists("rte_cache") || attr(rte_cache,"map") != route_grid@name) {
+  if (!exists("rte_cache") || (attr(rte_cache,"map") != route_grid@name)) {
     assign("rte_cache", new.env(parent=.GlobalEnv), .GlobalEnv)
     attr(rte_cache,"map") <- route_grid@name}
 
@@ -833,10 +900,12 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
 
   #get the arrDep routes
   #note here only 1-directional - the makegraph adds the other direction
+  adep <- ap_loc[ap_loc$APICAO == ap2$ADEP, ]
+  ades <- ap_loc[ap_loc$APICAO == ap2$ADES, ]
   arrDep <-
-    bind_rows(findToCToD(ap_loc[ap_loc$APICAO==ap2$ADEP,], route_grid, fat_map,
+    bind_rows(findToCToD(adep, route_grid, fat_map,
                          ac, ad_dist, ad_nearest),
-              findToCToD(ap_loc[ap_loc$APICAO==ap2$ADES,], route_grid, fat_map,
+              findToCToD(ades, route_grid, fat_map,
                          ac, ad_dist, ad_nearest))
 
   #check if need to avoid areas
@@ -874,7 +943,9 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
   #then get the grid route
   # path <- get_path_pair(gr, nearest_id(route_grid,c(ap2$from_long,ap2$from_lat)),
   #                       nearest_id(route_grid,c(ap2$to_long,ap2$to_lat)))
-  path <- get_path_pair(gr, ap2$ADEP, ap2$ADES)
+  if (getOption("quiet", default = 0) < 2) {
+    suppressMessages(path <- get_path_pair(gr, ap2$ADEP, ap2$ADES))
+  } else path <- get_path_pair(gr, ap2$ADEP, ap2$ADES)
 
   if (length(path[[1]])>1) {
     if(getOption("quiet",default=0)>2) message("  Got path: ",round(Sys.time() - tstart,1))

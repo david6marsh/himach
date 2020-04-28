@@ -35,8 +35,8 @@ test_that("Airport data loads", {
 })
 
 test_that("NZ maps available", {
-  expect_true("sfc_MULTIPOLYGON" %in% class(NZ_coast))
-  expect_true("sfc_MULTIPOLYGON" %in% class(NZ_buffer30))
+  expect_true(all(st_is(NZ_coast, c("POLYGON", "MULTIPOLYGON"))))
+  expect_true(all(st_is(NZ_buffer30, c("POLYGON", "MULTIPOLYGON"))))
 })
 
 test_that("can make AP2",{
