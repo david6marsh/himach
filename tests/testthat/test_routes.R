@@ -84,6 +84,16 @@ test_that("Find Route",{
                       ap_loc = airports),
     "known/find_route_default")
 
+  # test with parallel subsonic aircraft
+  expect_known_output(
+    routes <- find_route(aircraft[1,],
+                       make_AP2("NZGS","NZDN",airports),
+                       fat_map = NZ_buffer_Pac,
+                       route_grid = NZ_grid,
+                       ap_loc = airports,
+                       cf_subsonic = aircraft[3,]),
+    "known/find_route_cf_subsonic")
+
   options("quiet" = old_quiet)
 })
 
