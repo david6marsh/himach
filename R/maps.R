@@ -98,7 +98,7 @@ rangeEnvelope <- function(ac, route_grid, ap2, fat_map,
 #' @param \code{crow,crow_col,crow_size} If TRUE, show the 'crow-flies' direct
 #'   great circle, in colour \code{crow_col} and thickness \code{crow_size}.
 #'   Default FALSE, "grey70", 0.2
-#' @param \code{range_envelope} show the route envelope (default FALSE).
+#' @param \code{route_envelope} show the route envelope (default FALSE).
 #' @param \code{e_col,e_alpha,e_size} colour, alpha and width for the range
 #'    envelope. Default "grey70", 0.4, 0.6
 #' @param \code{bound,bound_margin_km} If bound=TRUE (default) crop to bounding
@@ -126,7 +126,7 @@ map_routes <- function(
   fat_map=NA, avoid_map=NA,
   ap_loc=NA, ap_col="darkblue", ap_size=0.4,
   crow=FALSE, crow_col="grey70", crow_size=0.2,
-  range_envelope=FALSE,
+  route_envelope=FALSE,
   bound=TRUE, bound_margin_km=200,
   land_f="grey90", buffer_f="grey60", avoid_f="grey80",
   l_alpha=0.8, l_size=0.5,
@@ -138,7 +138,7 @@ map_routes <- function(
 
   # remove the non-routes (have time = NA)
   # these are where refuelling was needed
-  # if (is.data.frame(routes)) routes <- routes %>% filter(!is.na(time_h))
+  if (is.data.frame(routes)) routes <- routes %>% filter(!is.na(time_h))
 
   #thin map is the one without buffer
   thin_map <- st_wrap_transform(thin_map, crs=crs) #force to CRS used for this map
@@ -200,8 +200,10 @@ map_routes <- function(
     if (show_route == "aircraft"){
       m <- m +  labs(colour = "Aircraft") +
         geom_sf(data = routes,
-                aes(geometry = st_wrap(prj(gc, crs=crs)), colour = acID),
-                size=l_size, lineend="round", alpha=l_alpha) +
+                aes(geometry = st_wrap(prj(gc, crs=crs)),
+                    colour = acID),
+                size=l_size, lineend="round", alpha=l_alpha,
+                show.legend = "line")+
         scale_colour_viridis_d()
     }
   }
@@ -213,7 +215,7 @@ map_routes <- function(
   }
 
   #layer 5: range envelope
-  if (range_envelope){
+  if (route_envelope){
     m <- m +
       geom_sf(data = st_wrap(st_cast(prj(routes$envelope, crs=crs), 'MULTILINESTRING')),
               fill = NA,

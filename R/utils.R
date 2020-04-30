@@ -255,17 +255,17 @@ make_airports <- function(ap = NA, crs = 4326, warn = TRUE){
 }
 
 #rename a dataset in an environment, replacing *one* find with replace
-#returns ds not found error - but does the job!
-ren_subst <- function(ds,find_str,replace_str,in_env){
+ren_subst <- function(ds,
+                      find_str, replace_str,
+                      in_env){
   # ds is a string
-  #copy with new name
-  assign(sub(find_str,replace_str,ds),
+  # copy with new name
+  assign(sub(find_str, replace_str, ds),
          get(ds, in_env), in_env)
   #get rid of old one
-  rm(ds, envir=in_env)
+  rm(list = ds, envir = in_env)
   TRUE
 }
-
 
 #wrapper for geosphere::gcIntermediate that returns an sfc object
 st_gcIntermediate <- function(crs, ...){
