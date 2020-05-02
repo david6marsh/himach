@@ -149,13 +149,18 @@ make_route_grid <- function(fat_map, name,
               by=c("to_long"="long", "to_lat"="lat"))
   if (getOption("quiet",default=0)>0) message("Made the basic lattice:",round(Sys.time() - tstart,1))
 
+
+  if (getOption("quiet", default=0)>0) message("Adding geo & distance to the lattice...")
+  pb <- txtProgressBar(max = nrow(ll_lattice), style = 3)
   g@lattice <- ll_lattice %>%
     # add geometry
     # handle the 'overflow longitude' - slightly over the dateline
     mutate(from_long = mod_long(from_long),
-           to_long = mod_long(to_long)) %>%
+           to_long = mod_long(to_long),
+           tick = 1:nrow(ll_lattice)) %>%
     rowwise() %>%
-    mutate(geometry = st_transform(st_sfc(st_linestring(matrix(c(from_long, from_lat, to_long, to_lat),
+    mutate(geometry = st_transform(st_sfc(st_linestring(
+      withProgress(pb, tick, 20, matrix, c(from_long, from_lat, to_long, to_lat),
                                                                ncol=2, byrow = TRUE)),
                                           crs=4326),
                                    crs=st_crs(fat_map))) %>%
@@ -164,6 +169,7 @@ make_route_grid <- function(fat_map, name,
     mutate(dist_km = geosphere::distGeo(matrix(c(from_long, from_lat), ncol=2),
                              matrix(c(to_long, to_lat), ncol=2))/1000) %>%
     select(from, to, geometry, dist_km, wrap)
+  message("")
   if (getOption("quiet", default=0)>0) message("Added geo & distance to the lattice:",round(Sys.time() - tstart,1))
 
   #classify the points as sea or not

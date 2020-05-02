@@ -277,3 +277,9 @@ st_gcIntermediate <- function(crs, ...){
 }
 
 
+# simple wrapper to update a n existing progress bar
+# every nstep rows, if passed row_number as n
+withProgress <- function(pb, n, nstep, f, ...){
+  if ((n %% nstep) == 0) {setTxtProgressBar(pb, n + nstep)}
+  f(...)
+}
