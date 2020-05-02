@@ -151,16 +151,15 @@ make_route_grid <- function(fat_map, name,
 
 
   if (getOption("quiet", default=0)>0) message("Adding geo & distance to the lattice...")
-  pb <- txtProgressBar(max = nrow(ll_lattice), style = 3)
+  pb <- progress_estimated(nrow(ll_lattice), min_time = 3)
   g@lattice <- ll_lattice %>%
     # add geometry
     # handle the 'overflow longitude' - slightly over the dateline
     mutate(from_long = mod_long(from_long),
-           to_long = mod_long(to_long),
-           tick = 1:nrow(ll_lattice)) %>%
+           to_long = mod_long(to_long)) %>%
     rowwise() %>%
     mutate(geometry = st_transform(st_sfc(st_linestring(
-      withProgress(pb, tick, 20, matrix, c(from_long, from_lat, to_long, to_lat),
+      withProgress(pb, matrix, c(from_long, from_lat, to_long, to_lat),
                                                                ncol=2, byrow = TRUE)),
                                           crs=4326),
                                    crs=st_crs(fat_map))) %>%
