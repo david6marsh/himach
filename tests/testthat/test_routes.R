@@ -40,7 +40,7 @@ test_that("Find Leg",{
 
   # fail with unmatched CRS
   expect_error(
-  routes <- find_leg(aircraft[4,],
+  find_leg(aircraft[4,],
                     make_AP2("NZAA","NZCH",airports),
                     fat_map = NZ_buffer_Pac,
                     route_grid = NZ_grid,
@@ -48,7 +48,7 @@ test_that("Find Leg",{
 
   airports <- make_airports(crs = crs_Pacific)
   expect_known_output(
-    routes <- find_leg(aircraft[4,],
+    find_leg(aircraft[4,],
                       make_AP2("NZAA","NZCH",airports),
                       fat_map = NZ_buffer_Pac,
                       route_grid = NZ_grid,
@@ -66,18 +66,10 @@ test_that("Find Route",{
   aircraft <- make_aircraft(warn = FALSE)
   airports <- make_airports()
   NZ_buffer_Pac <- sf::st_transform(NZ_buffer30, crs=crs_Pacific)
-#
-#   # fail with unmatched CRS - ??fails
-#   expect_error(
-#     routes <- find_route(aircraft[4,],
-#                       make_AP2("NZAA","NZCH", airports),
-#                       fat_map = NZ_buffer_Pac,
-#                       route_grid = NZ_grid,
-#                       ap_loc = airports))
 
   airports <- make_airports(crs = crs_Pacific)
   expect_known_output(
-    routes <- find_route(aircraft[4,],
+    find_route(aircraft[4,],
                       make_AP2("NZAA","NZCH",airports),
                       fat_map = NZ_buffer_Pac,
                       route_grid = NZ_grid,
@@ -86,7 +78,7 @@ test_that("Find Route",{
 
   # test with parallel subsonic aircraft
   expect_known_output(
-    routes <- find_route(aircraft[1,],
+    find_route(aircraft[1,],
                        make_AP2("NZGS","NZDN",airports),
                        fat_map = NZ_buffer_Pac,
                        route_grid = NZ_grid,
@@ -112,7 +104,7 @@ test_that("Find Routes",{
   ac <- aircraft[c(1,4), ]$id
 
   expect_known_output(
-    routes <- find_routes(ac, ap2, aircraft, airports,
+    find_routes(ac, ap2, aircraft, airports,
                          fat_map = NZ_buffer_Pac,
                          route_grid = NZ_grid,
                          refuel = refuel_ap),
