@@ -114,40 +114,59 @@ make_route_grid <- function(fat_map, name,
   #we need 4 neighbours,  1- next one with the same lat and higher long (roughly E)
   #2, 3 & 4 the 3 with the next higher lat and nearest 3 longitudes either side of this long (roughly NW, N and NE)
   #add a 4th for safety.
+  # wrap this in a split - map - map_dfr framework, and show tick on the first mutate statement
+  # big ll_grid_seed (30km) has 500,000 elements, so 1,000 chunks should be plenty
+  if (getOption("quiet",default=0)>0) message("Making the basic lattice:")
+  sample_n <- nrow(ll_grid_seed)
+  grp_size <- 1000
+  pb <- progress_estimated(sample_n , min_time = 3)
+
   n_cand <- 3
   ll_lattice <- ll_grid_seed %>%
-    group_by(id) %>%
-    mutate(to_lat = list(round(c(lat + c(0, rep.int(lat_step, n_cand))),lat_dec)),
-           nlong_cands = list(round(seq.int(long_min, long_max,
-                                            by = coalesce(next_long_step,1.0)),
-                                    lat_dec)),
-           lc_diff = list(abs(unlist(nlong_cands) - long)),
-           lc_sel = list(which(rank(unlist(lc_diff)) <= n_cand)),
-           to_long = list(round(c(long_min + ((long+long_fudge - long_min) %/% long_step + 1)*long_step,
-                                unlist(nlong_cands)[unlist(lc_sel)[1]],
-                                unlist(nlong_cands)[unlist(lc_sel)[2]],
-                                unlist(nlong_cands)[unlist(lc_sel)[3]]),lat_dec)),
-           long_wrap = list(c(last_long, rep.int(next_last_long, n_cand)))) %>%
-    select(-nlong_cands, -lc_diff, -lc_sel)  %>%
-    tidyr::unnest(c(to_lat, to_long, long_wrap)) %>%
-    filter(!is.na(to_long)) %>% #possible cases
     ungroup() %>%
-    filter(to_lat>= lat_min & to_lat<=lat_max) %>%
-    #handle the date line
-    #wrap is useful for plotting
-    mutate(wrap = (to_long >= last_long | to_long <= long_min),
-           to_long = case_when(
-             to_long > long_max ~ long_min,
-             to_long < long_min ~ long_wrap,
-             TRUE ~ to_long
-           )) %>%
-    #tidy up
-    rename(from_long=long, from_lat=lat, from=id) %>%
-    # select(from, from_long, from_lat, to_long, to_lat) %>%
-    #get the to id
-    left_join(ll_grid_seed %>% select(id, long, lat) %>% rename(to=id),
-              by=c("to_long"="long", "to_lat"="lat"))
-  if (getOption("quiet",default=0)>0) message("Made the basic lattice:",round(Sys.time() - tstart,1))
+    mutate(grp  = row_number() %/% grp_size)  %>%
+    split(.$grp) %>%
+    purrr::map(
+      ~ group_by(., id) %>%
+        mutate(to_lat = list(round(c(lat + c(0,
+                                             withProgress(pb,
+                                                          rep.int,
+                                                          lat_step,
+                                                          n_cand))),
+                                   lat_dec)),
+               nlong_cands = list(round(seq.int(long_min, long_max,
+                                                by = coalesce(next_long_step,1.0)),
+                                        lat_dec)),
+               lc_diff = list(abs(unlist(nlong_cands) - long)),
+               lc_sel = list(which(rank(unlist(lc_diff)) <= n_cand)),
+               to_long = list(round(c(long_min + ((long+long_fudge - long_min) %/% long_step + 1)*long_step,
+                                      unlist(nlong_cands)[unlist(lc_sel)[1]],
+                                      unlist(nlong_cands)[unlist(lc_sel)[2]],
+                                      unlist(nlong_cands)[unlist(lc_sel)[3]]),lat_dec)),
+               long_wrap = list(c(last_long, rep.int(next_last_long, n_cand)))) %>%
+        select(-nlong_cands, -lc_diff, -lc_sel)  %>%
+        tidyr::unnest(c(to_lat, to_long, long_wrap)) %>%
+        filter(!is.na(to_long)) %>% #possible cases
+        ungroup() %>%
+        filter(to_lat>= lat_min & to_lat<=lat_max) %>%
+        #handle the date line
+        #wrap is useful for plotting
+        mutate(wrap = (to_long >= last_long | to_long <= long_min),
+               to_long = case_when(
+                 to_long > long_max ~ long_min,
+                 to_long < long_min ~ long_wrap,
+                 TRUE ~ to_long
+               )) %>%
+        #tidy up
+        rename(from_long=long, from_lat=lat, from=id) %>%
+        # select(from, from_long, from_lat, to_long, to_lat) %>%
+        #get the to id
+        left_join(ll_grid_seed %>% select(id, long, lat) %>% rename(to=id),
+                  by=c("to_long"="long", "to_lat"="lat"))
+    ) %>%
+    purrr::map_dfr(~ as.data.frame(.)) %>%
+    select(-grp)
+  if (getOption("quiet",default=0)>0) message("") #new line
 
 
   if (getOption("quiet", default=0)>0) message("Adding geo & distance to the lattice...")
