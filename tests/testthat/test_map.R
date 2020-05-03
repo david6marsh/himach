@@ -5,34 +5,35 @@ library(twospeed)
 test_that("Route mapping", {
   NZ_thin <- sf::st_transform(NZ_coast, crs=crs_Pacific)
   airports <- make_airports(crs = crs_Pacific, warn = FALSE)
+
   # speed map
-  expect_known_output(map_routes(NZ_thin, NZ_routes,
-                                crs = crs_Pacific,
-                                show_route="speed"),
-                      "known/NZ speed map")
+  expect_known_hash(map_routes(NZ_thin, NZ_routes,
+                               crs = crs_Pacific,
+                               show_route="speed"),
+                    hash = "ac5cef8acd" )
   # aircraft map
-  expect_known_output(map_routes(NZ_thin, NZ_routes,
+  expect_known_hash(map_routes(NZ_thin, NZ_routes,
                                  crs = crs_Pacific,
                                  show_route="aircraft"),
-                      "known/NZ aircraft map")
+                      hash = "164794012b")
 
    # time advantage - auto calculated
- expect_known_output(map_routes(NZ_thin, NZ_routes,
+ expect_known_hash(map_routes(NZ_thin, NZ_routes,
                                 crs = crs_Pacific),
-                      "known/NZ time map")
+                     hash = "9e793b0081")
 
  # circuity - auto calculated - on crs_Atlantic
- expect_known_output(map_routes(NZ_thin, NZ_routes,
+ expect_known_hash(map_routes(NZ_thin, NZ_routes,
                                 crs = crs_Pacific,
                                 show_route = "circuity"),
-                     "known/NZ circuity Pacific map")
+                     hash = "7c24ca5412")
 
  # time advantage calculated explicitly + frills
  rtes <- summarise_routes(NZ_routes, airports)
  routes <- NZ_routes %>%
    left_join(rtes %>% select(fullRouteID, advantage_h), by = "fullRouteID") %>%
    arrange(advantage_h)
- expect_known_output(map_routes(NZ_thin, routes,
+ expect_known_hash(map_routes(NZ_thin, routes,
                                 crs = crs_Pacific,
                                 fat_map = NZ_buffer30,
                                 ap_loc = airports,
@@ -40,15 +41,15 @@ test_that("Route mapping", {
                                   airports %>% filter(APICAO=="NZWN"),
                                 crow = TRUE,
                                 route_envelope = TRUE),
-                     "known/NZ time and frills map")
+                     hash = "6f612e1e6a")
 
 })
 
 test_that("World wrapping", {
   world <- st_as_sf(rnaturalearthdata::countries110)
 
-  expect_known_output(st_wrap_transform(world,
+  expect_known_hash(st_wrap_transform(world,
                                         crs_Pacific),
-                      "known/Natural World Pacific")
+                      "3edfc51f513f2bda70a29a542a9")
 
 })

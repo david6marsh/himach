@@ -3,14 +3,14 @@ library(twospeed)
 
 test_that("Default aircraft data loads", {
   expect_warning(make_aircraft())
-  expect_known_output(make_aircraft(warn = FALSE), "known/ac_default_load")
+  expect_known_value(make_aircraft(warn = FALSE), "known/ac_default_load")
 })
 
 test_that("Aircraft data loads", {
   ac <- data.frame(id = "test", type = "test aircraft",
                    over_sea_M = 2.0, over_land_M = 0.9, accel_Mpm = 0.2,
                    arrdep_kph = 300, range_km = 6000, stringsAsFactors=FALSE)
-  expect_known_output(make_aircraft(ac), "known/ac_load")
+  expect_known_value(make_aircraft(ac), "known/ac_load")
   #missing vbl
   ac <- data.frame(id = "test", type = "test aircraft",
                    over_sea_M = 2.0, over_land_M = 0.9,
@@ -26,12 +26,14 @@ test_that("Aircraft data loads", {
 
 test_that("Default airport data loads", {
   expect_message(make_airports())
-  expect_known_output(make_airports(), "known/ap_default_load")
+  expect_known_hash(make_airports(),
+                     hash = "d2946f76ec")
 })
 
 test_that("Airport data loads", {
   airports <- data.frame(APICAO = "TEST", lat = 10, long = 10, stringsAsFactors = FALSE)
-  expect_known_output(make_airports(airports), "known/ap_load")
+  expect_known_hash(make_airports(airports),
+                    hash = "d8a27d2f18")
 })
 
 test_that("NZ maps available", {

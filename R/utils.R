@@ -181,7 +181,7 @@ make_aircraft <- function(ac = NA, sound_kph = mach_kph, warn = TRUE){
            trans_h = (over_sea_M - over_land_M)/(accel_Mpm * 60))
 
   if (is.null(attr(ac, "aircraftSet"))) {
-    attr(ac_full, "aircraftSet") <- paste("Dummy aircraft", as.character(Sys.time()))
+    attr(ac_full, "aircraftSet") <- "Dummy aircraft"
   } else {
     attr(ac_full, "aircraftSet") <- attr(ac, "aircraftSet")
 

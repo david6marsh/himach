@@ -47,13 +47,14 @@ test_that("Find Leg",{
                     ap_loc = airports))
 
   airports <- make_airports(crs = crs_Pacific)
-  expect_known_output(
-    find_leg(aircraft[4,],
-                      make_AP2("NZAA","NZCH",airports),
-                      fat_map = NZ_buffer_Pac,
-                      route_grid = NZ_grid,
-                      ap_loc = airports),
-    "known/find_leg_default")
+  # can't test against a route with a timestamp!
+  routes <- find_leg(aircraft[4,],
+                     make_AP2("NZAA","NZCH",airports),
+                     fat_map = NZ_buffer_Pac,
+                     route_grid = NZ_grid,
+                     ap_loc = airports) %>%
+    select(-timestamp)
+  expect_known_hash(routes, hash = "9b24caa126")
 
   options("quiet" = old_quiet)
 })
@@ -68,23 +69,23 @@ test_that("Find Route",{
   NZ_buffer_Pac <- sf::st_transform(NZ_buffer30, crs=crs_Pacific)
 
   airports <- make_airports(crs = crs_Pacific)
-  expect_known_output(
-    find_route(aircraft[4,],
-                      make_AP2("NZAA","NZCH",airports),
-                      fat_map = NZ_buffer_Pac,
-                      route_grid = NZ_grid,
-                      ap_loc = airports),
-    "known/find_route_default")
+  routes <- find_route(aircraft[4,],
+                       make_AP2("NZAA","NZCH",airports),
+                       fat_map = NZ_buffer_Pac,
+                       route_grid = NZ_grid,
+                       ap_loc = airports) %>%
+    select(-timestamp)
+  expect_known_hash(routes, hash = "9b24caa126")
 
   # test with parallel subsonic aircraft
-  expect_known_output(
-    find_route(aircraft[1,],
+  routes <- find_route(aircraft[1,],
                        make_AP2("NZGS","NZDN",airports),
                        fat_map = NZ_buffer_Pac,
                        route_grid = NZ_grid,
                        ap_loc = airports,
-                       cf_subsonic = aircraft[3,]),
-    "known/find_route_cf_subsonic")
+                       cf_subsonic = aircraft[3,]) %>%
+    select(-timestamp)
+  expect_known_hash(routes, hash = "e21017d2a7")
 
   options("quiet" = old_quiet)
 })
@@ -103,12 +104,14 @@ test_that("Find Routes",{
                               ncol = 2, byrow = TRUE), stringsAsFactors = FALSE)
   ac <- aircraft[c(1,4), ]$id
 
-  expect_known_output(
-    find_routes(ac, ap2, aircraft, airports,
-                         fat_map = NZ_buffer_Pac,
-                         route_grid = NZ_grid,
-                         refuel = refuel_ap),
-    "known/find_routes_default")
+  invisible(capture.output(
+    routes <- find_routes(ac, ap2, aircraft, airports,
+                        fat_map = NZ_buffer_Pac,
+                        route_grid = NZ_grid,
+                        refuel = refuel_ap) %>%
+    select(-timestamp)
+  ))
+  expect_known_hash(routes, hash = "045569d467")
 
   options("quiet" = old_quiet)
 })
