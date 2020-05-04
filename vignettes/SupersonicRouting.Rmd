@@ -4,7 +4,7 @@ author: "David Marsh"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Supersonic Routing}
+  %\VignetteIndexEntry{Intro to Supersonic Routing}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -26,6 +26,7 @@ library(twospeed)
 library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
 library(ggplot2)
 library(sp)
+library(airportr)
 
 ```
 
@@ -173,8 +174,11 @@ You can control the amount of reporting during the creation of routes with the `
 options("quiet" = 4) #for some output
 # from Auckland to Christchurch
 ap2 <- make_AP2("NZAA","NZCH",airports)
-rm(rte_cache)
-rm(star_cache)
+
+# normally you do NOT want to do this, but for the vignette we
+# work without caches
+if (exists("rte_cache")) rm(rte_cache)
+if (exists("star_cache")) rm(star_cache)
 
 routes <- find_route(aircraft[4,], 
                      ap2,
@@ -210,10 +214,6 @@ Once you have some routes, you will probably want (a) a summary of the routes cr
 # create route summary
 rtes <- summarise_routes(routes, airports)
 
-# add each route's 'advantage_h' field to the detailed segments, so that it can be mapped
-routes <- routes %>% 
-  left_join(rtes, by = "fullRouteID") %>% 
-  arrange(advantage_h)
 
 # draw a basic map
 map_routes(NZ_coast_Pac, routes, crs = crs_Pacific, fat_map = NZ_buffer_Pac)
