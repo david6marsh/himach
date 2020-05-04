@@ -113,5 +113,19 @@ test_that("Find Routes",{
   ))
   expect_known_hash(routes, hash = "045569d467")
 
+  # and again with a no-fly zone
+  Buller_nofly <- sf::st_transform(NZ_Buller_buffer40, crs=crs_Pacific)
+  attr(Buller_nofly, "avoid") <- "Buller+40km" #required for correct caching
+
+  invisible(capture.output(
+    routes <- find_routes(ac, ap2, aircraft, airports,
+                          fat_map = NZ_buffer_Pac,
+                          route_grid = NZ_grid,
+                          refuel = refuel_ap,
+                          avoid = Buller_nofly) %>%
+      select(-timestamp)
+  ))
+  expect_known_hash(routes, hash = "0780500293")
+
   options("quiet" = old_quiet)
 })

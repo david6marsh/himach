@@ -912,10 +912,15 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
 
   #check if need to avoid areas
   if (!is.na(avoid)){
+    # remove the avoid aread from the search grid
+    z <- st_intersects(avoid, route_grid@lattice$geometry, sparse=FALSE)
+    #remove this from lattice
+    route_grid@lattice <- route_grid@lattice %>% filter(!z)
+
     #need an extra map
     #for over-sea flight ensure the avoid areas are included, so they are not allowed
     fat_map <- st_union(fat_map, avoid)
-    if (getOption("quiet",default=0)>2) message("  Merged map and avoid areas: ",round(Sys.time() - tstart,1))
+    if (getOption("quiet",default=0)>2) message("  Adjusted for avoid areas: ", round(Sys.time() - tstart,1))
     #and for non-seas flight, also need to avoid 'avoid'
   }
 

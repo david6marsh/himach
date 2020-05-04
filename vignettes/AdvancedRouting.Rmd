@@ -81,33 +81,28 @@ Here we illustrate a few use cases for more general management of the cache. Fir
 ```{r inspecting the cache}
 #first create a cache ----
 # need to load some of the built-in data
-ac <- make_aircraft()
+aircraft <- make_aircraft()
 airports <- make_airports(crs = crs_Pacific) 
 refuel_ap <- airports %>%
   filter(APICAO=="NZWN")
 NZ_buffer_Pac <- sf::st_transform(twospeed::NZ_buffer30, crs=crs_Pacific)
 
-aps <- rbind(make_AP2("NZAA","NZCH",airports), make_AP2("NZAA","NZDN",airports),
-             make_AP2("NZAA","NZQN",airports), make_AP2("NZWN","NZQN",airports),
-             make_AP2("NZGS","NZCH",airports))
+ap2 <- matrix(c("NZAA","NZCH","NZAA","NZDN","NZGS","NZCH"), 
+              ncol = 2, byrow = TRUE)
+ac <- aircraft[c(1,4), ]$id
 
-options("quiet"= 1)
-NZ_routes <- purrr::reduce(lapply(
-  1:nrow(aps),
-  function(x) find_route(ac[4,],
-                        aps[x,],
-                        NZ_buffer_Pac,
-                        refuel = refuel_ap, refuel_topN = 1,
-                        refuel_only_if = TRUE,
-                        route_grid = NZ_grid,
-                        ap_loc = airports)),
-  rbind)
+options("quiet" = 0) # just the progress bar
+NZ_routes <- find_routes(ac, ap2, aircraft, airports,
+                      fat_map = NZ_buffer_Pac, 
+                     route_grid = NZ_grid,
+                     refuel = refuel_ap)
 
 # now have the 2 caches ----
 
 # Use case 1: How big is my cache?
 length(rte_cache)
 length(star_cache)
+# quiz: why are they not the same length?
 
 # Use case 2: find and remove a single leg
 # find matching elements in the rte cache - here for NZAA
@@ -117,10 +112,11 @@ rm("M22_test-NZAA-NZCH--TRUE-TRUE-NA-TRUE-100-12", envir = rte_cache)
 
 # Use case 3: remove all legs for a given airport
 length(rte_cache)
-rm(list=ls(rte_cache, pattern="NZCH"), envir = rte_cache)
+rm(list=ls(rte_cache, pattern="NZDN"), envir = rte_cache)
 length(rte_cache)
 
 # Use case 4: check for out-of-date elements in the cache
+# in this case check if consistent with 'new' version where there are 24 variables
 # get number of variables in each element in rte cache
 rte_cols <- lapply(1:length(rte_cache), function(x) length(get(ls(rte_cache)[1], rte_cache)))
 wrong <- which(rte_cols != 24)
@@ -145,37 +141,33 @@ In this example, no offence is intended to the citizens of Buller District; it i
 # NZ_Buller_u <- sf::st_union(sf::st_simplify(NZ_Buller, dTolerance = 1000))
 # NZ_Buller_buffer50 <- sf::st_union(sf::st_buffer(NZ_Buller_u, 50 * 1000))
 # attr(NZ_Buller_buffer50, "avoid") <- "Buller+50km"
-# give the details of this
+# the quicker version, using a built-in no fly zone
 Buller_nofly <- sf::st_transform(NZ_Buller_buffer40, crs=crs_Pacific)
 attr(Buller_nofly, "avoid") <- "Buller+40km" #required for correct caching
 
 # run the same routes, but with the avoid region
-options("quiet"= 1)
-routes <- purrr::reduce(lapply(
-  1:nrow(aps),
-  function(x) find_route(ac[4,],
-                        aps[x,],
-                        NZ_buffer_Pac,
-                        refuel = refuel_ap, refuel_topN = 1,
-                        refuel_only_if = TRUE,
-                        route_grid = NZ_grid,
-                        ap_loc = airports,
-                        avoid = Buller_nofly)),
-  rbind)
+options("quiet"= 0) #just the progress bar
+ac <- aircraft[c(4), ]$id
+routes <- find_routes(ac, ap2, aircraft, airports,
+                      fat_map = NZ_buffer_Pac, 
+                      route_grid = NZ_grid,
+                      refuel = refuel_ap,
+                      cf_subsonic = aircraft[3,],
+                      avoid = Buller_nofly)
 
 #this shows versions of the legs with and without no-fly
 ls(rte_cache, pattern = "NZCH")
 
 # create route summary
 rtes <- summarise_routes(routes, airports)
-# add each route's 'advantage_h' field to the detailed segments, so that it can be mapped
-routes <- routes %>% 
-  left_join(rtes, by = "fullRouteID") %>% 
-  arrange(advantage_h)
 
 # draw a basic map
 NZ_coast_Pac <- sf::st_transform(twospeed::NZ_coast, crs=crs_Pacific)
 map_routes(NZ_coast_Pac, routes, crs = crs_Pacific, fat_map = NZ_buffer_Pac,
+          avoid_map = Buller_nofly)
+
+map_routes(NZ_coast_Pac, routes, show_route = "aircraft",
+           crs = crs_Pacific, fat_map = NZ_buffer_Pac,
           avoid_map = Buller_nofly)
 
 ```
