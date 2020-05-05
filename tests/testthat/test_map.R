@@ -1,53 +1,57 @@
-Sys.setenv("R_TESTS" = "") # https://github.com/r-lib/testthat/issues/86 refers, but does not solve my issue with test_coverage
 library(Mach2)
 library(dplyr)
 
+# Hadley rules out hash as not helpful: https://groups.google.com/forum/#!msg/ggplot2/JEvC86l_otA/i7k0yTDt2_UJ
+# vdiffr says may not be useful for sf objects - which is everything here :-(
+
+# for the moment, limit to testing that the maps return ggplot objects, without fail
 
 test_that("Route mapping", {
   NZ_thin <- sf::st_transform(NZ_coast, crs=crs_Pacific)
   airports <- make_airports(crs = crs_Pacific, warn = FALSE)
 
   # speed map
-  expect_known_hash(map_routes(NZ_thin, NZ_routes,
+  expect_silent(z <- map_routes(NZ_thin, NZ_routes,
                                crs = crs_Pacific,
-                               show_route="speed"),
-                    hash = "4a360e96f9" )
+                               show_route="speed"))
+  expect_true("ggplot" %in% class(z))
+
   # aircraft map
-  expect_known_hash(map_routes(NZ_thin, NZ_routes,
+  expect_silent(z <- map_routes(NZ_thin, NZ_routes,
                                  crs = crs_Pacific,
-                                 show_route="aircraft"),
-                      hash = "a3db60cfc3")
+                                 show_route="aircraft"))
+  expect_true("ggplot" %in% class(z))
 
    # time advantage - auto calculated
- expect_known_hash(map_routes(NZ_thin, NZ_routes,
-                                crs = crs_Pacific),
-                     hash = "c87d33b068")
+ expect_silent(z <- map_routes(NZ_thin, NZ_routes,
+                                crs = crs_Pacific))
+ expect_true("ggplot" %in% class(z))
 
  # circuity - auto calculated - on crs_Atlantic
- expect_known_hash(map_routes(NZ_thin, NZ_routes,
+ expect_silent(z <- map_routes(NZ_thin, NZ_routes,
                                 crs = crs_Pacific,
-                                show_route = "circuity"),
-                     hash = "8a1c6f5f21")
+                                show_route = "circuity"))
+ expect_true("ggplot" %in% class(z))
 
  # time advantage calculated explicitly + frills
  rtes <- summarise_routes(NZ_routes, airports)
  routes <- NZ_routes %>%
    left_join(rtes %>% select(fullRouteID, advantage_h), by = "fullRouteID") %>%
    arrange(advantage_h)
- expect_known_hash(map_routes(NZ_thin, routes,
+ expect_silent(z <- map_routes(NZ_thin, routes,
                               crs = crs_Pacific,
                               fat_map = NZ_buffer30,
                               ap_loc = airports,
                               refuel_airports =
                                 airports %>% filter(APICAO=="NZWN"),
                               crow = TRUE,
-                              route_envelope = TRUE),
-                   hash = "0580bd566b")
+                              route_envelope = TRUE))
+ expect_true("ggplot" %in% class(z))
 
 })
 
 test_that("World wrapping", {
-  world <- st_as_sf(rnaturalearthdata::countries110)
+  world <- sf::st_as_sf(rnaturalearthdata::countries110)
 
   expect_known_hash(st_wrap_transform(world,
                                         crs_Pacific),

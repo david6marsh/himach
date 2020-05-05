@@ -33,7 +33,7 @@ distFromLand <- function(long, lat, land){
   #long and lat are vectors, land is a map (sfc_MULTIPOLYGON)
   if (is.na(land)) return(0)
   mp <- st_transform(st_cast(st_sfc(
-    st_multipoint(matrix(c(long, lat),ncol=2)),crs=Mach2:::crs_latlong),'POINT'),
+    st_multipoint(matrix(c(long, lat),ncol=2)),crs=crs_latlong),'POINT'),
     crs=st_crs(land))
   as.vector(st_distance(mp, land))/1000
 }
@@ -43,7 +43,7 @@ distFromLand <- function(long, lat, land){
 #this will be called recursively
 findGC <- function(subp, withMap, avoidMap){
 
-  if(getOption("quiet",default=0)>2) message("  ",first(subp$phase), " ",
+  if(getOption("quiet", default=0)>2) message("  ",first(subp$phase), " ",
                                              first(subp$phaseID), "  ", nrow(subp))
 
   #if is.na(avoidMap) then a simplified approach for the non-sea phases
@@ -55,11 +55,11 @@ findGC <- function(subp, withMap, avoidMap){
   #land or transition, we assume a single GC
   #sea, but single step, then the same
   if ((first(subp$phase) != "sea" & is.na(useMap)) | length(subp) == 1){
-    if (nrow(subp)==1) subp %>% select(phase, phaseID, id)
+    if (nrow(subp)==1) subp %>% select(.data$phase, .data$phaseID, .data$id)
     else {
-      subp %>% summarise(phase = first(phase),
-                         phaseID = first(phaseID),
-                         id = first(id))
+      subp %>% summarise(phase = first(.data$phase),
+                         phaseID = first(.data$phaseID),
+                         id = first(.data$id))
     }
   }
   else {
@@ -74,11 +74,11 @@ findGC <- function(subp, withMap, avoidMap){
     #just extract the single binary result
     sea_only <- ! as.logical(st_intersects(test_line, useMap, sparse=FALSE))
     if (sea_only) {
-      if (nrow(subp)==1) subp %>% select(phase, phaseID, id)
+      if (nrow(subp)==1) subp %>% select(.data$phase, .data$phaseID, .data$id)
       else {
-        subp %>% summarise(phase = first(phase),
-                           phaseID = first(phaseID),
-                           id = first(id))
+        subp %>% summarise(phase = first(.data$phase),
+                           phaseID = first(.data$phaseID),
+                           id = first(.data$id))
       }
     }
     else {
@@ -97,9 +97,9 @@ findGC <- function(subp, withMap, avoidMap){
         TRUE ~ which.min(subp$fromLand_km[2:(nrow(subp)-2)]) + 1)
       #recurse - extending phaseID each time
       bind_rows( findGC(subp %>% slice(1:split) %>%
-                          mutate(phaseID=paste0(phaseID,"0")), withMap, avoidMap),
+                          mutate(phaseID=paste0(.data$phaseID,"0")), withMap, avoidMap),
                  findGC(subp %>% slice(split:nrow(subp)) %>%
-                          mutate(phaseID=paste0(phaseID,"1")), withMap, avoidMap))
+                          mutate(phaseID=paste0(.data$phaseID,"1")), withMap, avoidMap))
     }
   }
 }
@@ -116,8 +116,8 @@ emptyRoute <- function(ac, ap2, fat_map,
              from_long = ap2$from_long, from_lat = ap2$from_lat,
              to_long = ap2$to_long, to_lat = ap2$to_lat,
 
-             gcdist_km = geosphere::distGeo(c(ap2$from_long,ap2$from_lat),
-                                 c(ap2$to_long,ap2$to_lat))/1000,
+             gcdist_km = geosphere::distGeo(c(ap2$from_long, ap2$from_lat),
+                                 c(ap2$to_long, ap2$to_lat))/1000,
              routeID = ap2$AP2,
              acID = ac$id,
              acType = ac$type,
@@ -128,12 +128,12 @@ emptyRoute <- function(ac, ap2, fat_map,
              fullRouteID = ap2$AP2,
              refuel_ap = NA,
              stringsAsFactors = FALSE) %>%
-    mutate(gc = st_sfc(st_linestring(),crs=Mach2:::crs_latlong), #for want of anything else NULL sfc
-           crow = st_gcIntermediate(p1=c(ap2$from_long,ap2$from_lat),
-                                    p2=c(ap2$to_long,ap2$to_lat),
+    mutate(gc = st_sfc(st_linestring(),crs=crs_latlong), #for want of anything else NULL sfc
+           crow = st_gcIntermediate(p1=c(ap2$from_long, ap2$from_lat),
+                                    p2=c(ap2$to_long, ap2$to_lat),
                                     n = 30, addStartEnd=TRUE,
-                                    crs=Mach2:::crs_latlong),
-           envelope = st_sfc(st_polygon(),crs=Mach2:::crs_latlong))
+                                    crs=crs_latlong),
+           envelope = st_sfc(st_polygon(),crs=crs_latlong))
 }
 
 
@@ -151,8 +151,8 @@ emptyRoute <- function(ac, ap2, fat_map,
 #' For more details see \code{\link{find_route}}
 #'
 #'
-#' @param ac A vector of aircraft IDs, as column 'id' from \code{\link{make_aircraft}}
-#' @param ap2 A 2-column matrix or dataframe of airport pair text IDs
+#' @param ac_ids A vector of aircraft IDs, as column 'id' from \code{\link{make_aircraft}}
+#' @param ap2_ids A 2-column matrix or dataframe of airport pair text IDs
 #' @param aircraft Specification of the aircraft, see \code{\link{make_aircraft}}
 #' @param airports Airport locations as from \code{\link{make_airports}}
 #' @param ... Other parameters, passed to \code{\link{find_route}}.
@@ -165,10 +165,11 @@ emptyRoute <- function(ac, ap2, fat_map,
 #'
 #' @examples
 #' # need to load some of the built-in data
+#' library(dplyr)
 #' aircraft <- make_aircraft()
 #' airports <- make_airports(crs = crs_Pacific) %>%
-#'     filter(substr(APICAO,1,1)=="N") #just around New Zealand
-#' NZ_buffer <- sf::st_transform(NZ_b, crs=crs_Pacific)
+#'    filter(substr(APICAO,1,1) == "N") #just around New Zealand
+#' NZ_buffer <- sf::st_transform(NZ_buffer30, crs=crs_Pacific)
 #'
 #' options("quiet" = 4) #for heavy reporting
 #' # from Auckland to Christchurch
@@ -186,7 +187,7 @@ find_routes <- function(ac_ids, ap2_ids, aircraft, airports, ...){
 
   combos <- tidyr::crossing(ac_ids, ap2_ids)
   names(combos) <- c("ac","ap1","ap2")
-  pb <- txtProgressBar(max = nrow(combos), style = 3)
+  pb <- utils::txtProgressBar(max = nrow(combos), style = 3)
   routes <- purrr::reduce(lapply(1:nrow(combos),
                                  function(x) {
                                    ac <- aircraft[aircraft$id == combos$ac[x], ]
@@ -195,7 +196,7 @@ find_routes <- function(ac_ids, ap2_ids, aircraft, airports, ...){
                                                    airports)
                                    r <- find_route(ac, ap2,
                                                    ap_loc = airports, ...)
-                                   setTxtProgressBar(pb, x)
+                                   utils::setTxtProgressBar(pb, x)
                                    message("") # new line
                                    return(r)
                                  }
@@ -208,24 +209,24 @@ find_routes <- function(ac_ids, ap2_ids, aircraft, airports, ...){
 
 #' Find best route between 2 airports
 #'
-#' \code{find_route} finds the quickest route between two airports, refuelling if
-#' necessary
+#' \code{find_route} finds the quickest route between two airports, refuelling
+#' if necessary
 #'
 #' This function finds the quickest route between two airports. A 'route' is
 #' made up of one or two 'legs' (airport to airport without intermediate stop).
 #' \code{find_route} makes one or more calls to \code{find_leg} as required.
 #'
-#' It assumes that the routing grid, \code{route_grid}, has already been classified as
-#' land or sea using the map \code{fat_map}. The map is further used when
-#' converting the grid-based route to one of great circles segments.
+#' It assumes that the routing grid, \code{route_grid}, has already been
+#' classified as land or sea using the map \code{fat_map}. The map is further
+#' used when converting the grid-based route to one of great circles segments.
 #'
 #'
 #' @section Refuelling:
 #'
 #'   If either necessary, because the great circle distance is greater than the
-#'   aircraft range, or because \code{refuel_only_if} is FALSE, \code{find_route}
-#'   searches through a list of refuelling airports and chooses the quickest one
-#'   (or \code{refuel_topN}).
+#'   aircraft range, or because \code{refuel_only_if} is FALSE,
+#'   \code{find_route} searches through a list of refuelling airports and
+#'   chooses the quickest one (or \code{refuel_topN}).
 #'
 #'   Circuitous refuelling is avoided, tested against total distance <
 #'   \code{max_circuity} * great circle distance.
@@ -240,18 +241,20 @@ find_routes <- function(ac_ids, ap2_ids, aircraft, airports, ...){
 #' @param ap2 One airport pair, as from \code{\link{make_AP2}}
 #' @param fat_map \code{sf::MULTIPOLYGON} map of land, including buffer
 #' @param avoid \code{sf::MULTIPOLYGON} map of areas not to fly over
-#' @param route_grid \code{GridLat} routing grid as from \code{\link{make_route_grid}}
+#' @param route_grid \code{GridLat} routing grid as from
+#'   \code{\link{make_route_grid}}
 #' @param cf_subsonic Further aircraft to use as comparator, default NA. [not
 #'   recommended]
-#' @param refuel Airports available for refuelling
+#' @param refuel Airports available for refuelling, dataframe with \code{APICAO,
+#'   long, lat}
 #' @param refuel_h Duration of refuelling stop, in hours
 #' @param refuel_only_if If TRUE (default) only test refuel options if necessary
 #'   because the great circle distance is too far for the aircraft range
 #' @param refuel_topN Return the best N (default 1) refuelling options
 #' @param max_circuity Threshold for excluding refuelling stops (default 2.0)
 #' @param ap_loc Airport locations as from \code{\link{make_airports}}
-#' @param ... Other parameters, passed to \code{\link{find_leg}} and thence to to
-#'   \code{\link{make_route_envelope}}.
+#' @param ... Other parameters, passed to \code{\link{find_leg}} and thence to
+#'   to \code{\link{make_route_envelope}}.
 #'
 #'
 #' @return Dataframe with details of the route
@@ -264,10 +267,11 @@ find_routes <- function(ac_ids, ap2_ids, aircraft, airports, ...){
 #'
 #' @examples
 #' # need to load some of the built-in data
+#' library(dplyr)
 #' aircraft <- make_aircraft()
 #' airports <- make_airports(crs = crs_Pacific) %>%
-#'     filter(substr(APICAO,1,1)=="N") #just around New Zealand
-#' NZ_buffer <- sf::st_transform(NZ_b, crs=crs_Pacific)
+#'     filter(substr(APICAO, 1, 1) == "N") #just around New Zealand
+#' NZ_buffer <- sf::st_transform(NZ_buffer30, crs=crs_Pacific)
 #'
 #' options("quiet" = 4) #for heavy reporting
 #' # from Auckland to Christchurch
@@ -287,7 +291,7 @@ find_route <- function(ac, ap2, fat_map, avoid=NA, route_grid, cf_subsonic=NA,
   #cf_subsonic is either NA or a line from the ac dataframe, like ac itself
   #refuel is either NA or a dataframe list APICAO, lat, long at least, with ap_locs
 
-  if (getOption("quiet",default=0)>0) message("Route:-",ap2$AP2,"----") #route header v refuel subroutes
+  if (getOption("quiet", default=0)>0) message("Route:-", ap2$AP2,"----") #route header v refuel subroutes
 
   # #debug  - find good crs
   # useCRS <- "+proj=laea +lon_0=150 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
@@ -298,10 +302,10 @@ find_route <- function(ac, ap2, fat_map, avoid=NA, route_grid, cf_subsonic=NA,
   #note ap2$routeID is in a specific order, but ADEP/ADES might not reflect that
   #switch if necessary
   ap2 <- ap2 %>%
-    select(AP2, ADEP, ADES, ends_with("_long"), ends_with("_lat"), gcdist_km) %>%
-    mutate(ADEP= stringr::str_split(AP2,"(<>)|(>)|(<)", simplify=TRUE)[1],
-           ADES= stringr::str_split(AP2,"(<>)|(>)|(<)", simplify=TRUE)[2])
-  sep <- stringr::str_remove_all(ap2$AP2,paste0("(",ap2$ADEP,")|(",ap2$ADES,")")) #get separator "<>",">"
+    select(.data$AP2, .data$ADEP, .data$ADES, ends_with("_long"), ends_with("_lat"), .data$gcdist_km) %>%
+    mutate(ADEP= stringr::str_split(.data$AP2,"(<>)|(>)|(<)", simplify=TRUE)[1],
+           ADES= stringr::str_split(.data$AP2,"(<>)|(>)|(<)", simplify=TRUE)[2])
+  sep <- stringr::str_remove_all(ap2$AP2,paste0("(", ap2$ADEP,")|(", ap2$ADES,")")) #get separator "<>",">"
   unidirectional <- (sep==">")
 
   #can aircraft make it without refuelling?
@@ -311,14 +315,14 @@ find_route <- function(ac, ap2, fat_map, avoid=NA, route_grid, cf_subsonic=NA,
   if (ap2range_ok) routes <- find_leg(ac, ap2, ap_loc = ap_loc,
                                              fat_map=fat_map, route_grid = route_grid, avoid = avoid, ...)
   else {
-    if (getOption("quiet",default=0)>1) message(" Too far for one leg.")
+    if (getOption("quiet", default=0)>1) message(" Too far for one leg.")
     routes <- emptyRoute(ac, ap2, fat_map)
   }
 
   #do a parallel run for a subsonic aircraft - a true baseline?
   #not advised - just use the M084 estimate
   if (is.data.frame(cf_subsonic)) {
-    if (getOption("quiet",default=0)>1) message(" Adding subsonic, without range bounds.")
+    if (getOption("quiet", default=0)>1) message(" Adding subsonic, without range bounds.")
     r_subsonic <- find_leg(cf_subsonic, ap2, ap_loc = ap_loc,
                                   enforce_range = FALSE,
                                   fat_map=fat_map, route_grid = route_grid, avoid=avoid, ...)
@@ -330,38 +334,38 @@ find_route <- function(ac, ap2, fat_map, avoid=NA, route_grid, cf_subsonic=NA,
     #find triples: AREF in range of ADEP and ADES
     r_ap3 <- ap2 %>%
       tidyr::crossing(refuel %>%
-                 select(APICAO, long, lat) %>%
-                 rename(AREF=APICAO, ref_long=long, ref_lat=lat)) %>%
+                 select(.data$APICAO, .data$long, .data$lat) %>%
+                 rename(AREF=.data$APICAO, ref_long=.data$long, ref_lat=.data$lat)) %>%
       rowwise() %>%
-      mutate(dep_ref_km = geosphere::distGeo(c(from_long,from_lat),
-                                  c(ref_long,ref_lat))/1000,
-             ref_des_km = geosphere::distGeo(c(ref_long,ref_lat),
-                                  c(to_long,to_lat))/1000) %>%
+      mutate(dep_ref_km = geosphere::distGeo(c(.data$from_long, .data$from_lat),
+                                  c(.data$ref_long, .data$ref_lat))/1000,
+             ref_des_km = geosphere::distGeo(c(.data$ref_long, .data$ref_lat),
+                                  c(.data$to_long, .data$to_lat))/1000) %>%
       ungroup() %>%
-      filter(dep_ref_km < ac$range_km & ref_des_km < ac$range_km) %>%
-      filter((AREF != ADEP) & (AREF != ADES)) %>% #can't refuel at start or end!
+      filter(.data$dep_ref_km < ac$range_km & .data$ref_des_km < ac$range_km) %>%
+      filter((.data$AREF != .data$ADEP) & (.data$AREF != .data$ADES)) %>% #can't refuel at start or end!
       #if 1 or more under circuity then filter
-      mutate(circuity = (dep_ref_km + ref_des_km)/ap2$gcdist_km,
-             n_under_circ = sum(circuity < max_circuity)) %>%
-      filter((n_under_circ<2)|(circuity < max_circuity))
+      mutate(circuity = (.data$dep_ref_km + .data$ref_des_km)/ap2$gcdist_km,
+             n_under_circ = sum(.data$circuity < max_circuity)) %>%
+      filter((.data$n_under_circ<2)|(.data$circuity < max_circuity))
 
     if (nrow(r_ap3) < 1) {
-      message("No refuel options for ",ap2$AP2)
+      message("No refuel options for ", ap2$AP2)
     } else {
       #simplify to distinct AP2 (there may be some duplicates, eg Heathrow-Gander appearing for -SFO & -LAX)
       r_ap2 <- r_ap3 %>%
-        select(ADEP, AREF, from_long, from_lat, ref_long, ref_lat) %>%
-        rename(ADES=AREF, to_long=ref_long, to_lat=ref_lat) %>%
+        select(.data$ADEP, .data$AREF, .data$from_long, .data$from_lat, .data$ref_long, .data$ref_lat) %>%
+        rename(ADES=.data$AREF, to_long=.data$ref_long, to_lat=.data$ref_lat) %>%
         rbind(r_ap3 %>%
-                select(AREF, ADES, ref_long, ref_lat, to_long, to_lat) %>%
-                rename(ADEP=AREF, from_long=ref_long, from_lat=ref_lat)) %>%
+                select(.data$AREF, .data$ADES, .data$ref_long, .data$ref_lat, .data$to_long, .data$to_lat) %>%
+                rename(ADEP=.data$AREF, from_long=.data$ref_long, from_lat=.data$ref_lat)) %>%
         distinct() %>%
         rowwise() %>%
-        mutate(gcdist_km = geosphere::distGeo(c(from_long, from_lat),
-                                       c(to_long, to_lat))/1000,
+        mutate(gcdist_km = geosphere::distGeo(c(.data$from_long, .data$from_lat),
+                                       c(.data$to_long, .data$to_lat))/1000,
                AP2=ifelse(unidirectional,
-                          paste(ADEP,ADES,sep=sep),
-                          concat_ADEPADES(ADEP, ADES, FALSE))) #get it in the 'right' order (for the cache)
+                          paste(.data$ADEP, .data$ADES,sep=sep),
+                          paste_ADEPADES(.data$ADEP, .data$ADES, FALSE))) #get it in the 'right' order (for the cache)
 
 
       # w <- lapply(1:nrow(r_ap2), function(x) find_leg(ac, r_ap2[x, ], fat_map=fat_map, route_grid = route_grid, avoid=avoid,
@@ -375,55 +379,55 @@ find_route <- function(ac, ap2, fat_map, avoid=NA, route_grid, cf_subsonic=NA,
       #extract the best from these options
       #add some variables
       refuel_options <- refuel_options %>%
-        mutate(legs = ifelse(routeID==ap2$AP2, 1, 2),
-               leg_id = ifelse(grepl(ap2$ADEP,routeID), 1, 2),
-               refuel_ap = stringr::str_remove_all(routeID,
-                                                   paste0("(",ap2$ADEP,")|(<>)|(>)|(",ap2$ADES,")")),
+        mutate(legs = ifelse(.data$routeID==ap2$AP2, 1, 2),
+               leg_id = ifelse(grepl(ap2$ADEP,.data$routeID), 1, 2),
+               refuel_ap = stringr::str_remove_all(.data$routeID,
+                                                   paste0("(", ap2$ADEP,")|(<>)|(>)|(", ap2$ADES,")")),
                routeID = ap2$AP2,
-               fullRouteID = paste(ap2$ADEP, refuel_ap, ap2$ADES,
+               fullRouteID = paste(ap2$ADEP, .data$refuel_ap, ap2$ADES,
                                    sep=sep))
 
       best_routes <- refuel_options %>%
-        group_by(fullRouteID) %>%
+        group_by(.data$fullRouteID) %>%
         summarise(time_h = sum(time_h),
-                  dist_km = sum(gcdist_km)) %>%
+                  dist_km = sum(.data$gcdist_km)) %>%
         filter(!is.na(time_h)) %>%  #drop any failed direct route
         top_n(-refuel_topN, time_h) %>%
-        pull(fullRouteID)
+        pull(.data$fullRouteID)
 
       #now re-order to get the sequence right (only really imporatnt for speed profile)
       best_refuel_options <-  refuel_options %>%
-        filter(fullRouteID %in% best_routes) %>%
-        group_by(fullRouteID, leg_id) %>%
+        filter(.data$fullRouteID %in% best_routes) %>%
+        group_by(.data$fullRouteID, .data$leg_id) %>%
         #now check if need to reverse order
         #with refuelling we want the phases to be in the right order and join up in the middle
-        mutate(grid_s = head(grid[[1]],1),
-               grid_e = tail(grid[[1]],1),
-               reverse = (leg_id==1 & grid_s != stringr::str_split(routeID,"(<>)|(>)",simplify=TRUE)[1])|
-                 (leg_id==2 & grid_e!= stringr::str_split(routeID,"(<>)|(>)",simplify=TRUE)[2]),
-               order = if_else(reverse, -row_number(),row_number()),
-               temp = from,
-               from = if_else(reverse, to, from),
-               to = if_else(reverse, temp, to),
-               reverse = reverse & !(row_number()==n()), #don't reverse data in last row, since arr/dep leg is alway from AP
-               temp= from_lat,
-               from_lat = if_else(reverse, to_lat, from_lat),
-               to_lat = if_else(reverse, temp, to_lat),
-               temp= from_long,
-               from_long = if_else(reverse, to_long, from_long),
-               to_long = if_else(reverse, temp, to_long)) %>%
-        arrange(fullRouteID, leg_id, order) %>%
-        select(-grid_s, -grid_e, -reverse, -temp) #drop order later
+        mutate(grid_s = utils::head(.data$grid[[1]],1),
+               grid_e = utils::tail(.data$grid[[1]],1),
+               reverse = (.data$leg_id==1 & .data$grid_s != stringr::str_split(.data$routeID,"(<>)|(>)",simplify=TRUE)[1])|
+                 (.data$leg_id==2 & .data$grid_e!= stringr::str_split(.data$routeID,"(<>)|(>)",simplify=TRUE)[2]),
+               order = if_else(.data$reverse, -row_number(),row_number()),
+               temp = .data$from,
+               from = if_else(.data$reverse, .data$to, .data$from),
+               to = if_else(.data$reverse, .data$temp, .data$to),
+               reverse = .data$reverse & !(row_number()==n()), #don't reverse data in last row, since arr/dep leg is alway from AP
+               temp= .data$from_lat,
+               from_lat = if_else(.data$reverse, .data$to_lat, .data$from_lat),
+               to_lat = if_else(.data$reverse, .data$temp, .data$to_lat),
+               temp= .data$from_long,
+               from_long = if_else(.data$reverse, .data$to_long, .data$from_long),
+               to_long = if_else(.data$reverse, .data$temp, .data$to_long)) %>%
+        arrange(.data$fullRouteID, .data$leg_id, order) %>%
+        select(-.data$grid_s, -.data$grid_e, -.data$reverse, -.data$temp) #drop order later
 
       #base the refuel legs on the last row of the first leg - for lat long, etc
       refuel_legs <- best_refuel_options %>%
-        group_by(fullRouteID) %>%
-        filter(leg_id==1) %>%
+        group_by(.data$fullRouteID) %>%
+        filter(.data$leg_id==1) %>%
         filter(row_number() == n()) %>%
         mutate(phase = factor("refuel", levels = lattice_phases),
-               from = to,
+               from = .data$to,
                time_h = refuel_h,
-               from_long = to_long, from_lat = to_lat,
+               from_long = .data$to_long, from_lat = .data$to_lat,
                gcdist_km = 0,
                speed_kph = 0,
                leg_id = 1.5)
@@ -431,18 +435,18 @@ find_route <- function(ac, ap2, fat_map, avoid=NA, route_grid, cf_subsonic=NA,
       #need to use rbind not bind_rows because of the sf
       sel_routes <- rbind.data.frame(best_refuel_options, refuel_legs)
       sel_routes <-  sel_routes %>%
-        arrange(fullRouteID, leg_id, order) %>%
-        group_by(fullRouteID) %>%
+        arrange(.data$fullRouteID, .data$leg_id, order) %>%
+        group_by(.data$fullRouteID) %>%
         #renumber the phases
         mutate(phaseChange = case_when(
           row_number() == 1 ~ 1L,
           phase != lag(phase) ~ 1L,
           TRUE ~ 0L),
-          phaseID = paste0(cumsum(phaseChange),".",stringr::str_split(phaseID,
+          phaseID = paste0(cumsum(.data$phaseChange), ".", stringr::str_split(.data$phaseID,
                                                                       stringr::coll("."),
                                                                       simplify=TRUE)[,2]),
-          timestamp = first(timestamp)) %>%
-        select(-phaseChange, -order)
+          timestamp = first(.data$timestamp)) %>%
+        select(-.data$phaseChange, -order)
 
       routes <- rbind.data.frame(routes, sel_routes)
     }
@@ -472,7 +476,7 @@ findToCToD <- function(ap, route_grid, fat_map, ac,
 
   #if this query has not already been cached, calculate its value
   if (!exists(cache_as, envir=star_cache, inherits=F)) {
-    if (getOption("quiet",default=0)>2) message("  TOC/TOD not cached: calculating...")
+    if (getOption("quiet", default=0)>2) message("  TOC/TOD not cached: calculating...")
     assign(cache_as, findToCToD_really(ap, route_grid, fat_map, ac,
                                        ad_dist, ad_nearest), star_cache)
   }
@@ -493,31 +497,31 @@ findToCToD_really <- function(ap, route_grid, fat_map, ac,
   colnames(y)<- ap$APICAO
   w <- data.frame(y) %>%
     gather("AP","dist_m") %>%
-    rename(from = AP) %>% #we use the AP ICAO code as the node ID
-    group_by(from) %>%
+    rename(from = .data$AP) %>% #we use the AP ICAO code as the node ID
+    group_by(.data$from) %>%
     mutate(to = as.character(route_grid@points$id),
-           dist_m = units::drop_units(dist_m),
-           near_m = abs(dist_m - ad_dist)) %>% #compare to target distance
-    arrange(near_m) %>%
-    select(-near_m) %>%
+           dist_m = units::drop_units(.data$dist_m),
+           near_m = abs(.data$dist_m - ad_dist)) %>% #compare to target distance
+    arrange(.data$near_m) %>%
+    select(-.data$near_m) %>%
     #take the top n, with 8 should be near the points of the compass
     slice(1:ad_nearest) %>%
     #add time (cost) for each aircraft
     ungroup() %>%
-    crossing(ac %>% select(id, arrdep_kph)) %>%
-    mutate(cost = (dist_m/1000)/arrdep_kph) %>%
+    crossing(ac %>% select(.data$id, .data$arrdep_kph)) %>%
+    mutate(cost = (.data$dist_m/1000)/.data$arrdep_kph) %>%
     #add the long lats
     left_join(ap %>%
                 as.data.frame() %>%
-                select(APICAO, lat, long),
+                select(.data$APICAO, .data$lat, .data$long),
               by=c("from"="APICAO")) %>%
     left_join(route_grid@points %>%
-                select(id, long, lat, land) %>%
-                mutate(id = as.character(id)),
+                select(.data$id, .data$long, .data$lat, .data$land) %>%
+                mutate(id = as.character(.data$id)),
               by = c("to"="id"), suffix=c("_ap", "_grid")) %>%
     #if no transition leg, then take the acceleration subsonic cruise-supersonic penalty here
-    mutate(cost = cost + if_else(land, 0, ac$trans_h)) %>%
-    select(-land)
+    mutate(cost = .data$cost + if_else(.data$land, 0, ac$trans_h)) %>%
+    select(-.data$land)
 
 }
 
@@ -547,15 +551,15 @@ pathToGC <- function(path, route_grid,
                     w_id = 0, from=sid[1], to = sid[2],
                     steps = 1, stringsAsFactors = FALSE) %>%
     #add distance and time for the departure
-    left_join(arrDep %>% select(-id, -arrdep_kph),
+    left_join(arrDep %>% select(-id, -.data$arrdep_kph),
               by=c("from","to")) %>%
     #flip the types back to match gcid
-    mutate(gcdist_km = dist_m/1000,
-           from = 0, to = as.numeric(to)) %>%
-    rename(from_long = long_ap, from_lat = lat_ap,
-           to_long = long_grid, to_lat = lat_grid,
-           time_h = cost) %>%
-    select(-dist_m)
+    mutate(gcdist_km = .data$dist_m/1000,
+           from = 0, to = as.numeric(.data$to)) %>%
+    rename(from_long = .data$long_ap, from_lat = .data$lat_ap,
+           to_long = .data$long_grid, to_lat = .data$lat_grid,
+           time_h = .data$cost) %>%
+    select(-.data$dist_m)
 
   #create line for arrival, using 0 as id for airport
   #the phaseID here will need updating if n>3
@@ -564,15 +568,15 @@ pathToGC <- function(path, route_grid,
                     w_id = as.numeric(star[1]), from=star[1], to = star[2],
                     steps = 1, stringsAsFactors = FALSE) %>%
     #add distance and time for the departure
-    left_join(arrDep %>% select(-id, -arrdep_kph),
+    left_join(arrDep %>% select(-id, -.data$arrdep_kph),
               by=c("from"="to","to"="from")) %>%
     #flip the types back to match gcid
-    mutate(gcdist_km = dist_m/1000,
-           from = as.numeric(from), to = 0) %>%
-    rename(from_long = long_ap, from_lat = lat_ap,
-           to_long = long_grid, to_lat = lat_grid,
-           time_h = cost) %>%
-    select(-dist_m)
+    mutate(gcdist_km = .data$dist_m/1000,
+           from = as.numeric(.data$from), to = 0) %>%
+    rename(from_long = .data$long_ap, from_lat = .data$lat_ap,
+           to_long = .data$long_grid, to_lat = .data$lat_grid,
+           time_h = .data$cost) %>%
+    select(-.data$dist_m)
 
   if (n==3) {
     #unusual sid-star case 3 is the minimum possible
@@ -586,18 +590,18 @@ pathToGC <- function(path, route_grid,
     #the lattice might be stored in the opposite sense, so check both
     p <- data.frame(from = as.numeric(path[1:n-1]),
                     to = as.numeric(path[2:n])) %>%
-      left_join(route_grid@lattice %>% select(from, to, phase),
+      left_join(route_grid@lattice %>% select(.data$from, .data$to,.data$ phase),
                 by=c("from","to")) %>%
-      left_join(route_grid@lattice %>% select(from, to, phase),
+      left_join(route_grid@lattice %>% select(.data$from, .data$to, .data$phase),
                 by=c("from"="to","to"="from")) %>%
-      mutate(phase=coalesce(phase.x, phase.y)) %>%
-      select(-phase.x, -phase.y)
+      mutate(phase=coalesce(.data$phase.x, .data$phase.y)) %>%
+      select(-.data$phase.x, -.data$phase.y)
 
     if (ac$over_sea_M == ac$over_land_M | !byTime) {
       #if this is a subsonic aircraft - or distance only, then land/sea/transition phases are the same - land
       #and at this point the path only contains these 3
       p <- p %>%
-        mutate(phase = factor("land",levels=levels(route_grid@lattice$phase)),
+        mutate(phase = factor("land", levels=levels(route_grid@lattice$phase)),
                phaseID = "1.")
     }
     else {
@@ -607,60 +611,60 @@ pathToGC <- function(path, route_grid,
           row_number()==1 ~ 1L,
           phase != lag(phase) ~ 1L,
           TRUE ~ 0L),
-          phaseID = paste0(cumsum(phaseChange),".")) %>%
-        select(-phaseChange)
+          phaseID = paste0(cumsum(.data$phaseChange),".")) %>%
+        select(-.data$phaseChange)
     }
-    if(getOption("quiet",default=0)>1) message(" Calculated phase changes")
+    if(getOption("quiet", default=0)>1) message(" Calculated phase changes")
     p <- p %>%
       #now duplicate each row and simplify to a single id instead of from-to
       #deliberately create doubles then drop them
       #tidyr::gather ought to do this, but changes the order in a way I don't want
       rowwise() %>%
       uncount(2) %>%
-      group_by(phaseID, from, to) %>%
-      mutate(id = c(first(from), first(to))) %>%
-      group_by(phaseID) %>%
-      select(-from, -to) %>%
+      group_by(.data$phaseID, .data$from, .data$to) %>%
+      mutate(id = c(first(.data$from), first(.data$to))) %>%
+      group_by(.data$phaseID) %>%
+      select(-.data$from, -.data$to) %>%
       distinct() %>%
       #need the long lat too
-      left_join(route_grid@points %>% select(id, long, lat),
+      left_join(route_grid@points %>% select(.data$id, .data$long, .data$lat),
                 by = c("id")) %>%
       #add in the distances from land - by phase since if <>"sea" then 0
-      group_by(phase) %>%
-      mutate(fromLand_km = if_else(phase == "sea",
-                                   distFromLand(long, lat, fat_map),
-                                   distFromLand(long, lat, avoid))) %>%
+      group_by(.data$phase) %>%
+      mutate(fromLand_km = if_else(.data$phase == "sea",
+                                   distFromLand(.data$long, .data$lat, fat_map),
+                                   distFromLand(.data$long, .data$lat, avoid))) %>%
       ungroup()
 
     #loop for each phase
     #trim path to list of id pairs, each of which can be joined by a GC
     #reduce collapes a list of data.frames to a data.frame
-    if (getOption("quiet",default=0)>2) message("  Ready to recurse")
+    if (getOption("quiet", default=0)>2) message("  Ready to recurse")
 
     gcid <- purrr::reduce(lapply(unique(p$phaseID), function(i, m) findGC(p[p$phaseID==i,],
                                                                           fat_map, avoid)),
                           bind_rows) %>%
       #after a single hop line you can start too late, so correct any gaps
-      mutate(from = id,
-             to = coalesce(lead(id),last(p$id))) %>%
-      rename(w_id = id)
+      mutate(from = .data$id,
+             to = coalesce(lead(.data$id), last(p$id))) %>%
+      rename(w_id = .data$id)
 
-    if (getOption("quiet",default=0)>1) message(" Done recursion")
+    if (getOption("quiet", default=0)>1) message(" Done recursion")
 
     #code is split just because there's less to highlight in the debugger
     gcid <- gcid %>%
       #add back the geo data
-      left_join(route_grid@points %>% select(id, long, lat),
+      left_join(route_grid@points %>% select(.data$id, .data$long, .data$lat),
                 by = c("from"="id")) %>%
-      rename(from_long = long, from_lat = lat) %>%
-      left_join(route_grid@points %>% select(id, long, lat),
+      rename(from_long = .data$long, from_lat = .data$lat) %>%
+      left_join(route_grid@points %>% select(.data$id, .data$long, .data$lat),
                 by = c("to"="id")) %>%
-      rename(to_long = long, to_lat = lat)
+      rename(to_long = .data$long, to_lat = .data$lat)
 
     #post-processing
     #loop to look for shortcuts
     if (shortcuts) {
-      if (getOption("quiet",default=0)>1) message(" Checking Shortcuts")
+      if (getOption("quiet", default=0)>1) message(" Checking Shortcuts")
       baseID <- 1
       while (baseID < nrow(gcid)-1) {
         #skip this baseID if not 'sea'
@@ -680,7 +684,7 @@ pathToGC <- function(path, route_grid,
               all_sea <- ! as.logical(st_intersects(test_line, fat_map, sparse=FALSE))
               if (all_sea) {
                 #can drop the intermediate points
-                if (getOption("quiet",default=0)>2) message("  Shortcut from ",baseID," to ",farID)
+                if (getOption("quiet", default=0)>2) message("  Shortcut from ",baseID," to ",farID)
                 #first update the 'next step' info in the baseID
                 gcid[baseID,c("to","to_long","to_lat")] <- gcid[farID,c("to","to_long","to_lat")]
                 #then skip the intermediate points
@@ -697,11 +701,11 @@ pathToGC <- function(path, route_grid,
     }
 
     gcid <- gcid %>%
-      mutate(gcdist_km = geosphere::distGeo(matrix(c(from_long, from_lat), ncol=2),
-                                 matrix(c(to_long, to_lat), ncol=2))/1000,
-             steps = floor(pmin(gcdist_km/gckm_perstep, max_gcsteps))) %>%
-      group_by(phase) %>%
-      mutate(time_h = time_h(phase, gcdist_km, ac=ac))
+      mutate(gcdist_km = geosphere::distGeo(matrix(c(.data$from_long, .data$from_lat), ncol=2),
+                                 matrix(c(.data$to_long, .data$to_lat), ncol=2))/1000,
+             steps = floor(pmin(.data$gcdist_km/gckm_perstep, max_gcsteps))) %>%
+      group_by(.data$phase) %>%
+      mutate(time_h = time_h(.data$phase, .data$gcdist_km, ac=ac))
 
     #update the phaseID for the arr phase
     arr <- arr %>%
@@ -716,11 +720,11 @@ pathToGC <- function(path, route_grid,
     #and finally add the arcs
     #my st_gcIntermediate is not vector-clever so need to go row-wise
     rowwise() %>%
-    mutate(gc = st_gcIntermediate(p1=c(from_long, from_lat),
-                                  p2=c(to_long, to_lat),
-                                  n=steps-1, addStartEnd=TRUE,
-                                  crs = Mach2:::crs_latlong)) %>%
-    select(-steps) %>%
+    mutate(gc = st_gcIntermediate(p1=c(.data$from_long, .data$from_lat),
+                                  p2=c(.data$to_long, .data$to_lat),
+                                  n=.data$steps-1, addStartEnd=TRUE,
+                                  crs = crs_latlong)) %>%
+    select(-.data$steps) %>%
     ungroup()
 }
 
@@ -775,10 +779,12 @@ pathToGC <- function(path, route_grid,
 #'
 #' @examples
 #' # need to load some of the built-in data
+#' library(dplyr)
 #' aircraft <- make_aircraft()
 #' airports <- make_airports(crs = crs_Pacific) %>%
-#'     filter(substr(APICAO,1,1)=="N") #just around New Zealand
-#' NZ_buffer <- sf::st_transform(NZ_b, crs=crs_Pacific)
+#'     filter(substr(APICAO, 1, 1) == "N") #just around New Zealand
+#'
+#' NZ_buffer <- sf::st_transform(NZ_buffer30, crs=crs_Pacific)
 #'
 #' options("quiet" = 4) #for heavy reporting
 #' # from Auckland to Christchurch
@@ -857,29 +863,29 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
   tstart <- Sys.time()
   stopifnot(class(route_grid)=="GridLat")
 
-  if (getOption("quiet",default=0)>0) message("Leg: ",ap2$AP2," Aircraft: ",ac$type)
+  if (getOption("quiet", default=0)>0) message("Leg: ", ap2$AP2, " Aircraft: ", ac$type)
 
   #get crow-flies
   crow <- st_gcIntermediate(p1=c(ap2$from_long, ap2$from_lat),
                             p2=c(ap2$to_long, ap2$to_lat),
                             n = 30, addStartEnd=TRUE,
-                            crs=Mach2:::crs_latlong)
+                            crs=crs_latlong)
 
   #check can actually make it!
-  gcdist <- geosphere::distGeo(c(ap2$from_long,ap2$from_lat),
-                    c(ap2$to_long,ap2$to_lat))/1000
+  gcdist <- geosphere::distGeo(c(ap2$from_long, ap2$from_lat),
+                    c(ap2$to_long, ap2$to_lat))/1000
 
   if ((gcdist > ac$range_km) & enforce_range) {
-    if (getOption("quiet",default=0)>0) message("Distance ",round(gcdist,1),"km exceeds range ",
-                                                round(ac$range_km,1),"km.")
+    if (getOption("quiet", default=0)>0) message("Distance ", round(gcdist,1), "km exceeds range ",
+                                                round(ac$range_km,1), "km.")
     #return something mostly empty
     return(emptyRoute(ac, ap2, fat_map))
   }
 
-  if (getOption("quiet",default=0)>2) message("  Starting envelope: ",round(Sys.time() - tstart,1))
+  if (getOption("quiet", default=0)>2) message("  Starting envelope: ",round(Sys.time() - tstart,1))
   #make the envelope - so can plot even if don't enforce it
   #we work with the envelope in map CRS, then save at last stage in crs_latlong
-  envelope <-  st_sfc(st_polygon(),crs=st_crs(fat_map)) #null by default
+  envelope <-  st_sfc(st_polygon(), crs=st_crs(fat_map)) #null by default
   if (gcdist <= ac$range_km) {
 
     #if necessary add a grace distance, to allow routing to be found if within 2%.
@@ -891,12 +897,12 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
 
       #reduce the lattice - but do it via the points, because we don't want to cut lines up
       route_grid@points <- route_grid@points %>%
-        filter(st_intersects(xy, envelope, sparse=FALSE))
+        filter(st_intersects(.data$xy, envelope, sparse = FALSE))
       route_grid@lattice <- route_grid@lattice %>%
-        inner_join(route_grid@points %>% select(id), by=c("from"="id")) %>%
-        inner_join(route_grid@points %>% select(id), by=c("to"="id"))
+        inner_join(route_grid@points %>% select(.data$id), by=c("from"="id")) %>%
+        inner_join(route_grid@points %>% select(.data$id), by=c("to"="id"))
 
-      if (getOption("quiet",default=0)>1) message(" Cut envelope from lattice: ",round(Sys.time() - tstart,1))
+      if (getOption("quiet", default=0)>1) message(" Cut envelope from lattice: ",round(Sys.time() - tstart,1))
     }
   }
 
@@ -920,7 +926,7 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
     #need an extra map
     #for over-sea flight ensure the avoid areas are included, so they are not allowed
     fat_map <- st_union(fat_map, avoid)
-    if (getOption("quiet",default=0)>2) message("  Adjusted for avoid areas: ", round(Sys.time() - tstart,1))
+    if (getOption("quiet", default=0)>2) message("  Adjusted for avoid areas: ", round(Sys.time() - tstart,1))
     #and for non-seas flight, also need to avoid 'avoid'
   }
 
@@ -928,37 +934,37 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
   # ggplot(route_grid@points %>% filter(!land), aes(long, lat)) + geom_point(size=0.1)
 
   #add aircraft specific costs
-  costed_lattice <- costLattice(route_grid, ac=ac) %>%
-    select(from, to, cost, dist_km) %>%
+  costed_lattice <- costLattice(route_grid, ac = ac) %>%
+    select(.data$from, .data$to, .data$cost, .data$dist_km) %>%
     #add on the arrival dep - indices are now strings
-    mutate_at(vars(from, to), ~as.character(.)) %>%
+    mutate_at(vars(.data$from, .data$to), ~as.character(.)) %>%
     bind_rows(arrDep %>%
-                mutate(dist_km = dist_m/1000) %>%
-                select(from, to, cost, dist_km))
+                mutate(dist_km = .data$dist_m/1000) %>%
+                select(.data$from, .data$to, .data$cost, .data$dist_km))
 
   if (!best_by_time) {costed_lattice <- costed_lattice %>%
-    mutate(cost = dist_km) #if !bytime, just use distance..
+    mutate(cost = .data$dist_km) #if !bytime, just use distance..
   }
-  if (getOption("quiet",default=0)>2) message("  Got costed lattice: ",round(Sys.time() - tstart,1))
+  if (getOption("quiet", default=0)>2) message("  Got costed lattice: ",round(Sys.time() - tstart,1))
 
 
-  gr <- makegraph(costed_lattice %>% select(from, to, cost),
+  gr <- makegraph(costed_lattice %>% select(.data$from, .data$to, .data$cost),
                   directed = FALSE)
   #with update to cppRouting v2.0 this stopped working
   # gr <- cpp_simplify(gr, iterate=TRUE)$graph #simplify the data
 
   #then get the grid route
-  # path <- get_path_pair(gr, nearest_id(route_grid,c(ap2$from_long,ap2$from_lat)),
-  #                       nearest_id(route_grid,c(ap2$to_long,ap2$to_lat)))
+  # path <- get_path_pair(gr, nearest_id(route_grid,c(ap2$from_long, ap2$from_lat)),
+  #                       nearest_id(route_grid,c(ap2$to_long, ap2$to_lat)))
   if (getOption("quiet", default = 0) < 2) {
     suppressMessages(path <- get_path_pair(gr, ap2$ADEP, ap2$ADES))
   } else path <- get_path_pair(gr, ap2$ADEP, ap2$ADES)
 
   if (length(path[[1]])>1) {
-    if(getOption("quiet",default=0)>2) message("  Got path: ",round(Sys.time() - tstart,1))
+    if(getOption("quiet", default=0)>2) message("  Got path: ",round(Sys.time() - tstart,1))
   }
   else if (length(path[[1]])<2 ) {
-    if (getOption("quiet",default=0)>0) {message("Failed to find path for ",ap2$AP2,
+    if (getOption("quiet", default=0)>0) {message("Failed to find path for ", ap2$AP2,
                                                  " (too far, or higher envelope_points)")}
     #return something mostly empty
     return(emptyRoute(ac, ap2, fat_map))
@@ -975,9 +981,9 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
            acType = ac$type,
            #this is inefficient, saving multiple copies
            grid=c(path, rep(list(NA),n()-1)), #a list with just the grid in the first one
-           crow = c(crow, rep(st_sfc(st_linestring(),crs=Mach2:::crs_latlong),n()-1)),
-           envelope = c(prj(envelope,crs=Mach2:::crs_latlong),
-                        rep(st_sfc(st_polygon(),crs=Mach2:::crs_latlong),
+           crow = c(crow, rep(st_sfc(st_linestring(),crs=crs_latlong),n()-1)),
+           envelope = c(prj(envelope,crs=crs_latlong),
+                        rep(st_sfc(st_polygon(),crs=crs_latlong),
                             n()-1)),
            fullRouteID = ap2$AP2,
            legs = 1, leg_id = 1,
@@ -985,7 +991,7 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
 
   #only if there is a sea phase can we smooth the accelerations out.
   if ("sea" %in% gcArcs$phase) smoothSpeed(gcArcs, ac)
-  else gcArcs <- gcArcs %>% mutate(speed_kph = gcdist_km/time_h)
+  else gcArcs <- gcArcs %>% mutate(speed_kph = .data$gcdist_km/time_h)
 }
 
 
@@ -1042,7 +1048,7 @@ make_route_envelope <- function(ac, route_grid, ap2, crs,
 
   # convert to simple feature
   boundary <- st_cast(st_cast(
-    st_transform(st_sfc(st_multipoint(geod[,1:2]), crs=Mach2:::crs_latlong),
+    st_transform(st_sfc(st_multipoint(geod[,1:2]), crs=crs_latlong),
                  crs=crs),
     'LINESTRING'),
     'POLYGON')
@@ -1108,14 +1114,14 @@ smoothSpeed <- function(r, ac){
   ac <- ac %>% filter(id == first(r$acID))
   r <- r %>%
     mutate(penalty = 0,
-           speed_kph= gcdist_km/time_h) #useful initial value
+           speed_kph= .data$gcdist_km/.data$time_h) #useful initial value
   #spread the acceleration cost forwards
   r <- smooth1(1, r, ac)
   #spread the deceleration cost backwards
   r <- smooth1(-1, r, ac)
 
 
-  return(r %>% select(-penalty))
+  return(r %>% select(-.data$penalty))
 }
 
 
@@ -1145,7 +1151,7 @@ smoothSpeed <- function(r, ac){
 #' \itemize{
 #'   \item \code{timestamp}: when the leg was originally generated (it may have been cached)
 #'   \item \code{fullRouteID}: including the refuel stop if any
-#'   \item \code{routeID}: origin and destination airport, in \code{\link{concatenate_ADEPADES}} order
+#'   \item \code{routeID}: origin and destination airport, in \code{\link{make_AP2}} order
 #'   \item \code{refuel_ap}: code for the refuelling airport, or NA
 #'   \item \code{acID, acType}: aircraft identifiers taken from the aircraft set
 #'   \item \code{M084_h}: flight time for a Mach 0.84 comparator aircraft (including \code{2*arrdep_h})
@@ -1177,30 +1183,30 @@ summarise_routes <- function(routes,
                             arrdep_h = 0.5){
   #include 30 mins for arr/dep - based on 777ER examples
   route_summary <- routes %>%
-    group_by(routeID) %>%
-    rename(segdist_km = gcdist_km) %>%
-    mutate(gcdist_km = make_AP2(substr(first(routeID),1,4),
-                                    substr(first(routeID),7,10),
+    group_by(.data$routeID) %>%
+    rename(segdist_km = .data$gcdist_km) %>%
+    mutate(gcdist_km = make_AP2(substr(first(.data$routeID),1,4),
+                                    substr(first(.data$routeID),7,10),
                                     ap_loc)$gcdist_km,
-           M084_h = round(gcdist_km/(0.85 * mach_kph),2) + arrdep_h,
-           gcdist_km = round(gcdist_km,1)) %>%
-    group_by(timestamp, fullRouteID, routeID, refuel_ap,
-             acID, acType, M084_h, gcdist_km) %>%
+           M084_h = round(.data$gcdist_km/(0.85 * Mach2::mach_kph),2) + arrdep_h,
+           gcdist_km = round(.data$gcdist_km,1)) %>%
+    group_by(.data$timestamp, .data$fullRouteID, .data$routeID, .data$refuel_ap,
+             .data$acID, .data$acType, .data$M084_h, .data$gcdist_km) %>%
     summarise(sea_time_frac =
-                round(sum(if_else(phase=="sea",time_h,0))/sum(time_h), 3),
+                round(sum(if_else(.data$phase=="sea",.data$time_h,0))/sum(.data$time_h), 3),
               sea_dist_frac =
-                round(sum(if_else(phase=="sea", segdist_km, 0))/sum(segdist_km), 3),
-              dist_km = round(sum(segdist_km), 1),
-              time_h = round(sum(time_h), 2),
+                round(sum(if_else(.data$phase=="sea", .data$segdist_km, 0))/sum(.data$segdist_km), 3),
+              dist_km = round(sum(.data$segdist_km), 1),
+              time_h = round(sum(.data$time_h), 2),
               n_phases =
-                as.integer(last(phaseID)) - as.integer(first(phaseID)) + 1) %>%
-    mutate(advantage_h = M084_h - time_h,
-           circuity = round(dist_km/gcdist_km, 2)) %>%
-    arrange(routeID, acType, time_h) %>%
+                as.integer(last(.data$phaseID)) - as.integer(first(.data$phaseID)) + 1) %>%
+    mutate(advantage_h = .data$M084_h - .data$time_h,
+           circuity = round(.data$dist_km/.data$gcdist_km, 2)) %>%
+    arrange(.data$routeID, .data$acType, .data$time_h) %>%
     #add best for routeID, refuelling or not
-    group_by(routeID, acID) %>%
-    mutate(best = (advantage_h == max(advantage_h, na.rm = TRUE))) %>%
+    group_by(.data$routeID, .data$acID) %>%
+    mutate(best = (.data$advantage_h == max(.data$advantage_h, na.rm = TRUE))) %>%
     ungroup() %>%
-    arrange(advantage_h)
+    arrange(.data$advantage_h)
 
 }

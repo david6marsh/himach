@@ -1,5 +1,6 @@
 library(testthat)
 library(Mach2)
+library(dplyr)
 
 test_that("Route envelope", {
   ac <- make_aircraft(warn = FALSE)

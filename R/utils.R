@@ -7,7 +7,7 @@
 isEur <- function(x) substr(x,1,1) %in% c("E","L")
 
 #put ADEP ADES together with European first
-concat_ADEPADES <- function(ADEP, ADES, unidirectional=FALSE){
+paste_ADEPADES <- function(ADEP, ADES, unidirectional=FALSE){
   #vector adep ades is ok
   sep <- if_else(unidirectional, ">", "<>")
   AP2 <- case_when(
@@ -76,16 +76,16 @@ make_AP2 <- function(adep, ades, ap=make_airports()){
 
   data.frame(ADEP=adep, ADES=ades, stringsAsFactors = FALSE) %>%
     left_join(ap %>%
-                dplyr::select(APICAO, long, lat) %>%
-                dplyr::rename(ADEP=APICAO, from_long=long, from_lat=lat),
+                dplyr::select(.data$APICAO, .data$long, .data$lat) %>%
+                dplyr::rename(ADEP=.data$APICAO, from_long=.data$long, from_lat=.data$lat),
               by="ADEP") %>%
     left_join(ap %>%
-                dplyr::select(APICAO, long, lat) %>%
-                dplyr::rename(ADES=APICAO, to_long=long, to_lat=lat),
+                dplyr::select(.data$APICAO, .data$long, .data$lat) %>%
+                dplyr::rename(ADES=.data$APICAO, to_long=.data$long, to_lat=.data$lat),
               by="ADES") %>%
-    dplyr::mutate(AP2 = concat_ADEPADES(ADEP, ADES, unidirectional),
-                  gcdist_km = geosphere::distGeo(c(from_long, from_lat),
-                                                     c(to_long, to_lat))/1000)
+    dplyr::mutate(AP2 = paste_ADEPADES(.data$ADEP, .data$ADES, unidirectional),
+                  gcdist_km = geosphere::distGeo(c(.data$from_long, .data$from_lat),
+                                                     c(.data$to_long, .data$to_lat))/1000)
 }
 
 
@@ -93,8 +93,8 @@ make_AP2 <- function(adep, ades, ap=make_airports()){
 # in utils because used both in maps and elsewhere
 # crs=54030 Robinson works well, but avoid cropping - a classic
 # for the Pacific crs=CRS("+proj=robin +lon_0=150 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
-prj <- function(x,crs=crs_map) {
-  st_transform(x, crs=crs, quiet=FALSE)
+prj <- function(x, crs) {
+  st_transform(x, crs = crs, quiet=FALSE)
 }
 
 #' Make aircraft data from minimum dataset
@@ -142,7 +142,7 @@ prj <- function(x,crs=crs_map) {
 #'
 #' \dontrun{
 #' # example for your own data
-#' aircraft <- read.csv("data/aircraft.csv", stringsAsFactors = FALSE)
+#' aircraft <- utils::read.csv("data/aircraft.csv", stringsAsFactors = FALSE)
 #' aircraft <- make_aircraft(aircraft)
 #' # strongly recommended to record the file name for later reference
 #' attr(aircraft, "aircraftSet") <- "aircraft.csv"
@@ -151,11 +151,11 @@ prj <- function(x,crs=crs_map) {
 #' @importFrom dplyr %>%
 #'
 #' @export
-make_aircraft <- function(ac = NA, sound_kph = mach_kph, warn = TRUE){
+make_aircraft <- function(ac = NA, sound_kph = Mach2::mach_kph, warn = TRUE){
   if (is.na(ac[1])) {
     if (warn) warning("Using default aircraft file.")
     file <- system.file("extdata", "test_aircraft.csv", package = "Mach2", mustWork = TRUE)
-    ac <- read.csv(file, stringsAsFactors = FALSE)
+    ac <- utils::read.csv(file, stringsAsFactors = FALSE)
     attr(ac, "aircraftSet") <- "test_aircraft" #keep track
   }
 
@@ -174,11 +174,11 @@ make_aircraft <- function(ac = NA, sound_kph = mach_kph, warn = TRUE){
   ac_full <- ac %>%
     #make sure all the same type - double, not integer
     dplyr::mutate_if(is.numeric, as.double) %>%
-    dplyr::mutate(over_sea_kph = over_sea_M*sound_kph,
-           over_land_kph = over_land_M*sound_kph,
-           trans_kph = (over_sea_kph + over_land_kph)/2,
+    dplyr::mutate(over_sea_kph = .data$over_sea_M*sound_kph,
+           over_land_kph = .data$over_land_M*sound_kph,
+           trans_kph = (.data$over_sea_kph + .data$over_land_kph)/2,
            #transition penalty is time to change from over_sea to over_land speed (or v.v)
-           trans_h = (over_sea_M - over_land_M)/(accel_Mpm * 60))
+           trans_h = (.data$over_sea_M - .data$over_land_M)/(.data$accel_Mpm * 60))
 
   if (is.null(attr(ac, "aircraftSet"))) {
     attr(ac_full, "aircraftSet") <- "Dummy aircraft"
@@ -223,7 +223,7 @@ make_aircraft <- function(ac = NA, sound_kph = mach_kph, warn = TRUE){
 #'
 #' \dontrun{
 #' # example for your own data
-#' airports <- read.csv("data/airports.csv", stringsAsFactors = FALSE)
+#' airports <- utils::read.csv("data/airports.csv", stringsAsFactors = FALSE)
 #' airports <- make_airports(airports)
 #' }
 #'
@@ -235,9 +235,9 @@ make_airports <- function(ap = NA, crs = 4326, warn = TRUE){
   if (is.na(ap[1])) {
     if (warn) message("Using default airport data: airportr::airport.")
     ap <- airportr::airports %>%
-      dplyr::filter(Type == "airport") %>%
-      dplyr::select(ICAO, Latitude, Longitude) %>%
-      dplyr::rename(APICAO = ICAO, lat = Latitude, long = Longitude)
+      dplyr::filter(.data$Type == "airport") %>%
+      dplyr::select(.data$ICAO, .data$Latitude, .data$Longitude) %>%
+      dplyr::rename(APICAO = .data$ICAO, lat = .data$Latitude, long = .data$Longitude)
   }
 
   req_vbls <- c("APICAO", "long", "lat")
@@ -250,7 +250,7 @@ make_airports <- function(ap = NA, crs = 4326, warn = TRUE){
     # 4326 is a lat-long format, for input, then transform to required crs
     dplyr::mutate(ap_locs = st_transform(
       st_cast(st_sfc(
-        st_multipoint(matrix(c(long, lat),ncol=2)),crs=Mach2:::crs_latlong),
+        st_multipoint(matrix(c(.data$long, .data$lat),ncol=2)), crs = crs_latlong),
         'POINT'), crs = crs))
 }
 

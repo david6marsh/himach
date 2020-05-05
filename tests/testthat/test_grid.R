@@ -18,14 +18,14 @@ test_that("Grid creation", {
     expect_equal(rg@name, "NZ lat-long at 300km")
 
   expect_known_value(subset(rg@points, select = -xy),
-                      "known/NZ 300km grid points")
+                      "known/NZ_300km_grid_points")
   expect_known_value(sf::st_as_binary(rg@points$xy),
-                     "known/NZ 300km grid points xy")
+                     "known/NZ_300km_grid_points_xy")
 
   expect_known_value(subset(rg@lattice, select = -geometry),
-                     "known/NZ 300km grid lattice")
+                     "known/NZ_300km_grid_lattice")
   expect_known_value(sf::st_as_binary(rg@lattice$geometry),
-                     "known/NZ 300km grid lattice geometry")
+                     "known/NZ_300km_grid_lattice_geometry")
 
 })
 

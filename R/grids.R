@@ -11,7 +11,7 @@ mod_long <- function(x){
 #'
 #' \code{make_route_grid} creates, and optionally classifies, a lat-long route grid
 #'
-#' This function creates a \code{gridLat} object that contains
+#' This function creates a \linkS4class{GridLat} object that contains
 #' a set of point on a lat long grid (ie all the points are on
 #' lines of latitude). It also joins these points into a lattice.
 #' Optionally, but required later, it classifies each link as land, sea,
@@ -48,8 +48,7 @@ mod_long <- function(x){
 #' @return \code{gridLat} object containing points and lattice.
 #'
 #' @examples
-#' crs_Pacific <- sp::CRS("+proj=robin +lon_0=150 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
-#' NZ_buffer <- sf::st_transform(Mach2::NZ_b, crs=crs_Pacific)
+#' NZ_buffer <- sf::st_transform(Mach2::NZ_buffer30, crs=crs_Pacific)
 #' system.time(
 #'   p_grid <- make_route_grid(NZ_buffer,"NZ lat-long at 100km",
 #'                            target_km = 100, classify = TRUE,
@@ -70,13 +69,13 @@ make_route_grid <- function(fat_map, name,
   tstart <- Sys.time()
 
   #initialise object
-  g <- new("GridLat", name=name)
+  g <- methods::new("GridLat", name=name)
 
   lat_dec <- 3 #round lat-long to 2 decimal places
   long_fudge <- 10^(-(lat_dec + 2)) #avoid dropping a step in DIV
 
   # standardised levels for phase, include some not used in this function
-  phases <- Mach2:::lattice_phases
+  phases <- lattice_phases
 
   lat_step <- round(geosphere::destPointRhumb(c(0,0), 0, target_km * 1000)[1,2],
                     lat_dec) #latitude step, in degrees
@@ -84,28 +83,28 @@ make_route_grid <- function(fat_map, name,
   #data for both grid and lattice,
   ll_grid_seed <- data.frame(lat = round(seq(lat_min, lat_max, by = lat_step),
                                          lat_dec)) %>%
-    mutate(long_dist_km = geosphere::distGeo(matrix(c(rep(0,n()),lat),ncol=2),
-                                  matrix(c(rep(1,n()),lat),ncol=2))/1000,
-           long_step = round(target_km/long_dist_km,
+    mutate(long_dist_km = geosphere::distGeo(matrix(c(rep(0,n()), .data$lat),ncol=2),
+                                  matrix(c(rep(1,n()), .data$lat),ncol=2))/1000,
+           long_step = round(target_km/.data$long_dist_km,
                              lat_dec)) %>%
     rowwise() %>%
-    mutate(long = list(round(seq(long_min, long_max, by = long_step),
+    mutate(long = list(round(seq(long_min, long_max, by = .data$long_step),
                              lat_dec)),
-           last_long = last(unlist(long))) %>%
+           last_long = last(unlist(.data$long))) %>%
     ungroup() %>%
     #don't worry that this creates NAs at the ends - it's useful
-    mutate(next_long_step = lead(long_step),
+    mutate(next_long_step = lead(.data$long_step),
            #need these to handle the date line later
-           next_last_long = lead(last_long)) %>%
-    tidyr::unnest(c(long)) %>%
+           next_last_long = lead(.data$last_long)) %>%
+    tidyr::unnest(c(.data$long)) %>%
     mutate(id = row_number())
 
   #create the grid from this
   g@points <- ll_grid_seed %>%
-    select(id, long, lat) %>%
+    select(.data$id, .data$long, .data$lat) %>%
     # handle the 'overflow longitude' - slightly over the dateline
-    mutate(long = mod_long(long)) %>%
-    mutate(xy = st_cast(st_transform(st_sfc(st_multipoint(matrix(c(long, lat), ncol=2)),
+    mutate(long = mod_long(.data$long)) %>%
+    mutate(xy = st_cast(st_transform(st_sfc(st_multipoint(matrix(c(.data$long, .data$lat), ncol=2)),
                                             crs=4326),
                                      crs=st_crs(fat_map)),'POINT'))
   if (getOption("quiet", default=0)>0) message("Made the grid:", round(Sys.time() - tstart, 1))
@@ -127,8 +126,8 @@ make_route_grid <- function(fat_map, name,
     mutate(grp  = row_number() %/% grp_size)  %>%
     split(.$grp) %>%
     purrr::map(
-      ~ group_by(., id) %>%
-        mutate(to_lat = list(round(c(lat + c(0,
+      ~ group_by(., .data$id) %>%
+        mutate(to_lat = list(round(c(.data$lat + c(0,
                                              withProgress(pb,
                                                           rep.int,
                                                           lat_step,
@@ -137,35 +136,35 @@ make_route_grid <- function(fat_map, name,
                nlong_cands = list(round(seq.int(long_min, long_max,
                                                 by = coalesce(next_long_step,1.0)),
                                         lat_dec)),
-               lc_diff = list(abs(unlist(nlong_cands) - long)),
+               lc_diff = list(abs(unlist(nlong_cands) - .data$long)),
                lc_sel = list(which(rank(unlist(lc_diff)) <= n_cand)),
-               to_long = list(round(c(long_min + ((long+long_fudge - long_min) %/% long_step + 1)*long_step,
+               to_long = list(round(c(long_min + ((.data$long+long_fudge - long_min) %/% .data$long_step + 1)*.data$long_step,
                                       unlist(nlong_cands)[unlist(lc_sel)[1]],
                                       unlist(nlong_cands)[unlist(lc_sel)[2]],
                                       unlist(nlong_cands)[unlist(lc_sel)[3]]),lat_dec)),
-               long_wrap = list(c(last_long, rep.int(next_last_long, n_cand)))) %>%
+               long_wrap = list(c(.data$last_long, rep.int(next_last_long, n_cand)))) %>%
         select(-nlong_cands, -lc_diff, -lc_sel)  %>%
-        tidyr::unnest(c(to_lat, to_long, long_wrap)) %>%
-        filter(!is.na(to_long)) %>% #possible cases
+        tidyr::unnest(c(.data$to_lat, .data$to_long, long_wrap)) %>%
+        filter(!is.na(.data$to_long)) %>% #possible cases
         ungroup() %>%
-        filter(to_lat>= lat_min & to_lat<=lat_max) %>%
+        filter(.data$to_lat>= lat_min & .data$to_lat<=lat_max) %>%
         #handle the date line
         #wrap is useful for plotting
-        mutate(wrap = (to_long >= last_long | to_long <= long_min),
+        mutate(wrap = (.data$to_long >= .data$last_long | .data$to_long <= long_min),
                to_long = case_when(
-                 to_long > long_max ~ long_min,
-                 to_long < long_min ~ long_wrap,
-                 TRUE ~ to_long
+                 .data$to_long > long_max ~ long_min,
+                 .data$to_long < long_min ~ long_wrap,
+                 TRUE ~ .data$to_long
                )) %>%
         #tidy up
-        rename(from_long=long, from_lat=lat, from=id) %>%
+        rename(from_long=.data$long, from_lat=.data$lat, from=.data$id) %>%
         # select(from, from_long, from_lat, to_long, to_lat) %>%
         #get the to id
-        left_join(ll_grid_seed %>% select(id, long, lat) %>% rename(to=id),
+        left_join(ll_grid_seed %>% select(.data$id, .data$long, .data$lat) %>% rename(to=.data$id),
                   by=c("to_long"="long", "to_lat"="lat"))
     ) %>%
     purrr::map_dfr(~ as.data.frame(.)) %>%
-    select(-grp)
+    select(-.data$grp)
   if (getOption("quiet",default=0)>0) message("") #new line
 
 
@@ -174,19 +173,19 @@ make_route_grid <- function(fat_map, name,
   g@lattice <- ll_lattice %>%
     # add geometry
     # handle the 'overflow longitude' - slightly over the dateline
-    mutate(from_long = mod_long(from_long),
-           to_long = mod_long(to_long)) %>%
+    mutate(from_long = mod_long(.data$from_long),
+           to_long = mod_long(.data$to_long)) %>%
     rowwise() %>%
     mutate(geometry = st_transform(st_sfc(st_linestring(
-      withProgress(pb, matrix, c(from_long, from_lat, to_long, to_lat),
+      withProgress(pb, matrix, c(.data$from_long, .data$from_lat, .data$to_long, .data$to_lat),
                                                                ncol=2, byrow = TRUE)),
                                           crs=4326),
                                    crs=st_crs(fat_map))) %>%
     ungroup() %>%
     #calculate distance
-    mutate(dist_km = geosphere::distGeo(matrix(c(from_long, from_lat), ncol=2),
-                             matrix(c(to_long, to_lat), ncol=2))/1000) %>%
-    select(from, to, geometry, dist_km, wrap)
+    mutate(dist_km = geosphere::distGeo(matrix(c(.data$from_long, .data$from_lat), ncol=2),
+                             matrix(c(.data$to_long, .data$to_lat), ncol=2))/1000) %>%
+    select(.data$from, .data$to, .data$geometry, .data$dist_km, .data$wrap)
   message("")
   if (getOption("quiet", default=0)>0) message("Added geo & distance to the lattice:",round(Sys.time() - tstart,1))
 
@@ -195,7 +194,7 @@ make_route_grid <- function(fat_map, name,
     g@points$land <- as.vector(st_within(g@points$xy, fat_map, sparse=FALSE, prepared = TRUE))
     id_land <- g@points %>%
       as.data.frame() %>%
-      select(id, land)
+      select(.data$id, .data$land)
   }
 
   #classify the lines in the lattice by their intersection
@@ -209,15 +208,15 @@ make_route_grid <- function(fat_map, name,
       left_join(id_land, by=c("from"="id")) %>%
       left_join(id_land, by=c("to"="id"), suffix=c("_1","_2")) %>%
       mutate(ph = case_when(
-        !land_1 & !land_2 & !Xland ~ "sea",
-        land_1 & land_2 ~ "land",
+        !.data$land_1 & !.data$land_2 & !.data$Xland ~ "sea",
+        .data$land_1 & .data$land_2 ~ "land",
         TRUE ~ "transition"
       ),
-      phase = factor(ph, levels = phases))
+      phase = factor(.data$ph, levels = phases))
     if (getOption("quiet",default=0)>0) message("Calculated all phases:",round(Sys.time() - tstart,1))
     g@lattice<- g@lattice %>%
       mutate(phase = z$phase) %>%
-      select(-Xland)
+      select(-.data$Xland)
   }
 
   return(g)
