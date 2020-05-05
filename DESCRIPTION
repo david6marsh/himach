@@ -1,21 +1,24 @@
-Package: Mach2
 Type: Package
+Package: Mach2
 Title: Find quickest route for supersonic aircraft. 
 Version: 0.0.0.9004
-Authors@R: person("David", "Marsh", email = "david.marsh@eurocontrol.int",
-  role = c("aut", "cre"))
+Authors@R: 
+    person(given = "David",
+           family = "Marsh",
+           role = c("aut", "cre"),
+           email = "david.marsh@eurocontrol.int")
 Description: For supersonic aircraft, flying subsonic over land,
-    find the quickest route between airports. Allow for coastal buffer and 
-    potentially closed regions. Uses minimal model of aircraft performance:
-    focus is on time saved versus subsonic flight, rather than vertical flight
-    profile. For modelling, not for planning your flight.
-Vignette: 
-License: Copyright EUROCONTROL 2020. 
-    New Zealand map in vignette: This work is based on Stats NZ's data 
-    which are licensed by Stats NZ for re-use under the Creative Commons 
-    Attribution 4.0 International licence.
-Encoding: UTF-8
-LazyData: true
+    find the quickest route between airports. Allow for coastal buffer and
+    potentially closed regions. Uses minimal model of aircraft
+    performance: focus is on time saved versus subsonic flight, rather
+    than vertical flight profile. For modelling, not for planning your
+    flight.
+License: Copyright EUROCONTROL 2020.  New Zealand map in
+    vignette: This work is based on Stats NZ's data which are licensed by
+    Stats NZ for re-use under the Creative Commons Attribution 4.0
+    International licence.
+Depends: 
+    R (>= 2.10)
 Imports:
     cppRouting,
     dplyr,
@@ -34,7 +37,9 @@ Suggests:
     testthat,
     units,
     viridis
-VignetteBuilder: knitr
+VignetteBuilder: 
+    knitr
+Encoding: UTF-8
+LazyData: true
 RoxygenNote: 7.1.0
-Depends: 
-    R (>= 2.10)
+Vignette: 

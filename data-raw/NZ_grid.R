@@ -1,7 +1,7 @@
 ## code to prepare `NZ_grid` dataset goes here
 # to help with testing and vignettes
 
-NZ_buffer <- sf::st_transform(Mach2::NZ_b, crs=crs_Pacific)
+NZ_buffer <- sf::st_transform(Mach2::NZ_buffer30, crs=crs_Pacific)
 target_km=30
 system.time(
   NZ_grid <- make_route_grid(NZ_buffer,"NZ lat-long at 30km",
@@ -11,3 +11,4 @@ system.time(
 )
 
 usethis::use_data(NZ_grid, overwrite = TRUE)
+
