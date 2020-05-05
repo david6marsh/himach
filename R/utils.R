@@ -52,7 +52,7 @@ copy_attr <- function(from, to, atts){
 #' (Unidirectional not currently supported)
 #'
 #' For more details see the help vignette:
-#' \code{vignette("Supersonic Routing", package = "twospeed")}
+#' \code{vignette("Supersonic Routing", package = "Mach2")}
 #'
 #' @param adep,ades Identical-length lists of airport codes
 #' @param ap List of locations of airports, defaults to the output
@@ -62,7 +62,7 @@ copy_attr <- function(from, to, atts){
 #'
 #' @examples
 #'
-#' airports <- twospeed::make_airports() #get a default set of lat-longs
+#' airports <- Mach2::make_airports() #get a default set of lat-longs
 #' ap2 <- make_AP2("NZAA","NZCH", airports)
 #'
 #' @importFrom dplyr %>%
@@ -120,7 +120,7 @@ prj <- function(x,crs=crs_map) {
 #'
 #'
 #' For more details see the help vignette:
-#' \code{vignette("SupersonicRouting", package = "twospeed")}
+#' \code{vignette("SupersonicRouting", package = "Mach2")}
 #'
 #' @param ac Dataframe containing the minimum fields, or NA (default)
 #' @param sound_kph Speed of sound used to convert from Mach to kph, default
@@ -154,7 +154,7 @@ prj <- function(x,crs=crs_map) {
 make_aircraft <- function(ac = NA, sound_kph = mach_kph, warn = TRUE){
   if (is.na(ac[1])) {
     if (warn) warning("Using default aircraft file.")
-    file <- system.file("extdata", "test_aircraft.csv", package = "twospeed", mustWork = TRUE)
+    file <- system.file("extdata", "test_aircraft.csv", package = "Mach2", mustWork = TRUE)
     ac <- read.csv(file, stringsAsFactors = FALSE)
     attr(ac, "aircraftSet") <- "test_aircraft" #keep track
   }
@@ -250,7 +250,7 @@ make_airports <- function(ap = NA, crs = 4326, warn = TRUE){
     # 4326 is a lat-long format, for input, then transform to required crs
     dplyr::mutate(ap_locs = st_transform(
       st_cast(st_sfc(
-        st_multipoint(matrix(c(long, lat),ncol=2)),crs=twospeed:::crs_latlong),
+        st_multipoint(matrix(c(long, lat),ncol=2)),crs=Mach2:::crs_latlong),
         'POINT'), crs = crs))
 }
 

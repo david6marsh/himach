@@ -1,6 +1,6 @@
 Sys.setenv("R_TESTS" = "") # https://github.com/r-lib/testthat/issues/86 refers, but does not solve my issue with test_coverage
-library(testthat)
-library(twospeed)
+library(Mach2)
+library(dplyr)
 
 
 test_that("Route mapping", {
@@ -11,23 +11,23 @@ test_that("Route mapping", {
   expect_known_hash(map_routes(NZ_thin, NZ_routes,
                                crs = crs_Pacific,
                                show_route="speed"),
-                    hash = "ac5cef8acd" )
+                    hash = "4a360e96f9" )
   # aircraft map
   expect_known_hash(map_routes(NZ_thin, NZ_routes,
                                  crs = crs_Pacific,
                                  show_route="aircraft"),
-                      hash = "164794012b")
+                      hash = "a3db60cfc3")
 
    # time advantage - auto calculated
  expect_known_hash(map_routes(NZ_thin, NZ_routes,
                                 crs = crs_Pacific),
-                     hash = "9e793b0081")
+                     hash = "c87d33b068")
 
  # circuity - auto calculated - on crs_Atlantic
  expect_known_hash(map_routes(NZ_thin, NZ_routes,
                                 crs = crs_Pacific,
                                 show_route = "circuity"),
-                     hash = "7c24ca5412")
+                     hash = "8a1c6f5f21")
 
  # time advantage calculated explicitly + frills
  rtes <- summarise_routes(NZ_routes, airports)
@@ -42,7 +42,7 @@ test_that("Route mapping", {
                                 airports %>% filter(APICAO=="NZWN"),
                               crow = TRUE,
                               route_envelope = TRUE),
-                   hash = "6f612e1e6a")
+                   hash = "0580bd566b")
 
 })
 

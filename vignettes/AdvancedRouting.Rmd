@@ -10,7 +10,7 @@ vignette: >
 ---
 ## Introduction
 
-[Supersonic Routing](SupersonicRouting.html) provides a quick end-to-end introduction to using the `twospeed` package and is the place to start. This vignette provides advice on more advanced use, explaining details that the introduction skates over.
+[Supersonic Routing](SupersonicRouting.html) provides a quick end-to-end introduction to using the `Mach2` package and is the place to start. This vignette provides advice on more advanced use, explaining details that the introduction skates over.
 
 Much of this vignette is optional or for occasional use, but the advice on saving and reading the caches is likely to be _essential_ for a speedy workflow. 
 
@@ -24,7 +24,7 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 #the libraries needed for the vignette are
-library(twospeed)
+library(Mach2)
 library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
 library(ggplot2)
 library(sp)
@@ -34,7 +34,7 @@ library(sp)
 
 ## Caches
 
-`twospeed` uses caching to speed things up. Legs are cached in `.rte_cache` and arrival-departure links to airports are cached in `.star_cache` (STAR is short for standard arrival route, its counterpart being SID the standard instrument departure).
+`Mach2` uses caching to speed things up. Legs are cached in `.rte_cache` and arrival-departure links to airports are cached in `.star_cache` (STAR is short for standard arrival route, its counterpart being SID the standard instrument departure).
 
 Normally the caches just do the job. But you will want to save and load them as part of your standard workflow. Quite where you save them is up to you, but a set of routes is sensitive to (a) the route grid on which it is calculated (b) the list of aircraft used, and their performance. 
 
@@ -75,7 +75,7 @@ Here we illustrate a few use cases for more general management of the cache. Fir
 1. How big is my cache? How many legs or arrival/departure links does it contain?
 1. Remove a single item. If you think the input data were wrong, for example. Two steps, list the possible candidates using a search string, then copy paste the name of the one you want (usually obvious based on aircraft and airport-pair) into the code for deletion.
 1. Remove all legs for a single airport, for example if the location turned out to be wrong. Then update the lat-long and re-run. This pattern is easily adapted to airport pairs (all different aircraft), or all for a given aircraft.
-1. If you think you have merged caches from 2 different versions of `twospeed` in which the contents of a route dataframe have changed, then this is for you. Of course that never happens.
+1. If you think you have merged caches from 2 different versions of `Mach2` in which the contents of a route dataframe have changed, then this is for you. Of course that never happens.
 
 
 ```{r inspecting the cache}
@@ -85,7 +85,7 @@ aircraft <- make_aircraft()
 airports <- make_airports(crs = crs_Pacific) 
 refuel_ap <- airports %>%
   filter(APICAO=="NZWN")
-NZ_buffer_Pac <- sf::st_transform(twospeed::NZ_buffer30, crs=crs_Pacific)
+NZ_buffer_Pac <- sf::st_transform(Mach2::NZ_buffer30, crs=crs_Pacific)
 
 ap2 <- matrix(c("NZAA","NZCH","NZAA","NZDN","NZGS","NZCH"), 
               ncol = 2, byrow = TRUE)
@@ -126,7 +126,7 @@ wrong <- which(rte_cols != 24)
 
 # No-fly zones
 
-It is not unusual for parts of the airspace to be closed, or be considered unsafe for flying. `twospeed` allows regions to be marked as 'avoid'. They will not feature in the grid, so routes will avoid them, with one exception: an arrival or departure airport can be inside a no-fly zone, as long as the connection point to the grid is outside. So they might more precisely be called 'no-overfly' zones.
+It is not unusual for parts of the airspace to be closed, or be considered unsafe for flying. `Mach2` allows regions to be marked as 'avoid'. They will not feature in the grid, so routes will avoid them, with one exception: an arrival or departure airport can be inside a no-fly zone, as long as the connection point to the grid is outside. So they might more precisely be called 'no-overfly' zones.
 
 A no-fly zone is prepared in the same way as a map of land. If specific countries are to be avoided, this is where having a country name in the geographic data comes in handy.
 
@@ -162,7 +162,7 @@ ls(rte_cache, pattern = "NZCH")
 rtes <- summarise_routes(routes, airports)
 
 # draw a basic map
-NZ_coast_Pac <- sf::st_transform(twospeed::NZ_coast, crs=crs_Pacific)
+NZ_coast_Pac <- sf::st_transform(Mach2::NZ_coast, crs=crs_Pacific)
 map_routes(NZ_coast_Pac, routes, crs = crs_Pacific, fat_map = NZ_buffer_Pac,
           avoid_map = Buller_nofly)
 

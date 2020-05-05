@@ -33,7 +33,7 @@ distFromLand <- function(long, lat, land){
   #long and lat are vectors, land is a map (sfc_MULTIPOLYGON)
   if (is.na(land)) return(0)
   mp <- st_transform(st_cast(st_sfc(
-    st_multipoint(matrix(c(long, lat),ncol=2)),crs=twospeed:::crs_latlong),'POINT'),
+    st_multipoint(matrix(c(long, lat),ncol=2)),crs=Mach2:::crs_latlong),'POINT'),
     crs=st_crs(land))
   as.vector(st_distance(mp, land))/1000
 }
@@ -128,12 +128,12 @@ emptyRoute <- function(ac, ap2, fat_map,
              fullRouteID = ap2$AP2,
              refuel_ap = NA,
              stringsAsFactors = FALSE) %>%
-    mutate(gc = st_sfc(st_linestring(),crs=twospeed:::crs_latlong), #for want of anything else NULL sfc
+    mutate(gc = st_sfc(st_linestring(),crs=Mach2:::crs_latlong), #for want of anything else NULL sfc
            crow = st_gcIntermediate(p1=c(ap2$from_long,ap2$from_lat),
                                     p2=c(ap2$to_long,ap2$to_lat),
                                     n = 30, addStartEnd=TRUE,
-                                    crs=twospeed:::crs_latlong),
-           envelope = st_sfc(st_polygon(),crs=twospeed:::crs_latlong))
+                                    crs=Mach2:::crs_latlong),
+           envelope = st_sfc(st_polygon(),crs=Mach2:::crs_latlong))
 }
 
 
@@ -719,7 +719,7 @@ pathToGC <- function(path, route_grid,
     mutate(gc = st_gcIntermediate(p1=c(from_long, from_lat),
                                   p2=c(to_long, to_lat),
                                   n=steps-1, addStartEnd=TRUE,
-                                  crs = twospeed:::crs_latlong)) %>%
+                                  crs = Mach2:::crs_latlong)) %>%
     select(-steps) %>%
     ungroup()
 }
@@ -863,7 +863,7 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
   crow <- st_gcIntermediate(p1=c(ap2$from_long, ap2$from_lat),
                             p2=c(ap2$to_long, ap2$to_lat),
                             n = 30, addStartEnd=TRUE,
-                            crs=twospeed:::crs_latlong)
+                            crs=Mach2:::crs_latlong)
 
   #check can actually make it!
   gcdist <- geosphere::distGeo(c(ap2$from_long,ap2$from_lat),
@@ -975,9 +975,9 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
            acType = ac$type,
            #this is inefficient, saving multiple copies
            grid=c(path, rep(list(NA),n()-1)), #a list with just the grid in the first one
-           crow = c(crow, rep(st_sfc(st_linestring(),crs=twospeed:::crs_latlong),n()-1)),
-           envelope = c(prj(envelope,crs=twospeed:::crs_latlong),
-                        rep(st_sfc(st_polygon(),crs=twospeed:::crs_latlong),
+           crow = c(crow, rep(st_sfc(st_linestring(),crs=Mach2:::crs_latlong),n()-1)),
+           envelope = c(prj(envelope,crs=Mach2:::crs_latlong),
+                        rep(st_sfc(st_polygon(),crs=Mach2:::crs_latlong),
                             n()-1)),
            fullRouteID = ap2$AP2,
            legs = 1, leg_id = 1,
@@ -1042,7 +1042,7 @@ make_route_envelope <- function(ac, route_grid, ap2, crs,
 
   # convert to simple feature
   boundary <- st_cast(st_cast(
-    st_transform(st_sfc(st_multipoint(geod[,1:2]), crs=twospeed:::crs_latlong),
+    st_transform(st_sfc(st_multipoint(geod[,1:2]), crs=Mach2:::crs_latlong),
                  crs=crs),
     'LINESTRING'),
     'POLYGON')

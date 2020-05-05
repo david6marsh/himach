@@ -1,10 +1,10 @@
 library(testthat)
-library(twospeed)
+library(Mach2)
 library(sf)
 library(dplyr)
 
 old_quiet <- getOption("quiet", default=0)
-NZ_buffer_Pac <- sf::st_transform(twospeed::NZ_buffer30, crs=crs_Pacific)
+NZ_buffer_Pac <- sf::st_transform(Mach2::NZ_buffer30, crs=crs_Pacific)
 
 test_that("Grid creation", {
   options("quiet" = 0) #for no reporting

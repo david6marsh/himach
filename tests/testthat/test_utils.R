@@ -1,5 +1,5 @@
 library(testthat)
-library(twospeed)
+library(Mach2)
 
 test_that("Default aircraft data loads", {
   expect_warning(make_aircraft())

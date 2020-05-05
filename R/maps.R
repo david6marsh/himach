@@ -16,7 +16,7 @@ bbox_to_poly <- function(b, crs){
 
 # return a polygon from c(xmin, xmax, ymin, ymax)
 # b is in crs, default to lat long
-edges_to_poly <- function(b, in_crs = twospeed:::crs_latlong, to_crs = in_crs){
+edges_to_poly <- function(b, in_crs = Mach2:::crs_latlong, to_crs = in_crs){
   st_transform(st_sfc(st_polygon(list(matrix(c(b[1],b[3],
                                                b[2],b[3],
                                                b[2],b[4],
@@ -264,7 +264,7 @@ map_routes <- function(
 # works for multilines without GDAL problems
 st_wrap <- function(m){
   #this can be used wihtin a geom_sf plot statement
-  st_transform(st_wrap_dateline(st_transform(m, crs=twospeed:::crs_latlong),
+  st_transform(st_wrap_dateline(st_transform(m, crs=Mach2:::crs_latlong),
                                 options = c("WRAPDATELINE=YES")),
                crs=st_crs(m))
 }
@@ -297,7 +297,7 @@ st_bbox_longlat <- function(m){
   bb <- st_bbox(m)
   if (!st_is_longlat(bb)) {
     bb <- st_bbox(st_transform(m,
-                       crs=twospeed:::crs_latlong))
+                       crs=Mach2:::crs_latlong))
   }
   return(bb)
 }
@@ -346,8 +346,8 @@ st_wrap_transform <- function(m, crs, marg = 0.05){
   # get 'dateline' of original map proj in longitude
   # where the break in the map will be after a transformation
   # to get the crs as a string, transform a small box...
-  small_box <- twospeed:::edges_to_poly(c(1,2,1,2), to_crs = crs)
-  break_long <- twospeed:::mod_long(long_cent(small_box) + 180)
+  small_box <- Mach2:::edges_to_poly(c(1,2,1,2), to_crs = crs)
+  break_long <- Mach2:::mod_long(long_cent(small_box) + 180)
 
   if ("sf" %in% class(m) && "data.frame" %in% class(m) &&
       all(st_is(m, c("POLYGON", "MULTIPOLYGON")))) {

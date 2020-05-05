@@ -1,4 +1,4 @@
 library(testthat)
-library(twospeed)
+library(Mach2)
 
-test_check("twospeed")
+test_check("Mach2")

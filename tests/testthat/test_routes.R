@@ -1,5 +1,5 @@
 library(testthat)
-library(twospeed)
+library(Mach2)
 
 test_that("Route envelope", {
   ac <- make_aircraft(warn = FALSE)

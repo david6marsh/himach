@@ -10,7 +10,7 @@ vignette: >
 ---
 ## Introduction
 
-This vignette provides an end-to-end example of using the `twospeed` package to find the quickest route for a supersonic aircraft that is allowed to fly supersonic over sea, but only subsonic over land.
+This vignette provides an end-to-end example of using the `Mach2` package to find the quickest route for a supersonic aircraft that is allowed to fly supersonic over sea, but only subsonic over land.
 
 
 ```{r, include = FALSE}
@@ -22,7 +22,7 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 #the libraries needed for the vignette are
-library(twospeed)
+library(Mach2)
 library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
 library(ggplot2)
 library(sp)
@@ -85,7 +85,7 @@ airports <- make_airports(crs = crs_Pacific) %>%
 
 ```
 
-In fact you need two airport sets, because you need to say where flights can stop to refuel. If an aircraft cannot make a journey in a single leg, due to lack of range, `twospeed` automatically searches for the best refuelling option. This can easily multiply the number of searches by 5 or 10, so choose a limited number of likely 'good' options: islands, coastal points, or on narrow segments of land where the aircraft would have to slow down anyway. In our case, we have a test aircraft with an artifically reduced range, and we make just one refuel point available: coastal and central at the same time, Wellington.
+In fact you need two airport sets, because you need to say where flights can stop to refuel. If an aircraft cannot make a journey in a single leg, due to lack of range, `Mach2` automatically searches for the best refuelling option. This can easily multiply the number of searches by 5 or 10, so choose a limited number of likely 'good' options: islands, coastal points, or on narrow segments of land where the aircraft would have to slow down anyway. In our case, we have a test aircraft with an artifically reduced range, and we make just one refuel point available: coastal and central at the same time, Wellington.
 
 ```{r define refuel points}
 refuel_ap <- airports %>% 
@@ -93,7 +93,7 @@ refuel_ap <- airports %>%
 
 ```
 
-For the vignette, we'll assume that Wellington has a long enough runway. In fact `twospeed` does not currently check whether a runway is long enough for the aircraft selected.
+For the vignette, we'll assume that Wellington has a long enough runway. In fact `Mach2` does not currently check whether a runway is long enough for the aircraft selected.
 
 ## Maps
 
@@ -121,8 +121,8 @@ We leave this tranformation step in the process to emphasise the need to think a
 # NZ_buffer30 <- sf::st_union(sf::st_buffer(NZ_coast, 30 * 1000))
 
 # We project the in-built test maps
-NZ_coast_Pac <- sf::st_transform(twospeed::NZ_coast, crs=crs_Pacific)
-NZ_buffer_Pac <- sf::st_transform(twospeed::NZ_buffer30, crs=crs_Pacific)
+NZ_coast_Pac <- sf::st_transform(Mach2::NZ_coast, crs=crs_Pacific)
+NZ_buffer_Pac <- sf::st_transform(Mach2::NZ_buffer30, crs=crs_Pacific)
 
 # All that remains is to illustrate the land and buffer
 ggplot(NZ_buffer_Pac) +
@@ -134,7 +134,7 @@ ggplot(NZ_buffer_Pac) +
 
 ## Create a grid
 
-The route is constructed on a grid that covers the entire map. You could think of this as being at some high, cruise flight level, though `twospeed` doesn't assign a flight level to it. The links in this grid have nominal length: 30-40km appears sufficient, though we will use a coarser grid for this test. In fact the grid is constructed not on a strict distance basis, but between points along particular lines of latitude, so the links vary in length.
+The route is constructed on a grid that covers the entire map. You could think of this as being at some high, cruise flight level, though `Mach2` doesn't assign a flight level to it. The links in this grid have nominal length: 30-40km appears sufficient, though we will use a coarser grid for this test. In fact the grid is constructed not on a strict distance basis, but between points along particular lines of latitude, so the links vary in length.
 
 To this are added connections to airports. These connections have a nominal length, say 150km, to represent the distance covered when accelerating to cruise speed, or decelerating back when landing. In practice, the length varies, because it depends on the distance from airport to grid.
 

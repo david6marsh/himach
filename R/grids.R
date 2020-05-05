@@ -30,7 +30,7 @@ mod_long <- function(x){
 #' for the diagonal links.
 #'
 #' For more details see the help vignette:
-#' \code{vignette("Supersonic Routing", package = "twospeed")}
+#' \code{vignette("Supersonic Routing", package = "Mach2")}
 #'
 #' @param fat_map MULTIPOLYGON map defining land regions
 #' @param name String assigned to the name slot of the result
@@ -49,7 +49,7 @@ mod_long <- function(x){
 #'
 #' @examples
 #' crs_Pacific <- sp::CRS("+proj=robin +lon_0=150 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
-#' NZ_buffer <- sf::st_transform(twospeed::NZ_b, crs=crs_Pacific)
+#' NZ_buffer <- sf::st_transform(Mach2::NZ_b, crs=crs_Pacific)
 #' system.time(
 #'   p_grid <- make_route_grid(NZ_buffer,"NZ lat-long at 100km",
 #'                            target_km = 100, classify = TRUE,
@@ -76,7 +76,7 @@ make_route_grid <- function(fat_map, name,
   long_fudge <- 10^(-(lat_dec + 2)) #avoid dropping a step in DIV
 
   # standardised levels for phase, include some not used in this function
-  phases <- twospeed:::lattice_phases
+  phases <- Mach2:::lattice_phases
 
   lat_step <- round(geosphere::destPointRhumb(c(0,0), 0, target_km * 1000)[1,2],
                     lat_dec) #latitude step, in degrees

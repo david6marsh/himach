@@ -7,7 +7,7 @@ airports <- make_airports(crs = crs_Pacific) %>%
   filter(substr(APICAO,1,1)=="N") #just around New Zealand
 refuel_ap <- airports %>%
   filter(APICAO=="NZWN")
-NZ_buffer <- sf::st_transform(twospeed::NZ_b, crs=crs_Pacific)
+NZ_buffer <- sf::st_transform(Mach2::NZ_b, crs=crs_Pacific)
 
 aps <- rbind(make_AP2("NZAA","NZCH",airports), make_AP2("NZAA","NZDN",airports),
              make_AP2("NZAA","NZQN",airports), make_AP2("NZWN","NZQN",airports),

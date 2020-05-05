@@ -1,6 +1,6 @@
-#' twospeed: A package for computing supersonic aircraft routes
+#' Mach2: A package for computing supersonic aircraft routes
 #'
-#' The twospeed package finds the quickest route between airports, for
+#' The Mach2 package finds the quickest route between airports, for
 #' supersonic aircraft that fly subsonic over land.
 #'
 #'
@@ -20,5 +20,5 @@
 #' @import dplyr
 #'
 #' @docType package
-#' @name twospeed
+#' @name Mach2
 NULL
