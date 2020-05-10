@@ -55,7 +55,7 @@ test_that("Find Leg",{
                      route_grid = NZ_grid,
                      ap_loc = airports) %>%
     select(-timestamp)
-  expect_known_hash(routes, hash = "9b24caa126")
+  expect_known_hash(routes, hash = "30d57d469e")
 
   options("quiet" = old_quiet)
 })
@@ -76,7 +76,7 @@ test_that("Find Route",{
                        route_grid = NZ_grid,
                        ap_loc = airports) %>%
     select(-timestamp)
-  expect_known_hash(routes, hash = "9b24caa126")
+  expect_known_hash(routes, hash = "30d57d469e")
 
   # test with parallel subsonic aircraft
   routes <- find_route(aircraft[1,],
@@ -86,7 +86,7 @@ test_that("Find Route",{
                        ap_loc = airports,
                        cf_subsonic = aircraft[3,]) %>%
     select(-timestamp)
-  expect_known_hash(routes, hash = "e21017d2a7")
+  expect_known_hash(routes, hash = "8e872ac3d4")
 
   options("quiet" = old_quiet)
 })
@@ -112,7 +112,7 @@ test_that("Find Routes",{
                         refuel = refuel_ap) %>%
     select(-timestamp)
   ))
-  expect_known_hash(routes, hash = "045569d467")
+  expect_known_hash(routes, hash = "f21b6363e2")
 
   # and again with a no-fly zone
   Buller_nofly <- sf::st_transform(NZ_Buller_buffer40, crs=crs_Pacific)
@@ -126,7 +126,7 @@ test_that("Find Routes",{
                           avoid = Buller_nofly) %>%
       select(-timestamp)
   ))
-  expect_known_hash(routes, hash = "0780500293")
+  expect_known_hash(routes, hash = "8c27650536")
 
   options("quiet" = old_quiet)
 })
