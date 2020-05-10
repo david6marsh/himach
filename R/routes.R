@@ -41,10 +41,17 @@ distFromLand <- function(long, lat, land){
 
 
 #this will be called recursively
-findGC <- function(subp, withMap, avoidMap){
+# from 1000 routes, max nchar was 18, so 30 indicates problems
+findGC <- function(subp, withMap, avoidMap, max_char = 30){
 
   if(getOption("quiet", default=0)>2) message("  ",first(subp$phase), " ",
                                              first(subp$phaseID), "  ", nrow(subp))
+  # check if recursed too far
+  too_deep <- FALSE
+  if(nchar(first(subp$phaseID)) > max_char) {
+    too_deep <- TRUE
+    warning("Gone too deep at: ", first(subp$phaseID), "for", first(subp$id))
+  }
 
   #if is.na(avoidMap) then a simplified approach for the non-sea phases
   #for sea phases use withMap (avoiding land & avoid areas, already union)
@@ -54,7 +61,9 @@ findGC <- function(subp, withMap, avoidMap){
 
   #land or transition, we assume a single GC
   #sea, but single step, then the same
-  if ((first(subp$phase) != "sea" & is.na(useMap)) | length(subp) == 1){
+  if (too_deep |
+      (first(subp$phase) != "sea" & is.na(useMap)) |
+      length(subp) == 1){
     if (nrow(subp)==1) subp %>% select(.data$phase, .data$phaseID, .data$id)
     else {
       subp %>% summarise(phase = first(.data$phase),
@@ -590,7 +599,7 @@ pathToGC <- function(path, route_grid,
     #the lattice might be stored in the opposite sense, so check both
     p <- data.frame(from = as.numeric(path[1:n-1]),
                     to = as.numeric(path[2:n])) %>%
-      left_join(route_grid@lattice %>% select(.data$from, .data$to,.data$ phase),
+      left_join(route_grid@lattice %>% select(.data$from, .data$to, .data$phase),
                 by=c("from","to")) %>%
       left_join(route_grid@lattice %>% select(.data$from, .data$to, .data$phase),
                 by=c("from"="to","to"="from")) %>%
@@ -845,13 +854,14 @@ find_leg <- function(ac, ap2, route_grid, fat_map, ap_loc,
 #' @import dplyr
 #'
 find_leg_really <- function(ac, ap2, route_grid, fat_map,
-                                   ap_loc,
-                                   avoid=NA,
-                                   enforce_range=TRUE,
-                                   best_by_time=TRUE,
-                                   grace_km=NA,
-                                   shortcuts=TRUE,
-                           ad_dist, ad_nearest, ...){
+                            ap_loc,
+                            avoid=NA,
+                            enforce_range=TRUE,
+                            best_by_time=TRUE,
+                            grace_km=NA,
+                            shortcuts=TRUE,
+                            ad_dist, ad_nearest, max_circuity = 1.6,
+                            ...){
   #start with a grid, find the routes for this aircraft
   #ap2 is a row of a dataframe with at least AP2 from_long, from_lat, to_long, to_lat
   # dots are to allow passing the number of points to generate in the envelope
@@ -890,6 +900,9 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
 
     #if necessary add a grace distance, to allow routing to be found if within 2%.
     if (!is.na(grace_km) & (gcdist/ac$range_km > 0.97)) ac$range_km <- ac$range_km + grace_km
+
+    # v.v. if gcdist is small, reduce the range using max_circuity
+    ac$range_km <- min(ac$range_km, gcdist * max_circuity)
 
     if (enforce_range) {
       #trim the points to the route Envelope
