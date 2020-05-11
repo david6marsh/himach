@@ -906,7 +906,8 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
     #if quicker over the Pacific...
     if (enforce_range) {
       if ((abs(ap2$to_long - ap2$from_long) > 180) |
-          (min(abs(ap2$to_long), abs(ap2$from_long)) > 130)) {
+          (min(ap2$to_long, ap2$from_long) > 130) |
+          (max(ap2$to_long, ap2$from_long) < -130)) {
         use_crs <- crs_Pacific
       } else use_crs <- crs_Atlantic
       #shift route grid for this leg

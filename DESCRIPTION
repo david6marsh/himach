@@ -1,7 +1,7 @@
 Type: Package
 Package: Mach2
 Title: Find best route for supersonic aircraft 
-Version: 0.0.0.9006
+Version: 0.0.0.9007
 Authors@R: 
     c(person(given = "David",
            family = "Marsh",
