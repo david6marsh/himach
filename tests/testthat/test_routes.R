@@ -40,12 +40,13 @@ test_that("Find Leg",{
   NZ_buffer_Pac <- sf::st_transform(NZ_buffer30, crs=crs_Pacific)
 
   # fail with unmatched CRS
-  expect_error(
-  find_leg(aircraft[4,],
-                    make_AP2("NZAA","NZCH",airports),
-                    fat_map = NZ_buffer_Pac,
-                    route_grid = NZ_grid,
-                    ap_loc = airports))
+  # # transformed in code, so no longer fails
+  # expect_error(
+  # find_leg(aircraft[4,],
+  #                   make_AP2("NZAA","NZCH",airports),
+  #                   fat_map = NZ_buffer_Pac,
+  #                   route_grid = NZ_grid,
+  #                   ap_loc = airports))
 
   airports <- make_airports(crs = crs_Pacific)
   # can't test against a route with a timestamp!

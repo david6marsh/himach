@@ -63,7 +63,7 @@ findGC <- function(subp, withMap, avoidMap, max_char = 30){
   #sea, but single step, then the same
   if (too_deep |
       (first(subp$phase) != "sea" & is.na(useMap)) |
-      length(subp) == 1){
+      nrow(subp) <= 2){
     if (nrow(subp)==1) subp %>% select(.data$phase, .data$phaseID, .data$id)
     else {
       subp %>% summarise(phase = first(.data$phase),
@@ -903,10 +903,23 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
 
     # v.v. if gcdist is small, reduce the range using max_circuity
     ac$range_km <- min(ac$range_km, gcdist * max_circuity)
-
+    #if quicker over the Pacific...
     if (enforce_range) {
+      if ((abs(ap2$to_long - ap2$from_long) > 180) |
+          (min(abs(ap2$to_long), abs(ap2$from_long)) > 130)) {
+        use_crs <- crs_Pacific
+      } else use_crs <- crs_Atlantic
+      #shift route grid for this leg
+      route_grid@points$xy <- st_transform(route_grid@points$xy,
+                                           crs=use_crs, quiet=FALSE)
+      route_grid@lattice$geometry <- st_transform(route_grid@lattice$geometry,
+                                                  crs=use_crs, quiet=FALSE)
+      ap_loc$ap_locs <- st_transform(ap_loc$ap_locs, crs=use_crs, quiet=FALSE)
+      fat_map <- st_transform(fat_map, crs=use_crs, quiet=FALSE)
+
+
       #trim the points to the route Envelope
-      envelope <-  make_route_envelope(ac, route_grid, ap2, st_crs(fat_map), ...)
+      envelope <-  make_route_envelope(ac, route_grid, ap2, use_crs, ...)
 
       #reduce the lattice - but do it via the points, because we don't want to cut lines up
       route_grid@points <- route_grid@points %>%
