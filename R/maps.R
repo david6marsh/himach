@@ -92,7 +92,7 @@ rangeEnvelope <- function(ac, route_grid, ap2, fat_map,
 #' @param ap_col,ap_size Colour and size of used airport markers (dark
 #'   blue, 0.4)
 #' @param refuel_airports Show the used refuel airports using these
-#'   locations, or nothing if NA (default). (Usually same as \code{ap_loc}.)
+#'   locations, or nothing if NA (default). (Defaults to same as \code{ap_loc}.)
 #' @param rap_col,rap_size Colour and size of refuel airport markers
 #'   (red, 0.4)
 #' @param crow,crow_col,crow_size If TRUE, show the 'crow-flies' direct
@@ -131,7 +131,7 @@ map_routes <- function(
   land_f="grey90", buffer_f="grey60", avoid_f="grey80",
   l_alpha=0.8, l_size=0.5,
   e_alpha=0.4, e_size=0.6, e_col="grey70",
-  refuel_airports=NA, rap_col="red", rap_size=0.4,
+  refuel_airports=ap_loc, rap_col="red", rap_size=0.4,
   warn = FALSE
 ){
   (stopifnot(is.na(show_route) || show_route %in% c("speed","aircraft","time", "circuity")))

@@ -41,8 +41,9 @@ distFromLand <- function(long, lat, land){
 
 
 #this will be called recursively
-# from 1000 routes, max nchar was 18, so 30 indicates problems
-findGC <- function(subp, withMap, avoidMap, max_depth = 50){
+# from 1000 routes, max nchar was 18, so 100 indicates problems
+# seem to need much long for the long-haul trans-Pacific
+findGC <- function(subp, withMap, avoidMap, max_depth = 100){
 
   if(getOption("quiet", default=0)>2) message("  ",first(subp$phase), " ",
                                              first(subp$phaseID), "  ", nrow(subp))
@@ -916,8 +917,8 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
     #if quicker over the Pacific...
     if (enforce_range) {
       if ((abs(ap2$to_long - ap2$from_long) > 180) |
-          (min(ap2$to_long, ap2$from_long) > 130) |
-          (max(ap2$to_long, ap2$from_long) < -130)) {
+          (min(ap2$to_long, ap2$from_long) > 90) |
+          (max(ap2$to_long, ap2$from_long) < -90)) {
         if (getOption("quiet", default=0)>2) message("  Using Pacific projection")
         use_crs <- crs_Pacific
       } else {
