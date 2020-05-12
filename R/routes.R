@@ -42,7 +42,7 @@ distFromLand <- function(long, lat, land){
 
 #this will be called recursively
 # from 1000 routes, max nchar was 18, so 30 indicates problems
-findGC <- function(subp, withMap, avoidMap, max_depth = 40){
+findGC <- function(subp, withMap, avoidMap, max_depth = 50){
 
   if(getOption("quiet", default=0)>2) message("  ",first(subp$phase), " ",
                                              first(subp$phaseID), "  ", nrow(subp))
