@@ -55,6 +55,6 @@ test_that("World wrapping", {
 
   expect_known_hash(st_wrap_transform(world,
                                         crs_Pacific),
-                      "8c9428e6edc77ee324f82f1c955")
+                      "26638138e4e35e2c293259a7272")
 
 })

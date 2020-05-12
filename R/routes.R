@@ -42,13 +42,13 @@ distFromLand <- function(long, lat, land){
 
 #this will be called recursively
 # from 1000 routes, max nchar was 18, so 30 indicates problems
-findGC <- function(subp, withMap, avoidMap, max_char = 30){
+findGC <- function(subp, withMap, avoidMap, max_depth = 40){
 
   if(getOption("quiet", default=0)>2) message("  ",first(subp$phase), " ",
                                              first(subp$phaseID), "  ", nrow(subp))
   # check if recursed too far
   too_deep <- FALSE
-  if(nchar(first(subp$phaseID)) > max_char) {
+  if(nchar(first(subp$phaseID)) > max_depth) {
     too_deep <- TRUE
     warning("Gone too deep at: ", first(subp$phaseID), "for", first(subp$id))
   }
@@ -262,6 +262,9 @@ find_routes <- function(ac_ids, ap2_ids, aircraft, airports, ...){
 #' @param refuel_topN Return the best N (default 1) refuelling options
 #' @param max_circuity Threshold for excluding refuelling stops (default 2.0)
 #' @param ap_loc Airport locations as from \code{\link{make_airports}}
+#' @param margin_km Great circle distance between airports must be less than
+#'     aircraft range minus this operating margin (default 200km), to give
+#'     a margin for arrival and departure.
 #' @param ... Other parameters, passed to \code{\link{find_leg}} and thence to
 #'   to \code{\link{make_route_envelope}}.
 #'
@@ -296,7 +299,8 @@ find_route <- function(ac, ap2, fat_map, avoid=NA, route_grid, cf_subsonic=NA,
                       refuel=NA, refuel_h=1, refuel_only_if=TRUE,
                       refuel_topN=1,
                       max_circuity=2.0,
-                      ap_loc, ...){
+                      ap_loc,
+                      margin_km = 200, ...){
   #cf_subsonic is either NA or a line from the ac dataframe, like ac itself
   #refuel is either NA or a dataframe list APICAO, lat, long at least, with ap_locs
 
@@ -318,7 +322,7 @@ find_route <- function(ac, ap2, fat_map, avoid=NA, route_grid, cf_subsonic=NA,
   unidirectional <- (sep==">")
 
   #can aircraft make it without refuelling?
-  ap2range_ok <- ap2$gcdist_km < ac$range_km
+  ap2range_ok <- ap2$gcdist_km < ac$range_km - margin_km
 
   #if yes - then get the route
   if (ap2range_ok) routes <- find_leg(ac, ap2, ap_loc = ap_loc,
@@ -351,7 +355,8 @@ find_route <- function(ac, ap2, fat_map, avoid=NA, route_grid, cf_subsonic=NA,
              ref_des_km = geosphere::distGeo(c(.data$ref_long, .data$ref_lat),
                                   c(.data$to_long, .data$to_lat))/1000) %>%
       ungroup() %>%
-      filter(.data$dep_ref_km < ac$range_km & .data$ref_des_km < ac$range_km) %>%
+      filter(.data$dep_ref_km < ac$range_km - margin_km &
+               .data$ref_des_km < ac$range_km - margin_km) %>%
       filter((.data$AREF != .data$ADEP) & (.data$AREF != .data$ADES)) %>% #can't refuel at start or end!
       #if 1 or more under circuity then filter
       mutate(circuity = (.data$dep_ref_km + .data$ref_des_km)/ap2$gcdist_km,
@@ -623,6 +628,11 @@ pathToGC <- function(path, route_grid,
           phaseID = paste0(cumsum(.data$phaseChange),".")) %>%
         select(-.data$phaseChange)
     }
+    # debug find NA phase
+    if (any(is.na(p$phase))){
+      message("missing phase")
+    }
+
     if(getOption("quiet", default=0)>1) message(" Calculated phase changes")
     p <- p %>%
       #now duplicate each row and simplify to a single id instead of from-to
@@ -908,8 +918,12 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
       if ((abs(ap2$to_long - ap2$from_long) > 180) |
           (min(ap2$to_long, ap2$from_long) > 130) |
           (max(ap2$to_long, ap2$from_long) < -130)) {
+        if (getOption("quiet", default=0)>2) message("  Using Pacific projection")
         use_crs <- crs_Pacific
-      } else use_crs <- crs_Atlantic
+      } else {
+        if (getOption("quiet", default=0)>2) message("  Using Atlantic projection")
+        use_crs <- crs_Atlantic
+      }
       #shift route grid for this leg
       route_grid@points$xy <- st_transform(route_grid@points$xy,
                                            crs=use_crs, quiet=FALSE)

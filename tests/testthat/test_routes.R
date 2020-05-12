@@ -20,10 +20,10 @@ test_that("Route summary", {
   rs1 <- summarise_routes(NZ_routes, ap)
   expect_equal(rs1[1, ]$refuel_ap, "NZWN")
   expect_equal(rs1[2, ]$M084_h, 1.68)
-  expect_equal(rs1[2, ]$advantage_h, -0.88)
-  expect_equal(rs1[3, ]$sea_dist_frac, 0.753)
+  expect_equal(rs1[2, ]$advantage_h, -0.86)
+  expect_equal(rs1[3, ]$sea_dist_frac, 0.704)
   expect_equal(rs1[4, ]$n_phases, 5)
-  expect_equal(rs1[4, ]$circuity, 1.21)
+  expect_equal(rs1[4, ]$circuity, 1.22)
   expect_true(rs1[5, ]$best)
   expect_true(is.na(rs1[6, ]$time_h))
   # parameter behaviour?
@@ -56,7 +56,7 @@ test_that("Find Leg",{
                      route_grid = NZ_grid,
                      ap_loc = airports) %>%
     select(-timestamp)
-  expect_known_hash(routes, hash = "30d57d469e")
+  expect_known_hash(routes, hash = "397ecbf531")
 
   options("quiet" = old_quiet)
 })
@@ -77,7 +77,7 @@ test_that("Find Route",{
                        route_grid = NZ_grid,
                        ap_loc = airports) %>%
     select(-timestamp)
-  expect_known_hash(routes, hash = "30d57d469e")
+  expect_known_hash(routes, hash = "397ecbf531")
 
   # test with parallel subsonic aircraft
   routes <- find_route(aircraft[1,],
@@ -87,7 +87,7 @@ test_that("Find Route",{
                        ap_loc = airports,
                        cf_subsonic = aircraft[3,]) %>%
     select(-timestamp)
-  expect_known_hash(routes, hash = "6943309d2c")
+  expect_known_hash(routes, hash = "f1c39d7601")
 
   options("quiet" = old_quiet)
 })
@@ -113,7 +113,7 @@ test_that("Find Routes",{
                         refuel = refuel_ap) %>%
     select(-timestamp)
   ))
-  expect_known_hash(routes, hash = "5e9c1ed017")
+  expect_known_hash(routes, hash = "deee889ed7")
 
   # and again with a no-fly zone
   Buller_nofly <- sf::st_transform(NZ_Buller_buffer40, crs=crs_Pacific)
@@ -127,7 +127,7 @@ test_that("Find Routes",{
                           avoid = Buller_nofly) %>%
       select(-timestamp)
   ))
-  expect_known_hash(routes, hash = "8e04417a82")
+  expect_known_hash(routes, hash = "4aa2042e78")
 
   options("quiet" = old_quiet)
 })
