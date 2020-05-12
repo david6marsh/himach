@@ -41,9 +41,8 @@ distFromLand <- function(long, lat, land){
 
 
 #this will be called recursively
-# from 1000 routes, max nchar was 18, so 100 indicates problems
-# seem to need much long for the long-haul trans-Pacific
-findGC <- function(subp, withMap, avoidMap, max_depth = 100){
+# for trans-Pacific, depth of > 150 is quite possible
+findGC <- function(subp, withMap, avoidMap, max_depth = 250){
 
   if(getOption("quiet", default=0)>2) message("  ",first(subp$phase), " ",
                                              first(subp$phaseID), "  ", nrow(subp))

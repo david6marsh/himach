@@ -92,7 +92,7 @@ rangeEnvelope <- function(ac, route_grid, ap2, fat_map,
 #' @param ap_col,ap_size Colour and size of used airport markers (dark
 #'   blue, 0.4)
 #' @param refuel_airports Show the used refuel airports using these
-#'   locations, or nothing if NA (default). (Defaults to same as \code{ap_loc}.)
+#'   locations, or nothing if NA. (Defaults to same as \code{ap_loc}.)
 #' @param rap_col,rap_size Colour and size of refuel airport markers
 #'   (red, 0.4)
 #' @param crow,crow_col,crow_size If TRUE, show the 'crow-flies' direct
@@ -108,6 +108,8 @@ rangeEnvelope <- function(ac, route_grid, ap2, fat_map,
 #'   maps, default grey 90, 70 and 80, respectively
 #' @param l_alpha,l_size line (route) settings for alpha (transparency)
 #'   and width, defaults 0.6 and 0.4.
+#' @param scale_direction Passed to scale_colour_viridis, either -1 (default) or
+#'   or 1.
 #' @param warn if TRUE show some warnings (when defaults loaded) (default FALSE)
 #'
 #' @return Dataframe with details of the leg
@@ -132,6 +134,7 @@ map_routes <- function(
   l_alpha=0.8, l_size=0.5,
   e_alpha=0.4, e_size=0.6, e_col="grey70",
   refuel_airports=ap_loc, rap_col="red", rap_size=0.4,
+  scale_direction = -1,
   warn = FALSE
 ){
   (stopifnot(is.na(show_route) || show_route %in% c("speed","aircraft","time", "circuity")))
@@ -181,21 +184,21 @@ map_routes <- function(
         geom_sf(data = routes,
                 aes(geometry=st_wrap(prj(.data$gc, crs=crs)), colour=.data$advantage_h), fill="white",
                 size=l_size, lineend="round", alpha=l_alpha) +
-        scale_colour_viridis_c()
+        scale_colour_viridis_c(direction = scale_direction)
     }
     if (show_route=="circuity"){
       m <- m +  labs(colour = "Circuity\n(best=1.0)") +
         geom_sf(data = routes,
                 aes(geometry=st_wrap(prj(.data$gc, crs=crs)), colour=.data$circuity), fill="white",
                 size=l_size, lineend="round", alpha=l_alpha) +
-        scale_colour_viridis_c()
+        scale_colour_viridis_c(direction = scale_direction)
     }
     if (show_route == "speed"){
       m <- m +  labs(colour = "Average speed on segment (kph)") +
         geom_sf(data = routes,
                 aes(geometry=st_wrap(prj(.data$gc, crs=crs)), colour=.data$speed_kph),
                 size=l_size, lineend="round", alpha=l_alpha) +
-        scale_colour_viridis_c()
+        scale_colour_viridis_c(direction = scale_direction)
     }
     if (show_route == "aircraft"){
       m <- m +  labs(colour = "Aircraft") +
@@ -204,7 +207,7 @@ map_routes <- function(
                     colour = .data$acID),
                 size=l_size, lineend="round", alpha=l_alpha,
                 show.legend = "line")+
-        scale_colour_viridis_d()
+        scale_colour_viridis_d(direction = scale_direction)
     }
   }
 
