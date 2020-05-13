@@ -2,6 +2,115 @@
 #
 # Functions for plotting nice maps of routes
 
+# return a hemisphere polygon with one edge on line of longitude
+# west or east
+hemis <- function(crs = crs_Atlantic, dir = "W",  n_pts = 50, margin = 0.05){
+
+  # edge has to be consistent with the 'new' crs
+  longit <- long_cent(crs)
+
+  if (dir == "W"){
+    longit <- longit - margin/2
+    long2 <- longit - (180 - margin/2)}
+  else {
+    longit <- longit + margin/2
+    long2 <- longit + (180 - margin/2)
+  }
+  latN <- 89.9
+  latS <- -89.9
+ pts <- bind_rows(
+    data.frame(lo = longit, la = seq(latN, latS, length.out = n_pts)),
+    data.frame(lo = seq(longit, long2, length.out = n_pts %/% 3), la = latS),
+    data.frame(lo = long2, la = seq(latS, latN, length.out = n_pts)),
+    data.frame(lo = seq(long2, longit, length.out = n_pts %/% 3), la = latN)) %>%
+    mutate(lo = mod_long(.data$lo)) %>%
+    #remove sequential repeats
+    filter(row_number() == 1 |
+      !(.data$lo == lag(.data$lo) & .data$la == lag(.data$la)))
+
+  y <- st_transform(
+    st_sfc(st_polygon(list(as.matrix(pts))), crs = crs_latlong),
+  crs = crs)
+}
+
+
+#' Wrap the 'dateline' before \code{st_transform}
+#'
+#' \code{st_slice_transform} handles the 'far side' break first, then
+#' \code{st_tranform}
+#'
+#' \code{\link[sf:st_transform]{st_wrap_dateline}} should handle the break in a
+#' map projection but uses `GDAL` for this. Given persistent issues in
+#' installing  GDAL, \code{st_slice_transform} achieves the same, at least for
+#' Atlantic to Pacific, without needing GDAL. This is only needed for
+#' polygons, otherwise \code{\link[sf:st_transform]{st_wrap_dateline}} works
+#' without the GDAL issues.
+#'
+#' Here 'simple' means, with a dateline that is a single line of longitude: ie
+#' the proj4string contains either "longitude_of_center", so the dateline is
+#' that +180; or not, in which case it assumes the "longitude_of_center" is 0.
+#'
+#' Caution: Use other than for \code{crs_Atlantic} to \code{crs_Pacific} is not
+#' guaranteed! Check by plotting!
+#'
+#'
+#' @param m A map dataframe, ie of class \code{sf} and \code{data.frame}, or an
+#'   \code{sfc_MULTIPOLYGON}
+#' @param new_crs Destination coordinate reference system, as in \code{st_tranform}
+#' @param margin Any polygons that cross the dateline lose a small margin, for
+#'   safety
+#' @param n_step Number of steps used in creating the slice (per side).
+#'
+#' @return \code{sf} dataframe, same as the parameter \code{m}
+#'
+#' @import sf
+#' @import dplyr
+#' @import tidyr
+#'
+#' @examples
+#' world <- sf::st_as_sf(rnaturalearthdata::coastline110)
+#' w_pacific <- st_slice_transform(world, crs_Pacific)
+#' ggplot2::ggplot(w_pacific) + ggplot2::geom_sf()
+#'
+#' # bad - not run - dateline problem example
+#' # ggplot2::ggplot(st_transform(world, crs_Pacific)) +
+#' #   ggplot2::geom_sf()
+#'
+#' @export
+st_slice_transform <- function(m, new_crs = crs_Pacific,
+                       n_pts = 30, margin = 0.05){
+  crs = st_crs(m)
+  # quick exit if nothing to change
+  if (crs == st_crs(new_crs) |
+      long_cent(m) == long_cent(new_crs)) return(m)
+
+  # slice centred for the 'new' crs
+  longit <- mod_long(long_cent(new_crs) + 180)
+
+  longit <- longit - margin/2
+  long2 <- longit + margin/2
+  latN <- 89.9
+  latS <- -89.9
+   pts <- bind_rows(
+    data.frame(lo = longit, la = seq(latN, latS, length.out = n_pts)),
+    data.frame(lo = seq(longit, long2, length.out = n_pts %/% 3), la = latS),
+    data.frame(lo = long2, la = seq(latS, latN, length.out = n_pts)),
+    data.frame(lo = seq(long2, longit, length.out = n_pts %/% 3), la = latN)) %>%
+    mutate(lo = mod_long(.data$lo)) %>%
+    #remove sequential repeats
+    filter(row_number() == 1 |
+             !(.data$lo == lag(.data$lo) & .data$la == lag(.data$la)))
+ sl <- st_transform(
+    st_sfc(st_polygon(list(as.matrix(pts))), crs = crs_latlong),
+    crs = crs)
+ # remove the slice
+  # transform to new crs
+ suppressWarnings(suppressMessages({
+   m_less <- st_difference(m, sl)
+   y <- st_transform(m_less, crs = new_crs)
+ }))
+ return(y)
+}
 
 # return polygon square based on sf bbox
 bbox_to_poly <- function(b, crs){
@@ -146,13 +255,13 @@ map_routes <- function(
   if (is.data.frame(routes)) routes <- routes %>% filter(!is.na(time_h))
 
   #thin map is the one without buffer
-  thin_map <- st_wrap_transform(thin_map, crs=crs) #force to CRS used for this map
+  thin_map <- st_slice_transform(thin_map, new_crs=crs) #force to CRS used for this map
 
   #layer 1 (one or two base maps)
   if (is.na(fat_map)) {
     m <- plot_map(thin_map, c_border=NA, c_land=land_f)
   } else {
-    m <- plot_map(prj(fat_map, crs=crs), c_border=NA, c_land=buffer_f) +
+    m <- plot_map(st_slice_transform(fat_map, new_crs=crs), c_border=NA, c_land=buffer_f) +
       geom_sf(data=thin_map, fill=land_f, colour=NA)
   }
 
@@ -314,7 +423,7 @@ st_bbox_longlat <- function(m){
 # splits prior to an st_transform
 # marg is a small amount in degrees trimmed off the side
 
-#' Wrap the 'dateline' before \code{st_transform}
+#' Wrap the 'dateline' before \code{st_transform}: DEPRECATED
 #'
 #' \code{st_wrap_transform} handles the 'far side' break first, then
 #' \code{st_tranform}

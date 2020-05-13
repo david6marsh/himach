@@ -929,7 +929,7 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
       route_grid@lattice$geometry <- st_transform(route_grid@lattice$geometry,
                                                   crs=use_crs, quiet=FALSE)
       ap_loc$ap_locs <- st_transform(ap_loc$ap_locs, crs=use_crs, quiet=FALSE)
-      fat_map <- st_wrap_transform(fat_map, crs=use_crs)
+      fat_map <- st_slice_transform(fat_map, new_crs=use_crs)
 
 
       #trim the points to the route Envelope

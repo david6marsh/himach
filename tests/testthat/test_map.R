@@ -53,8 +53,8 @@ test_that("Route mapping", {
 test_that("World wrapping", {
   world <- sf::st_as_sf(rnaturalearthdata::countries110)
 
-  expect_known_hash(st_wrap_transform(world,
+  expect_known_hash(st_slice_transform(world,
                                         crs_Pacific),
-                      "26638138e4e35e2c293259a7272")
+                      "62ae830d048da98dc436924c678")
 
 })
