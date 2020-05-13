@@ -196,7 +196,7 @@ find_routes <- function(ac_ids, ap2_ids, aircraft, airports, ...){
 
   combos <- tidyr::crossing(ac_ids, ap2_ids)
   names(combos) <- c("ac","ap1","ap2")
-  pb <- utils::txtProgressBar(max = nrow(combos), style = 3)
+  pb <- progress_estimated(nrow(combos) , min_time = 3)
   routes <- purrr::reduce(lapply(1:nrow(combos),
                                  function(x) {
                                    ac <- aircraft[aircraft$id == combos$ac[x], ]
@@ -205,13 +205,12 @@ find_routes <- function(ac_ids, ap2_ids, aircraft, airports, ...){
                                                    airports)
                                    r <- find_route(ac, ap2,
                                                    ap_loc = airports, ...)
-                                   utils::setTxtProgressBar(pb, x)
+                                   pb$tick()$print()
                                    message("") # new line
                                    return(r)
                                  }
   ),
   rbind)
-  close(pb)
   return(routes)
 }
 
@@ -930,7 +929,7 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
       route_grid@lattice$geometry <- st_transform(route_grid@lattice$geometry,
                                                   crs=use_crs, quiet=FALSE)
       ap_loc$ap_locs <- st_transform(ap_loc$ap_locs, crs=use_crs, quiet=FALSE)
-      fat_map <- st_transform(fat_map, crs=use_crs, quiet=FALSE)
+      fat_map <- st_wrap_transform(fat_map, crs=use_crs)
 
 
       #trim the points to the route Envelope
@@ -1238,15 +1237,26 @@ summarise_routes <- function(routes,
               sea_dist_frac =
                 round(sum(if_else(.data$phase=="sea", .data$segdist_km, 0))/sum(.data$segdist_km), 3),
               dist_km = round(sum(.data$segdist_km), 1),
+              fly_time_h = round(sum(if_else(.data$phase=="refuel", 0, .data$time_h)), 2),
               time_h = round(sum(.data$time_h), 2),
               n_phases =
-                as.integer(last(.data$phaseID)) - as.integer(first(.data$phaseID)) + 1) %>%
+                as.integer(last(.data$phaseID)) - as.integer(first(.data$phaseID)) + 1,
+              n_accel = sum(if_else(.data$phase=="sea" & lag(.data$phase) != "sea", 1,0),
+                            na.rm = TRUE)) %>%
     mutate(advantage_h = .data$M084_h - .data$time_h,
-           circuity = round(.data$dist_km/.data$gcdist_km, 2)) %>%
+           advantage_pct = round(.data$advantage_h / .data$M084_h, 3),
+           circuity = round(.data$dist_km/.data$gcdist_km, 2) - 1,
+           ave_fly_speed_M = round(.data$dist_km / (.data$fly_time_h * mach_kph), 2),) %>%
+    # for non-routes, set more values to NA
+    ungroup() %>%
+    mutate_at(c("dist_km", "n_phases", "n_accel", "circuity"),
+              ~ifelse(is.na(.data$time_h), NA, .)) %>%
     arrange(.data$routeID, .data$acType, .data$time_h) %>%
     #add best for routeID, refuelling or not
     group_by(.data$routeID, .data$acID) %>%
-    mutate(best = (.data$advantage_h == max(.data$advantage_h, na.rm = TRUE))) %>%
+    mutate(best = (.data$advantage_h == max(.data$advantage_h, na.rm = TRUE)),
+           #fix circuity bug
+           circuity = pmax(0, .data$circuity)) %>%
     ungroup() %>%
     arrange(.data$advantage_h)
 

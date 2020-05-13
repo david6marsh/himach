@@ -110,6 +110,7 @@ rangeEnvelope <- function(ac, route_grid, ap2, fat_map,
 #'   and width, defaults 0.6 and 0.4.
 #' @param scale_direction Passed to scale_colour_viridis, either -1 (default) or
 #'   or 1.
+#' @param title,subtitle Passed to ggplot.
 #' @param warn if TRUE show some warnings (when defaults loaded) (default FALSE)
 #'
 #' @return Dataframe with details of the leg
@@ -135,6 +136,7 @@ map_routes <- function(
   e_alpha=0.4, e_size=0.6, e_col="grey70",
   refuel_airports=ap_loc, rap_col="red", rap_size=0.4,
   scale_direction = -1,
+  title = "", subtitle = "",
   warn = FALSE
 ){
   (stopifnot(is.na(show_route) || show_route %in% c("speed","aircraft","time", "circuity")))
@@ -187,11 +189,12 @@ map_routes <- function(
         scale_colour_viridis_c(direction = scale_direction)
     }
     if (show_route=="circuity"){
-      m <- m +  labs(colour = "Circuity\n(best=1.0)") +
+      m <- m +  labs(colour = "Circuity\n(best=0)") +
         geom_sf(data = routes,
                 aes(geometry=st_wrap(prj(.data$gc, crs=crs)), colour=.data$circuity), fill="white",
                 size=l_size, lineend="round", alpha=l_alpha) +
-        scale_colour_viridis_c(direction = scale_direction)
+        scale_colour_viridis_c(direction = scale_direction,
+                               labels = scales::percent)
     }
     if (show_route == "speed"){
       m <- m +  labs(colour = "Average speed on segment (kph)") +
@@ -256,6 +259,7 @@ map_routes <- function(
   }
 
   m <- m +
+    labs(title = title, subtitle = subtitle) +
     theme(legend.position = "bottom")
 
   return(m)
@@ -352,6 +356,10 @@ st_wrap_transform <- function(m, crs, marg = 0.05){
   # get 'dateline' of original map proj in longitude
   # where the break in the map will be after a transformation
   # to get the crs as a string, transform a small box...
+
+  # nothing to do if already there
+  if (st_crs(m) == st_crs(crs)) return(m)
+
   small_box <- edges_to_poly(c(1,2,1,2), to_crs = crs)
   break_long <- mod_long(long_cent(small_box) + 180)
 

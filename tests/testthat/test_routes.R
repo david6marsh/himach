@@ -23,7 +23,10 @@ test_that("Route summary", {
   expect_equal(rs1[2, ]$advantage_h, -0.86)
   expect_equal(rs1[3, ]$sea_dist_frac, 0.704)
   expect_equal(rs1[4, ]$n_phases, 5)
-  expect_equal(rs1[4, ]$circuity, 1.22)
+  expect_equal(rs1[2, ]$n_accel, 2)
+  expect_equal(rs1[2, ]$ave_fly_speed_M, 0.76)
+  expect_equal(rs1[1, ]$fly_time_h, 1.68)
+  expect_equal(rs1[4, ]$circuity, 0.22)
   expect_true(rs1[5, ]$best)
   expect_true(is.na(rs1[6, ]$time_h))
   # parameter behaviour?
