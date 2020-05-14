@@ -109,11 +109,13 @@ test_that("Find Routes",{
                               ncol = 2, byrow = TRUE), stringsAsFactors = FALSE)
   ac <- aircraft[c(1,4), ]$id
 
+  # turn off the temporary cache
   invisible(capture.output(
     routes <- find_routes(ac, ap2, aircraft, airports,
                         fat_map = NZ_buffer_Pac,
                         route_grid = NZ_grid,
-                        refuel = refuel_ap) %>%
+                        refuel = refuel_ap,
+                        temp_cache_path = NA) %>%
     select(-timestamp)
   ))
   expect_known_hash(routes, hash = "deee889ed7")

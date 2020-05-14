@@ -201,7 +201,8 @@ ac <- aircraft[c(1,4), ]$id
 routes <- find_routes(ac, ap2, aircraft, airports,
                       fat_map = NZ_buffer_Pac, 
                      route_grid = p_grid,
-                     refuel = refuel_ap)
+                     refuel = refuel_ap,
+                     temp_cache_path = NA)
 
 ```
 

@@ -145,25 +145,38 @@ emptyRoute <- function(ac, ap2, fat_map,
            envelope = st_sfc(st_polygon(),crs=crs_latlong))
 }
 
-
+# save the caches as you go along, for safety
+# path should include directory, but not file extension (RDS)
+temp_cache_save <- function(temp_cache_path){
+  if (!is.na(temp_cache_path)){
+    saveRDS(rte_cache, paste0(temp_cache_path, "_routes.RDS"))
+    saveRDS(star_cache, paste0(temp_cache_path, "_stars.RDS"))
+  }
+}
 
 #' Find best routes between airport-pair & aircraft combinations
 #'
-#' \code{find_routes} combines an aircraft and airport-pair list and finds the best routes between them,
-#' refuelling if necessary
+#' \code{find_routes} combines an aircraft and airport-pair list and finds the
+#' best routes between them, refuelling if necessary
 #'
-#' This function finds is a wrapper for the single-case function \code{find_route}.
-#' It takes (text) lists of aircraft and airport codes, combines them,
-#' then repeatedly finds routes for these. A 'route' is
-#' made up of one or two 'legs' (airport to airport without intermediate stop).
+#' This function finds is a wrapper for the single-case function
+#' \code{find_route}. It takes (text) lists of aircraft and airport codes,
+#' combines them, then repeatedly finds routes for these. A 'route' is made up
+#' of one or two 'legs' (airport to airport without intermediate stop).
 #'
 #' For more details see \code{\link{find_route}}
 #'
 #'
-#' @param ac_ids A vector of aircraft IDs, as column 'id' from \code{\link{make_aircraft}}
+#' @param ac_ids A vector of aircraft IDs, as column 'id' from
+#'   \code{\link{make_aircraft}}
 #' @param ap2_ids A 2-column matrix or dataframe of airport pair text IDs
-#' @param aircraft Specification of the aircraft, see \code{\link{make_aircraft}}
+#' @param aircraft Specification of the aircraft, see
+#'   \code{\link{make_aircraft}}
 #' @param airports Airport locations as from \code{\link{make_airports}}
+#' @param temp_cache_path,temp_cache_n Saves the caches with this path every
+#'   \code{temp_cache_n} routes (default 5). Default path
+#'   \code{"data/CacheTemp"}, or use \code{NA} to turn off. File extension is
+#'   added later.
 #' @param ... Other parameters, passed to \code{\link{find_route}}.
 #'
 #'
@@ -190,7 +203,9 @@ emptyRoute <- function(ac, ap2, fat_map,
 #'                     ap_loc = airports)
 #'
 #' @export
-find_routes <- function(ac_ids, ap2_ids, aircraft, airports, ...){
+find_routes <- function(ac_ids, ap2_ids, aircraft, airports,
+                        temp_cache_path = "data/CacheTemp",
+                        temp_cache_n = 5, ...){
   stopifnot(ncol(ap2_ids)==2)
   if (!is.data.frame(ap2_ids)) ap2_ids <- as.data.frame(ap2_ids, stringsAsFactors = FALSE)
 
@@ -205,8 +220,9 @@ find_routes <- function(ac_ids, ap2_ids, aircraft, airports, ...){
                                                    airports)
                                    r <- find_route(ac, ap2,
                                                    ap_loc = airports, ...)
+                                   if (x %% temp_cache_n == 0) temp_cache_save(temp_cache_path)
                                    pb$tick()$print()
-                                   message("") # new line
+                                   if (getOption("quiet", default=0)>0) message("") # new line
                                    return(r)
                                  }
   ),

@@ -95,7 +95,8 @@ options("quiet" = 0) # just the progress bar
 NZ_routes <- find_routes(ac, ap2, aircraft, airports,
                       fat_map = NZ_buffer_Pac, 
                      route_grid = NZ_grid,
-                     refuel = refuel_ap)
+                     refuel = refuel_ap,
+                     temp_cache_path = NA)
 
 # now have the 2 caches ----
 
