@@ -5,7 +5,7 @@ library(dplyr)
 test_that("Route envelope", {
   ac <- make_aircraft(warn = FALSE)
   ap <- make_airports()
-  z <- make_route_envelope(ac[1,],NA, make_AP2("EGLL","KJFK",ap),4326)
+  z <- make_route_envelope(ac[1,], make_AP2("EGLL","KJFK",ap))
   expect_type(z, "list")
   expect_s3_class(z, "sfc_POLYGON")
   # default is 200 points
@@ -59,7 +59,7 @@ test_that("Find Leg",{
                      route_grid = NZ_grid,
                      ap_loc = airports) %>%
     select(-timestamp)
-  expect_known_hash(routes, hash = "397ecbf531")
+  expect_known_hash(routes, hash = "e185d20e91")
 
   options("quiet" = old_quiet)
 })
@@ -80,7 +80,7 @@ test_that("Find Route",{
                        route_grid = NZ_grid,
                        ap_loc = airports) %>%
     select(-timestamp)
-  expect_known_hash(routes, hash = "397ecbf531")
+  expect_known_hash(routes, hash = "e185d20e91")
 
   # test with parallel subsonic aircraft
   routes <- find_route(aircraft[1,],
@@ -90,7 +90,7 @@ test_that("Find Route",{
                        ap_loc = airports,
                        cf_subsonic = aircraft[3,]) %>%
     select(-timestamp)
-  expect_known_hash(routes, hash = "f1c39d7601")
+  expect_known_hash(routes, hash = "9cf7ba4023")
 
   options("quiet" = old_quiet)
 })
@@ -118,7 +118,7 @@ test_that("Find Routes",{
                         temp_cache_path = NA) %>%
     select(-timestamp)
   ))
-  expect_known_hash(routes, hash = "deee889ed7")
+  expect_known_hash(routes, hash = "ddeb9ea006")
 
   # and again with a no-fly zone
   Buller_nofly <- sf::st_transform(NZ_Buller_buffer40, crs=crs_Pacific)
@@ -132,7 +132,7 @@ test_that("Find Routes",{
                           avoid = Buller_nofly) %>%
       select(-timestamp)
   ))
-  expect_known_hash(routes, hash = "4aa2042e78")
+  expect_known_hash(routes, hash = "c18e7b537b")
 
   options("quiet" = old_quiet)
 })

@@ -5,10 +5,15 @@
 lattice_phases <- c("sea","transition","land","arr/dep","refuel")
 
 
-# (default) crs that uses lat and long
-# useful for converting matrices of long-lat to spatial
-crs_latlong <- 4326
+# standard points
+pole_N <- st_sfc(st_point(c(0,90)), crs = crs_N)
+pole_S <- st_sfc(st_point(c(0,-90)), crs = crs_S)
 
+# standard lines
+pts <- data.frame(lo = 0, la = seq(-89.5, -89.5, length.out = 200))
+long_0 <- st_sfc(st_linestring(as.matrix(pts)), crs = crs_latlong)
+long_180 <- st_sfc(st_linestring(as.matrix(pts %>% mutate(lo = 180))), crs = crs_latlong)
 
-usethis::use_data(lattice_phases, crs_latlong,
+usethis::use_data(lattice_phases, pole_N, pole_S,
+                  long_0, long_180,
                   internal = TRUE, overwrite = TRUE)

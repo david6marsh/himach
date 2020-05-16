@@ -38,6 +38,21 @@
 #'
 "NZ_Buller_buffer40"
 
+#' Lat-long coordinate reference system
+#'
+#' Coordinate reference system (CRS) for creating maps from
+#' longitude-latitude coordinates. Used in analysis, but
+#' not recommended for plots.
+#'
+#' crs_N <- 4326
+#'
+#' @seealso \code{\link{crs_Atlantic}}, \code{\link{crs_Pacific}},
+#'  \code{\link{crs_S}}, \code{\link{crs_N}}
+#'
+#' @format CRS
+#'
+"crs_latlong"
+
 #' Atlantic-centred coordinate reference system
 #'
 #' Coordinate reference system (CRS) for plotting and analysing maps.
@@ -65,6 +80,38 @@
 #' @seealso \code{\link{crs_Atlantic}}
 #'
 "crs_Pacific"
+
+
+#' Arctic-centred coordinate reference system
+#'
+#' Coordinate reference system (CRS) for plotting and analysing maps.
+#' WGS 84 / Arctic Polar Stereographic. Used in analysis, but
+#' not recommended for plots.
+#'
+#' crs_N <- 3995
+#'
+#' @seealso \code{\link{crs_Atlantic}}, \code{\link{crs_Pacific}},
+#'  \code{\link{crs_latlong}}, \code{\link{crs_S}}
+#'
+#' @format CRS
+#'
+"crs_N"
+
+#' Antarctic-centred coordinate reference system
+#'
+#' Coordinate reference system (CRS) for plotting and analysing maps.
+#' WGS 84 / Antarctic Polar Stereographic. Used in analysis, but
+#' not recommended for plots.
+#'
+#' crs_N <- 3031
+#'
+#' @seealso \code{\link{crs_Atlantic}}, \code{\link{crs_Pacific}},
+#'  \code{\link{crs_latlong}}, \code{\link{crs_N}}
+#'
+#' @format CRS
+#'
+"crs_S"
+
 
 #' Speed of sound, for Mach to km conversion
 #'
