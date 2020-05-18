@@ -930,41 +930,51 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
     ac$range_km <- min(ac$range_km, gcdist * max_circuity)
     #if quicker over the Pacific...
     if (enforce_range) {
-    #   if ((abs(ap2$to_long - ap2$from_long) > 180) |
-    #       (min(ap2$to_long, ap2$from_long) > 90) |
-    #       (max(ap2$to_long, ap2$from_long) < -90)) {
-    #     if (getOption("quiet", default=0)>2) message("  Using Pacific projection")
-    #     use_crs <- crs_Pacific
-    #   } else {
-    #     if (getOption("quiet", default=0)>2) message("  Using Atlantic projection")
-    #     use_crs <- crs_Atlantic
-    #   }
 
-    #find route Envelope
-    envelope <-  make_route_envelope(ac, ap2, ...)
-    # and use its CRS henceforth as a basis
-    use_crs <- st_crs(envelope)
+      #find route Envelope
+      envelope <-  make_route_envelope(ac, ap2, ...)
+      # and use its CRS henceforth as a basis
+      use_crs <- st_crs(envelope)
 
-    # crop the map - but reduce size first, and avoid self-overlap
-    # find crop region for fat_map in its crs
-    bb_re_map <- st_bbox(st_transform(envelope, st_crs(fat_map)))
-    bb_map <- st_bbox(fat_map)
-    bb_crop <- bb_re_map
-    # need corrections because bb_re_map is misleading at poles
-    # if it crosses long_180 you get a full strip, but that's ok
-    if (st_within(st_transform(pole_N, use_crs),
-                  envelope, sparse = FALSE)[1,1]) bb_crop["ymax"] <- bb_map["ymax"]
-    if (st_within(st_transform(pole_S, use_crs),
-                  envelope, sparse = FALSE)[1,1]) bb_crop["ymin"] <- bb_map["ymin"]
-    mland <- st_crop(fat_map, bb_crop) # crop map in its own CRS
-    # add more points on the straight bits & merge overlaps
-    mls <- st_segmentize(mland, units::set_units(20, km))
-    mlsN <- st_union(st_union(st_transform(mls, use_crs), by_feature = TRUE))
-    fat_map <- st_intersection(envelope, mlsN)
+      # crop the map - but reduce size first, and avoid self-overlap
+      # find crop region for fat_map in its crs
+      bb_re_map <- st_bbox(st_transform(envelope, st_crs(fat_map)))
+      bb_map <- st_bbox(fat_map)
+      bb_crop <- bb_re_map
+      # need corrections because bb_re_map is misleading at poles
+      # if it crosses long_180 you get a full strip, but that's ok
+      if (st_within(st_transform(pole_N, use_crs),
+                    envelope, sparse = FALSE)[1,1]) {
+        bb_crop["ymax"] <- bb_map["ymax"]
+      }
+      if (st_within(st_transform(pole_S, use_crs),
+                    envelope, sparse = FALSE)[1,1]) {
+        bb_crop["ymin"] <- bb_map["ymin"]
+      }
+      mland <- st_crop(fat_map, bb_crop) # crop map in its own CRS
+      # add more points on the straight bits & merge overlaps
+      mls <- st_segmentize(mland, units::set_units(20, km))
+      mlsN <- st_union(st_union(st_transform(mls, use_crs), by_feature = TRUE))
+      fat_map <- st_intersection(envelope, mlsN)
 
       #shift route grid for this leg
-      route_grid@points$xy <- st_transform(route_grid@points$xy,
-                                           crs=use_crs, quiet=FALSE)
+      # turn off warning about 'spatially constant attributes"
+      suppressWarnings(
+        pts <- route_grid@points %>%
+        st_as_sf() %>%
+        st_crop(bb_crop) %>%
+        st_transform(crs=use_crs, quiet=FALSE)
+      )
+      route_grid@points <- cbind(pts %>% st_drop_geometry(), pts$xy) %>%
+        rename(xy = geometry)
+      # now cut points to the envelope itself
+      route_grid@points <- route_grid@points %>%
+        filter(st_intersects(.data$xy, envelope, sparse = FALSE))
+
+      # 'crop' using ids - to reduce transform challenge
+      route_grid@lattice <- route_grid@lattice %>%
+        inner_join(route_grid@points, by = c("from"="id")) %>%
+        inner_join(route_grid@points, by = c("to"="id"))
       route_grid@lattice$geometry <- st_transform(route_grid@lattice$geometry,
                                                   crs=use_crs, quiet=FALSE)
       ap_loc$ap_locs <- st_transform(ap_loc$ap_locs, crs=use_crs, quiet=FALSE)
@@ -972,12 +982,11 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
       if (!is.na(avoid)) avoid <- st_transform(avoid, use_crs)
 
 
-      #reduce the lattice - but do it via the points, because we don't want to cut lines up
-      route_grid@points <- route_grid@points %>%
-        filter(st_intersects(.data$xy, envelope, sparse = FALSE))
-      route_grid@lattice <- route_grid@lattice %>%
-        inner_join(route_grid@points %>% select(.data$id), by=c("from"="id")) %>%
-        inner_join(route_grid@points %>% select(.data$id), by=c("to"="id"))
+     # reduce the lattice - but do it via the points
+      # the equivalent filter(st_intersects...) takes 6*longer
+      # route_grid@lattice <- route_grid@lattice %>%
+      #   inner_join(route_grid@points %>% select(.data$id), by=c("from"="id")) %>%
+      #   inner_join(route_grid@points %>% select(.data$id), by=c("to"="id"))
 
       if (getOption("quiet", default=0)>1) message(" Cut envelope from lattice: ",round(Sys.time() - tstart,1))
     }
