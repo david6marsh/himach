@@ -85,7 +85,7 @@ aircraft <- make_aircraft()
 airports <- make_airports(crs = crs_Pacific) 
 refuel_ap <- airports %>%
   filter(APICAO=="NZWN")
-NZ_buffer_Pac <- sf::st_transform(Mach2::NZ_buffer30, crs=crs_Pacific)
+NZ_buffer_Pac <- sf::st_transform(NZ_buffer30, crs=crs_Pacific)
 
 ap2 <- matrix(c("NZAA","NZCH","NZAA","NZDN","NZGS","NZCH"), 
               ncol = 2, byrow = TRUE)
@@ -163,7 +163,7 @@ ls(rte_cache, pattern = "NZCH")
 rtes <- summarise_routes(routes, airports)
 
 # draw a basic map
-NZ_coast_Pac <- sf::st_transform(Mach2::NZ_coast, crs=crs_Pacific)
+NZ_coast_Pac <- sf::st_transform(NZ_coast, crs=crs_Pacific)
 map_routes(NZ_coast_Pac, routes, crs = crs_Pacific, fat_map = NZ_buffer_Pac,
           avoid_map = Buller_nofly)
 

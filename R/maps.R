@@ -2,38 +2,6 @@
 #
 # Functions for plotting nice maps of routes
 
-# return a hemisphere polygon with one edge on line of longitude
-# west or east
-hemis <- function(crs = crs_Atlantic, dir = "W",  n_pts = 50, margin = 0.05){
-
-  # edge has to be consistent with the 'new' crs
-  longit <- long_cent(crs)
-
-  if (dir == "W"){
-    longit <- longit - margin/2
-    long2 <- longit - (180 - margin/2)}
-  else {
-    longit <- longit + margin/2
-    long2 <- longit + (180 - margin/2)
-  }
-  latN <- 89.9
-  latS <- -89.9
- pts <- bind_rows(
-    data.frame(lo = longit, la = seq(latN, latS, length.out = n_pts)),
-    data.frame(lo = seq(longit, long2, length.out = n_pts %/% 3), la = latS),
-    data.frame(lo = long2, la = seq(latS, latN, length.out = n_pts)),
-    data.frame(lo = seq(long2, longit, length.out = n_pts %/% 3), la = latN)) %>%
-    mutate(lo = mod_long(.data$lo)) %>%
-    #remove sequential repeats
-    filter(row_number() == 1 |
-      !(.data$lo == lag(.data$lo) & .data$la == lag(.data$la)))
-
-  y <- st_transform(
-    st_sfc(st_polygon(list(as.matrix(pts))), crs = crs_latlong),
-  crs = crs)
-}
-
-
 #' Wrap the 'dateline' before \code{st_transform}
 #'
 #' \code{st_slice_transform} handles the 'far side' break first, then
@@ -57,9 +25,9 @@ hemis <- function(crs = crs_Atlantic, dir = "W",  n_pts = 50, margin = 0.05){
 #' @param m A map dataframe, ie of class \code{sf} and \code{data.frame}, or an
 #'   \code{sfc_MULTIPOLYGON}
 #' @param new_crs Destination coordinate reference system, as in \code{st_tranform}
+#' @param n_pts Number of steps used in creating the slice (per side).
 #' @param margin Any polygons that cross the dateline lose a small margin, for
 #'   safety
-#' @param n_step Number of steps used in creating the slice (per side).
 #'
 #' @return \code{sf} dataframe, same as the parameter \code{m}
 #'
@@ -112,28 +80,7 @@ st_slice_transform <- function(m, new_crs = crs_Pacific,
  return(y)
 }
 
-# return polygon square based on sf bbox
-bbox_to_poly <- function(b, crs){
-  st_sfc(st_polygon(list(matrix(c(b$xmin,b$ymin,
-                                  b$xmax,b$ymin,
-                                  b$xmax,b$ymax,
-                                  b$xmin,b$ymax,
-                                  b$xmin,b$ymin),
-                                ncol=2, byrow=TRUE))),
-         crs=crs)
-}
 
-# return a polygon from c(xmin, xmax, ymin, ymax)
-# b is in crs, default to lat long
-edges_to_poly <- function(b, in_crs = crs_latlong, to_crs = in_crs){
-  st_transform(st_sfc(st_polygon(list(matrix(c(b[1],b[3],
-                                               b[2],b[3],
-                                               b[2],b[4],
-                                               b[1],b[4],
-                                               b[1],b[3]),
-                                             ncol=2, byrow=TRUE))),
-                      crs=in_crs), crs = to_crs)
-}
 
 #wrapper around ggplot/geom_sf for quick map
 plot_map <- function(msf,
@@ -149,25 +96,35 @@ plot_map <- function(msf,
 
 # achievable range from a point
 # not used for route finding
-rangeEnvelope <- function(ac, route_grid, ap2, fat_map,
+make_range_envelope <- function(ac, ap, ap_locs = make_airports(),
                           envelope_points=70){
   #range envelope shows how far from an airport you can go  with a given range
-  #it takes the first airport of the given airport pair
   #create no-wind range ellipse
-  #transform the origin
-  projC <- st_transform(st_sfc(st_point(
-    c(ap2$from_long, ap2$from_lat)),
-    crs=4326),crs=st_crs(fat_map))
 
-  r <- ac$range_km * 1000
+  ap_loc <- ap_locs %>%
+    filter(APICAO == ap)
 
+  # use CRS centred on cetnre of route envelopes
+  cen_prj <- sp::CRS(paste0("+proj=laea +lat_0=", round(ap_loc$lat,1),
+                            " +lon_0=", round(ap_loc$long,1),
+                            " +x_0=4321000 +y_0=3210000 +ellps=GRS80 +units=m +no_defs"))
+
+  geo_c <- c(ap_loc$long, ap_loc$lat)
+
+  dist <- ac$range_km * 1000
   theta <- seq(0, 2* pi, length.out = envelope_points)
-  circle <- matrix(c(r*cos(theta), r*sin(theta)), ncol=2)
 
-  ellipse <- t(circle) +
-    as.vector(st_coordinates(projC))
+  geod <- geosphere::geodesic(geo_c, theta, dist)
 
-  st_convex_hull(st_sfc(st_multipoint(t(ellipse)),crs=st_crs(fat_map)))
+  # convert to simple feature
+  pg <- st_multipoint(geod[,1:2]) %>%
+    st_sfc(crs=crs_latlong) %>%
+    st_cast('LINESTRING') %>%
+    st_cast('POLYGON') %>%
+    st_transform(cen_prj) %>%
+    # occasionally fails as self-intersection when later st_intersection
+    # so this should solve that
+    st_make_valid()
 }
 
 
@@ -234,7 +191,7 @@ rangeEnvelope <- function(ac, route_grid, ap2, fat_map,
 #'
 #' @export
 map_routes <- function(
-  thin_map, routes=NA, crs=Mach2::crs_Atlantic, show_route="time",
+  thin_map, routes=NA, crs=crs_Atlantic, show_route="time",
   fat_map=NA, avoid_map=NA,
   ap_loc=NA, ap_col="darkblue", ap_size=0.4,
   crow=FALSE, crow_col="grey70", crow_size=0.2,
@@ -358,7 +315,7 @@ map_routes <- function(
   }
 
   #apply bounds?
-  if (!is.na(routes) && bound){
+  if (is.data.frame(routes) && bound){
     #crop based on the bounding box of all of the routes
     bbox <- st_bbox(prj(routes$gc, crs=crs)) +
       # c(-1,-1,1,1)*10 #zoomed box + 10deg
@@ -385,28 +342,6 @@ st_wrap <- function(m){
                crs=st_crs(m))
 }
 
-# wrap a single SF object
-# geom, with bb (in long-lat)
-wrap_ <- function(geom, break_long, marg){
-  # if (st_is(geom, "POLYGON")){
-  #     (st_is(geom, "MULTIPOLYGON") && length(geom[[1]]) == 1)) {
-  # if (TRUE) {
-    bb <- st_bbox_longlat(geom)
-    long_prob <- ( break_long > bb$xmin & break_long < bb$xmax )
-    if (!st_is_empty(geom) && long_prob) {
-      # in case bounding box is very small
-      marg <- min(marg, (bb$xmax - bb$xmin)/20)
-      # get West and East parts
-      # in the _current_ crs of geom
-      box_W <- edges_to_poly(c(bb$xmin, break_long - marg, bb$ymin, bb$ymax))
-      geom_W <- st_intersection(st_transform(box_W, st_crs(geom)), geom)
-      box_E <- edges_to_poly(c(break_long + marg, bb$xmax,  bb$ymin, bb$ymax))
-      geom_E <- st_intersection(st_transform(box_E, st_crs(geom)), geom)
-      geom <- st_union(geom_W, geom_E)
-    }
-    return(geom)
-  # }
-}
 
 #wrapper for st_bbox that always returns lat-longs
 st_bbox_longlat <- function(m){
@@ -416,81 +351,6 @@ st_bbox_longlat <- function(m){
                        crs = crs_latlong))
   }
   return(bb)
-}
-
-# handle wrapping of objects around the 'dateline' or opposite end of the map
-# expect m to be a map data frame, with geometry
-# splits prior to an st_transform
-# marg is a small amount in degrees trimmed off the side
-
-#' Wrap the 'dateline' before \code{st_transform}: DEPRECATED
-#'
-#' \code{st_wrap_transform} handles the 'far side' break first, then
-#' \code{st_tranform}
-#'
-#' \code{\link[sf:st_transform]{st_wrap_dateline}} should handle the break in a
-#' map projection but uses `GDAL` for this. Given persistent issues in
-#' installing  GDAL, \code{st_wrap_transform} achieves the same, at least for
-#' simple map projections, without needing GDAL. This is only needed for
-#' polygons, otherwise \code{\link[sf:st_transform]{st_wrap_dateline}} works
-#' without the GDAL issues.
-#'
-#' Here 'simple' means, with a dateline that is a single line of longitude: ie
-#' the proj4string contains either "longitude_of_center", so the dateline is
-#' that +180; or not, in which case it assumes the "longitude_of_center" is 0.
-#'
-#'
-#' @param m A map dataframe, ie of class \code{sf} and \code{data.frame}
-#' @param crs Destination coordinate reference system, as in \code{st_tranform}
-#' @param marg Any polygons that cross the dateline lose a small margin, for
-#'   safety
-#'
-#' @return \code{sf} dataframe, same as the parameter \code{m}
-#'
-#' @import sf
-#' @import dplyr
-#' @import tidyr
-#'
-#' @examples
-#' world <- sf::st_as_sf(rnaturalearthdata::coastline110)
-#' w_pacific <- st_wrap_transform(world, crs_Pacific)
-#' ggplot2::ggplot(w_pacific) + ggplot2::geom_sf()
-#'
-#' # bad - not run - dateline problem example
-#' # ggplot2::ggplot(st_transform(world, crs_Pacific)) +
-#' #   ggplot2::geom_sf()
-#'
-#' @export
-st_wrap_transform <- function(m, crs, marg = 0.05){
-  # get 'dateline' of original map proj in longitude
-  # where the break in the map will be after a transformation
-  # to get the crs as a string, transform a small box...
-
-  # nothing to do if already there
-  if (st_crs(m) == st_crs(crs)) return(m)
-
-  small_box <- edges_to_poly(c(1,2,1,2), to_crs = crs)
-  break_long <- mod_long(long_cent(small_box) + 180)
-
-  if ("sf" %in% class(m) && "data.frame" %in% class(m) &&
-      all(st_is(m, c("POLYGON", "MULTIPOLYGON")))) {
-    # loop over dataframe rows
-    len <- nrow(m)
-    new_geo <-  m %>%
-      st_geometry() %>%
-      split(1:len)  %>%
-      purrr::modify( wrap_,
-                     break_long = break_long, marg = marg) %>%
-      unsplit(1:len)
-    st_geometry(m) <- new_geo
-  } else if (all(st_is(m, c("POLYGON", "MULTIPOLYGON")))) {
-    # simpler case
-    m <- wrap_(m, break_long = break_long, marg = marg)
-  } else {
-    warning("only handles single (multi)polygons or sf of polygons")
-  }
-
-  st_transform(m, crs)
 }
 
 #find the longitude of centre

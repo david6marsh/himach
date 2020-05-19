@@ -62,7 +62,7 @@ copy_attr <- function(from, to, atts){
 #'
 #' @examples
 #'
-#' airports <- Mach2::make_airports() #get a default set of lat-longs
+#' airports <- make_airports() #get a default set of lat-longs
 #' ap2 <- make_AP2("NZAA","NZCH", airports)
 #'
 #' @importFrom dplyr %>%
@@ -151,7 +151,7 @@ prj <- function(x, crs) {
 #' @importFrom dplyr %>%
 #'
 #' @export
-make_aircraft <- function(ac = NA, sound_kph = Mach2::mach_kph, warn = TRUE){
+make_aircraft <- function(ac = NA, sound_kph = mach_kph, warn = TRUE){
   if (is.na(ac[1])) {
     if (warn) warning("Using default aircraft file.")
     file <- system.file("extdata", "test_aircraft.csv", package = "Mach2", mustWork = TRUE)

@@ -107,10 +107,10 @@ For the purpose of testing and this vignette, we use a map which is provided by 
 
 In fact, we need two files: one is the basic outline of the land, largely used for visualisation; the second is derived from this, and adds a 30km buffer around the coastline to indicate the area where supersonic flight is not allowed. A different buffer is possible, though 30km is about right for the expected width of the footprint of the supersonic boom.
 
-Since the shape file is large, we provide a simplified outline `NZ_coast` and also the buffer `NZ_buffer30`. These are in the original projection used by Stats NZ (in full: `r sf::st_crs(NZ_coast)`). It's strongly recommended to use one of the following:
+Since the shape file is large, we provide a simplified outline `NZ_coast` and also the buffer `NZ_buffer30`. These are in the original projection used by Stats NZ. For global work, it's strongly recommended to use one of the following:
 
 * `crs_Atlantic`: Robinson 54030, a mid 20C classic view, with Atlantic centre
-* `crs_Pacific`: A Pacific-centred variant on this with `crs=CRS("+proj=robin +lon_0=150 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")`.
+* `crs_Pacific`: A Pacific-centred variant on this with `crs=CRS("+proj=robin +lon_0=180 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")`.
 
 We leave this tranformation step in the process to emphasise the need to think about which projection to use.
 
@@ -121,8 +121,8 @@ We leave this tranformation step in the process to emphasise the need to think a
 # NZ_buffer30 <- sf::st_union(sf::st_buffer(NZ_coast, 30 * 1000))
 
 # We project the in-built test maps
-NZ_coast_Pac <- sf::st_transform(Mach2::NZ_coast, crs=crs_Pacific)
-NZ_buffer_Pac <- sf::st_transform(Mach2::NZ_buffer30, crs=crs_Pacific)
+NZ_coast_Pac <- sf::st_transform(NZ_coast, crs=crs_Pacific)
+NZ_buffer_Pac <- sf::st_transform(NZ_buffer30, crs=crs_Pacific)
 
 # All that remains is to illustrate the land and buffer
 ggplot(NZ_buffer_Pac) +

@@ -33,7 +33,7 @@ distFromLand <- function(long, lat, land){
   #long and lat are vectors, land is a map (sfc_MULTIPOLYGON)
   if (is.na(land)) return(0)
   mp <- st_transform(st_cast(st_sfc(
-    st_multipoint(matrix(c(long, lat),ncol=2)),crs=crs_latlong),'POINT'),
+    st_multipoint(matrix(c(long, lat),ncol=2)), crs = crs_latlong), 'POINT'),
     crs=st_crs(land))
   as.vector(st_distance(mp, land))/1000
 }
@@ -953,8 +953,9 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
       }
       mland <- st_crop(fat_map, bb_crop) # crop map in its own CRS
       # add more points on the straight bits & merge overlaps
-      mls <- st_segmentize(mland, units::set_units(20, km))
-      mlsN <- st_union(st_union(st_transform(mls, use_crs), by_feature = TRUE))
+      mls <- st_segmentize(mland, units::set_units(20, "km"))
+      mlsN <- st_transform(mls, use_crs) %>%
+        st_make_valid()
       fat_map <- st_intersection(envelope, mlsN)
 
       #shift route grid for this leg
@@ -966,7 +967,7 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
         st_transform(crs=use_crs, quiet=FALSE)
       )
       route_grid@points <- cbind(pts %>% st_drop_geometry(), pts$xy) %>%
-        rename(xy = geometry)
+        rename(xy = .data$geometry)
       # now cut points to the envelope itself
       route_grid@points <- route_grid@points %>%
         filter(st_intersects(.data$xy, envelope, sparse = FALSE))
@@ -1136,12 +1137,14 @@ make_route_envelope <- function(ac, ap2,
                            " +lon_0=", round(geo_c[1],1),
                            " +x_0=4321000 +y_0=3210000 +ellps=GRS80 +units=m +no_defs"))
   # convert to simple feature
-  pg <- st_transform(
-    st_cast(st_cast(
-    st_sfc(st_multipoint(geod[,1:2]), crs=crs_latlong),
-    'LINESTRING'),
-    'POLYGON'),
-    cen_prj)
+  pg <- st_multipoint(geod[,1:2]) %>%
+    st_sfc(crs=crs_latlong) %>%
+    st_cast('LINESTRING') %>%
+    st_cast('POLYGON') %>%
+    st_transform(cen_prj) %>%
+    # occasionally fails as self-intersection when later st_intersection
+    # so this should solve that
+    st_make_valid()
 
 }
 
@@ -1279,7 +1282,7 @@ summarise_routes <- function(routes,
     mutate(gcdist_km = make_AP2(substr(first(.data$routeID),1,4),
                                     substr(first(.data$routeID),7,10),
                                     ap_loc)$gcdist_km,
-           M084_h = round(.data$gcdist_km/(0.85 * Mach2::mach_kph),2) + arrdep_h,
+           M084_h = round(.data$gcdist_km/(0.85 * mach_kph),2) + arrdep_h,
            gcdist_km = round(.data$gcdist_km,1)) %>%
     group_by(.data$timestamp, .data$fullRouteID, .data$routeID, .data$refuel_ap,
              .data$acID, .data$acType, .data$M084_h, .data$gcdist_km) %>%
