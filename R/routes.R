@@ -321,6 +321,16 @@ find_route <- function(ac, ap2, fat_map, avoid=NA, route_grid, cf_subsonic=NA,
 
   if (getOption("quiet", default=0)>0) message("Route:-", ap2$AP2,"----") #route header v refuel subroutes
 
+  # # check for unknown airport
+  # if (is.na(ap2$gcdist_km)){
+  #   miss_ADEP <- ""
+  #   miss_ADES <- ""
+  #   if (!(ap2$ADEP %in% ap_loc$APICAO)) miss_ADEP <- ap2$ADEP
+  #   if (!(ap2$ADES %in% ap_loc$APICAO)) miss_ADES <- ap2$ADES
+  #   warning(paste("Unknown airport:",miss_ADEP,miss_ADES))
+  #   return(emptyRoute(ac, ap2, fat_map))
+  # }
+
   # #debug  - find good crs
   # useCRS <- "+proj=laea +lon_0=150 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
   # fat_map <- st_transform(fat_map, crs=useCRS)

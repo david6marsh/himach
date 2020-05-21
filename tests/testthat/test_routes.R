@@ -34,7 +34,7 @@ test_that("Route summary", {
   expect_equal(rs2[1, ]$advantage_h - rs1[1, ]$advantage_h, 0.5)
 })
 
-test_that("Find Leg",{
+test_that("find_leg works",{
   old_quiet <- getOption("quiet", default=0)
   options("quiet" = 0) #for no reporting
   # need to load some of the built-in data
@@ -65,12 +65,11 @@ test_that("Find Leg",{
 })
 
 
-test_that("Find Route",{
+test_that("find_route works",{
   old_quiet <- getOption("quiet", default=0)
   options("quiet" = 0) #for no reporting
   # need to load some of the built-in data
   aircraft <- make_aircraft(warn = FALSE)
-  airports <- make_airports()
   NZ_buffer_Pac <- sf::st_transform(NZ_buffer30, crs=crs_Pacific)
 
   airports <- make_airports(crs = crs_Pacific)
@@ -133,6 +132,13 @@ test_that("Find Routes",{
       select(-timestamp)
   ))
   expect_known_hash(routes, hash = "c18e7b537b")
+
+  ap2 <- as.data.frame(matrix(c("NZAA","NZCH","NZAA","ZZZZ"),
+                              ncol = 2, byrow = TRUE), stringsAsFactors = FALSE)
+  expect_error(find_routes(ac, ap2, aircraft, airports,
+                             fat_map = NZ_buffer_Pac,
+                             route_grid = NZ_grid),
+               "unknown")
 
   options("quiet" = old_quiet)
 })

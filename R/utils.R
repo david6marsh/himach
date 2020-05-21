@@ -71,6 +71,11 @@ copy_attr <- function(from, to, atts){
 make_AP2 <- function(adep, ades, ap=make_airports()){
   stopifnot(length(adep)==length(ades))
 
+  missing_AP <- setdiff(union(adep, ades), ap$APICAO)
+  if (length(missing_AP) > 0) stop("Airport(s) ",
+                                   paste(missing_AP, collapse = " "),
+                                   " unknown.")
+
   #only bidirectional is currently supported
   unidirectional=FALSE
 

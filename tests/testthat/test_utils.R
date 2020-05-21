@@ -52,4 +52,5 @@ test_that("can make AP2",{
   z <- make_AP2("BIKF", "EDDF")
   #check sort order
   expect_equal(z$AP2, "EDDF<>BIKF")
+  expect_error(make_AP2("EGLL","ZZZZ", aps), "unknown")
 })
