@@ -2,7 +2,7 @@
 
 # (default) crs that uses lat and long
 # useful for converting matrices of long-lat to spatial
-crs_latlong <- 4326
+crs_longlat <- 4326
 
 #two map projections
 #54030 is Robinson
@@ -16,7 +16,7 @@ crs_N <- 3995
 # WGS 84 / Antarctic Polar Stereographic
 crs_S <- 3031
 
-usethis::use_data(crs_latlong,
+usethis::use_data(crs_longlat,
                   crs_Atlantic, crs_Pacific,
                   crs_N, crs_S, overwrite = TRUE)
 

@@ -255,7 +255,7 @@ make_airports <- function(ap = NA, crs = 4326, warn = TRUE){
     # 4326 is a lat-long format, for input, then transform to required crs
     dplyr::mutate(ap_locs = st_transform(
       st_cast(st_sfc(
-        st_multipoint(matrix(c(.data$long, .data$lat),ncol=2)), crs = crs_latlong),
+        st_multipoint(matrix(c(.data$long, .data$lat),ncol=2)), crs = crs_longlat),
         'POINT'), crs = crs))
 }
 

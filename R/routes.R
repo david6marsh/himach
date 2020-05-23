@@ -33,7 +33,7 @@ distFromLand <- function(long, lat, land){
   #long and lat are vectors, land is a map (sfc_MULTIPOLYGON)
   if (is.na(land)) return(0)
   mp <- st_transform(st_cast(st_sfc(
-    st_multipoint(matrix(c(long, lat),ncol=2)), crs = crs_latlong), 'POINT'),
+    st_multipoint(matrix(c(long, lat),ncol=2)), crs = crs_longlat), 'POINT'),
     crs=st_crs(land))
   as.vector(st_distance(mp, land))/1000
 }
@@ -137,12 +137,12 @@ emptyRoute <- function(ac, ap2, fat_map,
              fullRouteID = ap2$AP2,
              refuel_ap = NA,
              stringsAsFactors = FALSE) %>%
-    mutate(gc = st_sfc(st_linestring(),crs=crs_latlong), #for want of anything else NULL sfc
+    mutate(gc = st_sfc(st_linestring(), crs=crs_longlat), #for want of anything else NULL sfc
            crow = st_gcIntermediate(p1=c(ap2$from_long, ap2$from_lat),
                                     p2=c(ap2$to_long, ap2$to_lat),
                                     n = 30, addStartEnd=TRUE,
-                                    crs=crs_latlong),
-           envelope = st_sfc(st_polygon(),crs=crs_latlong))
+                                    crs=crs_longlat),
+           envelope = st_sfc(st_polygon(), crs=crs_longlat))
 }
 
 # save the caches as you go along, for safety
@@ -730,7 +730,7 @@ pathToGC <- function(path, route_grid,
                 #can drop the intermediate points
                 if (getOption("quiet", default=0)>2) message("  Shortcut from ",baseID," to ",farID)
                 #first update the 'next step' info in the baseID
-                gcid[baseID,c("to","to_long","to_lat")] <- gcid[farID,c("to","to_long","to_lat")]
+                gcid[baseID, c("to","to_long","to_lat")] <- gcid[farID, c("to","to_long","to_lat")]
                 #then skip the intermediate points
                 gcid <- gcid %>% slice(-((baseID+1):farID))
                 #no need to search further for this baseID - so set farID to a value which stops this loop
@@ -767,7 +767,7 @@ pathToGC <- function(path, route_grid,
     mutate(gc = st_gcIntermediate(p1=c(.data$from_long, .data$from_lat),
                                   p2=c(.data$to_long, .data$to_lat),
                                   n=.data$steps-1, addStartEnd=TRUE,
-                                  crs = crs_latlong)) %>%
+                                  crs = crs_longlat)) %>%
     select(-.data$steps) %>%
     ungroup()
 }
@@ -914,7 +914,7 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
   crow <- st_gcIntermediate(p1=c(ap2$from_long, ap2$from_lat),
                             p2=c(ap2$to_long, ap2$to_lat),
                             n = 30, addStartEnd=TRUE,
-                            crs=crs_latlong)
+                            crs=crs_longlat)
 
   #check can actually make it!
   gcdist <- geosphere::distGeo(c(ap2$from_long, ap2$from_lat),
@@ -929,7 +929,7 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
 
   if (getOption("quiet", default=0)>2) message("  Starting envelope: ",round(Sys.time() - tstart,1))
   #make the envelope - so can plot even if don't enforce it
-  #we work with the envelope in map CRS, then save at last stage in crs_latlong
+  #we work with the envelope in map CRS, then save at last stage in crs_longlat
   envelope <-  st_sfc(st_polygon(), crs=st_crs(fat_map)) #null by default
   if (gcdist <= ac$range_km) {
 
@@ -1055,8 +1055,8 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
   # gr <- cpp_simplify(gr, iterate=TRUE)$graph #simplify the data
 
   #then get the grid route
-  # path <- get_path_pair(gr, nearest_id(route_grid,c(ap2$from_long, ap2$from_lat)),
-  #                       nearest_id(route_grid,c(ap2$to_long, ap2$to_lat)))
+  # path <- get_path_pair(gr, nearest_id(route_grid, c(ap2$from_long, ap2$from_lat)),
+  #                       nearest_id(route_grid, c(ap2$to_long, ap2$to_lat)))
   if (getOption("quiet", default = 0) < 2) {
     suppressMessages(path <- get_path_pair(gr, ap2$ADEP, ap2$ADES))
   } else path <- get_path_pair(gr, ap2$ADEP, ap2$ADES)
@@ -1082,9 +1082,9 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
            acType = ac$type,
            #this is inefficient, saving multiple copies
            grid=c(path, rep(list(NA),n()-1)), #a list with just the grid in the first one
-           crow = c(crow, rep(st_sfc(st_linestring(),crs=crs_latlong),n()-1)),
-           envelope = c(prj(envelope,crs=crs_latlong),
-                        rep(st_sfc(st_polygon(),crs=crs_latlong),
+           crow = c(crow, rep(st_sfc(st_linestring(), crs=crs_longlat),n()-1)),
+           envelope = c(prj(envelope, crs=crs_longlat),
+                        rep(st_sfc(st_polygon(), crs=crs_longlat),
                             n()-1)),
            fullRouteID = ap2$AP2,
            legs = 1, leg_id = 1,
@@ -1152,7 +1152,7 @@ make_route_envelope <- function(ac, ap2,
                            " +x_0=4321000 +y_0=3210000 +ellps=GRS80 +units=m +no_defs"))
   # convert to simple feature
   pg <- st_multipoint(geod[,1:2]) %>%
-    st_sfc(crs=crs_latlong) %>%
+    st_sfc(crs=crs_longlat) %>%
     st_cast('LINESTRING') %>%
     st_cast('POLYGON') %>%
     st_transform(cen_prj) %>%
@@ -1322,9 +1322,12 @@ summarise_routes <- function(routes,
     arrange(.data$routeID, .data$acType, .data$time_h) %>%
     #add best for routeID, refuelling or not
     group_by(.data$routeID, .data$acID) %>%
-    mutate(best = (.data$advantage_h == max(.data$advantage_h, na.rm = TRUE)),
-           #fix circuity bug
-           circuity = pmax(0, .data$circuity)) %>%
+    mutate(best = ifelse(
+      all(is.na(.data$advantage_h)),
+      NA,
+      (.data$advantage_h == max(.data$advantage_h, na.rm = TRUE))),
+      #fix circuity rounding error
+      circuity = pmax(0, .data$circuity)) %>%
     ungroup() %>%
     arrange(.data$advantage_h)
 

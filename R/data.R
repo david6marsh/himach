@@ -51,7 +51,7 @@
 #'
 #' @format CRS
 #'
-"crs_latlong"
+"crs_longlat"
 
 #' Atlantic-centred coordinate reference system
 #'
@@ -91,7 +91,7 @@
 #' crs_N <- 3995
 #'
 #' @seealso \code{\link{crs_Atlantic}}, \code{\link{crs_Pacific}},
-#'  \code{\link{crs_latlong}}, \code{\link{crs_S}}
+#'  \code{\link{crs_longlat}}, \code{\link{crs_S}}
 #'
 #' @format CRS
 #'
@@ -106,7 +106,7 @@
 #' crs_N <- 3031
 #'
 #' @seealso \code{\link{crs_Atlantic}}, \code{\link{crs_Pacific}},
-#'  \code{\link{crs_latlong}}, \code{\link{crs_N}}
+#'  \code{\link{crs_longlat}}, \code{\link{crs_N}}
 #'
 #' @format CRS
 #'

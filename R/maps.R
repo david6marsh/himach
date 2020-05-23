@@ -69,7 +69,7 @@ st_slice_transform <- function(m, new_crs = crs_Pacific,
     filter(row_number() == 1 |
              !(.data$lo == lag(.data$lo) & .data$la == lag(.data$la)))
  sl <- st_transform(
-    st_sfc(st_polygon(list(as.matrix(pts))), crs = crs_latlong),
+    st_sfc(st_polygon(list(as.matrix(pts))), crs = crs_longlat),
     crs = crs)
  # remove the slice
   # transform to new crs
@@ -118,7 +118,7 @@ make_range_envelope <- function(ac, ap, ap_locs = make_airports(),
 
   # convert to simple feature
   pg <- st_multipoint(geod[,1:2]) %>%
-    st_sfc(crs=crs_latlong) %>%
+    st_sfc(crs=crs_longlat) %>%
     st_cast('LINESTRING') %>%
     st_cast('POLYGON') %>%
     st_transform(cen_prj) %>%
@@ -337,7 +337,7 @@ map_routes <- function(
 # works for multilines without GDAL problems
 st_wrap <- function(m){
   #this can be used wihtin a geom_sf plot statement
-  st_transform(st_wrap_dateline(st_transform(m, crs = crs_latlong),
+  st_transform(st_wrap_dateline(st_transform(m, crs = crs_longlat),
                                 options = c("WRAPDATELINE=YES")),
                crs=st_crs(m))
 }
@@ -348,7 +348,7 @@ st_bbox_longlat <- function(m){
   bb <- st_bbox(m)
   if (!st_is_longlat(bb)) {
     bb <- st_bbox(st_transform(m,
-                       crs = crs_latlong))
+                       crs = crs_longlat))
   }
   return(bb)
 }
