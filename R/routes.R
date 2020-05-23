@@ -948,38 +948,42 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
 
       # crop the map - but reduce size first, and avoid self-overlap
       # find crop region for fat_map in its crs
-      bb_re_map <- st_bbox(st_transform(envelope, st_crs(fat_map)))
-      bb_map <- st_bbox(fat_map)
-      bb_crop <- bb_re_map
-      # need corrections because bb_re_map is misleading at poles
-      # if it crosses long_180 you get a full strip, but that's ok
-      if (st_within(st_transform(pole_N, use_crs),
-                    envelope, sparse = FALSE)[1,1]) {
-        bb_crop["ymax"] <- bb_map["ymax"]
-      }
-      if (st_within(st_transform(pole_S, use_crs),
-                    envelope, sparse = FALSE)[1,1]) {
-        bb_crop["ymin"] <- bb_map["ymin"]
-      }
-      mland <- st_crop(fat_map, bb_crop) # crop map in its own CRS
-      # add more points on the straight bits & merge overlaps
-      mls <- st_segmentize(mland, units::set_units(20, "km"))
-      mlsN <- st_transform(mls, use_crs) %>%
+      # bb_re_map <- st_bbox(st_transform(envelope, st_crs(fat_map)))
+      # bb_map <- st_bbox(fat_map)
+      # bb_crop <- bb_re_map
+      # # need corrections because bb_re_map is misleading at poles
+      # # if it crosses long_180 you get a full strip, but that's ok
+      # if (st_within(st_transform(pole_N, use_crs),
+      #               envelope, sparse = FALSE)[1,1]) {
+      #   bb_crop["ymax"] <- bb_map["ymax"]
+      # }
+      # if (st_within(st_transform(pole_S, use_crs),
+      #               envelope, sparse = FALSE)[1,1]) {
+      #   bb_crop["ymin"] <- bb_map["ymin"]
+      # }
+      # mland <- st_crop(fat_map, bb_crop) # crop map in its own CRS
+      # # add more points on the straight bits & merge overlaps
+      # mls <- st_segmentize(mland, units::set_units(20, "km"))
+      mlsN <- fat_map %>%
+        st_transform(use_crs) %>%
+        st_union() %>%
         st_make_valid()
       fat_map <- st_intersection(envelope, mlsN)
 
       #shift route grid for this leg
       # turn off warning about 'spatially constant attributes"
-      suppressWarnings(
-        pts <- route_grid@points %>%
-        st_as_sf() %>%
-        st_crop(bb_crop) %>%
-        st_transform(crs=use_crs, quiet=FALSE)
-      )
-      route_grid@points <- cbind(pts %>% st_drop_geometry(), pts$xy) %>%
-        rename(xy = .data$geometry)
+      # suppressWarnings(
+      #   pts <- route_grid@points %>%
+      #   st_as_sf() %>%
+      #   st_crop(bb_crop) %>%
+      #   st_transform(crs=use_crs, quiet=FALSE)
+      # )
+      # route_grid@points <- cbind(pts %>% st_drop_geometry(), pts$xy) %>%
+      #   rename(xy = .data$geometry)
       # now cut points to the envelope itself
+
       route_grid@points <- route_grid@points %>%
+        mutate(xy = st_transform(.data$xy, crs=use_crs, quiet=FALSE)) %>%
         filter(st_intersects(.data$xy, envelope, sparse = FALSE))
 
       # 'crop' using ids - to reduce transform challenge
