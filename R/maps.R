@@ -250,14 +250,16 @@ map_routes <- function(
 
       m <- m +  labs(colour = "Time Advantage") +
         geom_sf(data = routes,
-                aes(geometry=st_wrap(prj(.data$gc, crs=crs)), colour=.data$advantage_h), fill="white",
+                aes(geometry=st_slice_transform(.data$gc, new_crs=crs),
+                    colour=.data$advantage_h), fill="white",
                 size=l_size, lineend="round", alpha=l_alpha) +
         scale_colour_viridis_c(direction = scale_direction)
     }
     if (show_route=="circuity"){
       m <- m +  labs(colour = "Circuity\n(best=0)") +
         geom_sf(data = routes,
-                aes(geometry=st_wrap(prj(.data$gc, crs=crs)), colour=.data$circuity), fill="white",
+                aes(geometry=st_slice_transform(.data$gc, new_crs=crs),
+                    colour=.data$circuity), fill="white",
                 size=l_size, lineend="round", alpha=l_alpha) +
         scale_colour_viridis_c(direction = scale_direction,
                                labels = scales::percent)
@@ -265,14 +267,15 @@ map_routes <- function(
     if (show_route == "speed"){
       m <- m +  labs(colour = "Average speed on segment (kph)") +
         geom_sf(data = routes,
-                aes(geometry=st_wrap(prj(.data$gc, crs=crs)), colour=.data$speed_kph),
+                aes(geometry=st_slice_transform(.data$gc, new_crs=crs),
+                    colour=.data$speed_kph),
                 size=l_size, lineend="round", alpha=l_alpha) +
         scale_colour_viridis_c(direction = scale_direction)
     }
     if (show_route == "aircraft"){
       m <- m +  labs(colour = "Aircraft") +
         geom_sf(data = routes,
-                aes(geometry = st_wrap(prj(.data$gc, crs=crs)),
+                aes(geometry = st_slice_transform(.data$gc, new_crs=crs),
                     colour = .data$acID),
                 size=l_size, lineend="round", alpha=l_alpha,
                 show.legend = "line")+
@@ -283,7 +286,8 @@ map_routes <- function(
   #layer 4: crow-flies
   if (crow){
     m <- m +
-      geom_sf(data = st_wrap(prj(routes$crow, crs=crs)), colour=crow_col, size = crow_size)
+      geom_sf(data = st_slice_transform(routes$crow, new_crs=crs),
+              colour=crow_col, size = crow_size)
   }
 
   #layer 5: range envelope
