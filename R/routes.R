@@ -986,6 +986,11 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
         mutate(xy = st_transform(.data$xy, crs=use_crs, quiet=FALSE)) %>%
         filter(st_intersects(.data$xy, envelope, sparse = FALSE))
 
+      #check for the rare map-inversion problem on st_transform (when land and sea are switched)
+      check_pt <- route_grid@points[1, ]
+      is_land <- as.logical(st_intersects(check_pt$xy, fat_map, sparse = FALSE))
+      if (is_land != check_pt$land) fat_map <- st_difference(envelope, fat_map)
+
       # 'crop' using ids - to reduce transform challenge
       route_grid@lattice <- route_grid@lattice %>%
         inner_join(route_grid@points, by = c("from"="id")) %>%
