@@ -149,8 +149,8 @@ emptyRoute <- function(ac, ap2, fat_map,
 # path should include directory, but not file extension (RDS)
 temp_cache_save <- function(temp_cache_path){
   if (!is.na(temp_cache_path)){
-    saveRDS(rte_cache, paste0(temp_cache_path, "_routes.RDS"))
-    saveRDS(star_cache, paste0(temp_cache_path, "_stars.RDS"))
+    save(rte_cache, file = paste0(temp_cache_path, "_routes.Rdata"))
+    save(star_cache, file = paste0(temp_cache_path, "_stars.Rdata"))
   }
 }
 
@@ -211,7 +211,10 @@ find_routes <- function(ac_ids, ap2_ids, aircraft, airports,
 
   combos <- tidyr::crossing(ac_ids, ap2_ids)
   names(combos) <- c("ac","ap1","ap2")
-  pb <- progress_estimated(nrow(combos) , min_time = 3)
+  # pb <- progress_estimated(nrow(combos) , min_time = 3)
+  pb <- progress::progress_bar$new(total = nrow(combos),
+                                   format = "[:bar] :percent :eta")
+
   routes <- purrr::reduce(lapply(1:nrow(combos),
                                  function(x) {
                                    ac <- aircraft[aircraft$id == combos$ac[x], ]
@@ -221,7 +224,7 @@ find_routes <- function(ac_ids, ap2_ids, aircraft, airports,
                                    r <- find_route(ac, ap2,
                                                    ap_loc = airports, ...)
                                    if (x %% temp_cache_n == 0) temp_cache_save(temp_cache_path)
-                                   pb$tick()$print()
+                                   pb$tick()
                                    if (getOption("quiet", default=0)>0) message("") # new line
                                    return(r)
                                  }
@@ -474,6 +477,8 @@ find_route <- function(ac, ap2, fat_map, avoid=NA, route_grid, cf_subsonic=NA,
       #need to use rbind not bind_rows because of the sf
       sel_routes <- rbind.data.frame(best_refuel_options, refuel_legs)
       sel_routes <-  sel_routes %>%
+        # needed to add ungroup here with dplyr 1.0.0
+        ungroup() %>%
         arrange(.data$fullRouteID, .data$leg_id, order) %>%
         group_by(.data$fullRouteID) %>%
         #renumber the phases

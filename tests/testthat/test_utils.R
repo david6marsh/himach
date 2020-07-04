@@ -27,13 +27,13 @@ test_that("Aircraft data loads", {
 test_that("Default airport data loads", {
   expect_message(make_airports())
   expect_known_hash(make_airports(),
-                     hash = "c5d24c086c")
+                     hash = "00682f18dc")
 })
 
 test_that("Airport data loads", {
   airports <- data.frame(APICAO = "TEST", lat = 10, long = 10, stringsAsFactors = FALSE)
   expect_known_hash(make_airports(airports),
-                    hash = "775070991b")
+                    hash = "112ebdc9ca")
 })
 
 test_that("NZ maps available", {
