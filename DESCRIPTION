@@ -1,7 +1,7 @@
 Type: Package
 Package: Mach2
 Title: Find best route for supersonic aircraft 
-Version: 0.0.0-9019
+Version: 0.0.0-9021
 Authors@R: 
     c(person(given = "David",
            family = "Marsh",
@@ -17,7 +17,7 @@ Description: For supersonic aircraft, flying subsonic over land,
     flight!
 License: MIT + file LICENSE
 Depends: 
-    R (>= 2.10)
+    R (>= 3.5.0)
 Imports:
     cppRouting,
     dplyr,
@@ -31,6 +31,7 @@ Suggests:
     lwgeom,
     methods,
     purrr,
+    progress,
     rmarkdown,
     rnaturalearthdata,
     scales,

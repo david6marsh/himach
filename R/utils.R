@@ -250,7 +250,7 @@ make_airports <- function(ap = NA, crs = 4326, warn = TRUE){
   if (length(miss_vbls) > 0) stop("Airport definition is missing: ",
                                   paste(miss_vbls, collapse = " "))
 
-  ap <- ap %>%
+  ap %>%
     #convert to map feature
     # 4326 is a lat-long format, for input, then transform to required crs
     dplyr::mutate(ap_locs = st_transform(
@@ -285,6 +285,6 @@ st_gcIntermediate <- function(crs, ...){
 # simple wrapper to update a n existing progress bar
 # every nstep rows, if passed row_number as n
 withProgress <- function(pb, f, ...){
-  pb$tick()$print()
+  pb$tick()
   f(...)
 }

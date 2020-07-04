@@ -49,8 +49,7 @@ st_slice_transform <- function(m, new_crs = crs_Pacific,
                        n_pts = 30, margin = 0.05){
   crs = st_crs(m)
   # quick exit if nothing to change
-  if (crs == st_crs(new_crs) |
-      long_cent(m) == long_cent(new_crs)) return(m)
+  if (crs == st_crs(new_crs) | long_cent(m) == long_cent(new_crs)) return(m)
 
   # slice centred for the 'new' crs
   longit <- mod_long(long_cent(new_crs) + 180)
@@ -207,6 +206,9 @@ map_routes <- function(
 ){
   (stopifnot(is.na(show_route) || show_route %in% c("speed","aircraft","time", "circuity")))
 
+  #only support crs_Atlantic for the moment
+  # stopifnot(st_crs(crs) == st_crs(crs_Atlantic))
+
   # remove the non-routes (have time = NA)
   # these are where refuelling was needed
   if (is.data.frame(routes)) routes <- routes %>% filter(!is.na(time_h))
@@ -218,7 +220,8 @@ map_routes <- function(
   if (is.na(fat_map)) {
     m <- plot_map(thin_map, c_border=NA, c_land=land_f)
   } else {
-    m <- plot_map(st_slice_transform(fat_map, new_crs=crs), c_border=NA, c_land=buffer_f) +
+    m <- plot_map(st_slice_transform(fat_map, new_crs=crs),
+                  c_border=NA, c_land=buffer_f) +
       geom_sf(data=thin_map, fill=land_f, colour=NA)
   }
 
@@ -231,6 +234,10 @@ map_routes <- function(
   # 3: prelim: check if summarise_routes has been run
   # by seeing if 'advantage_h' has been calculated
   if (is.data.frame(routes)) {
+    #remove empty routes
+    routes <- routes %>%
+      filter(!is.na(time_h))
+
     if ( !("advantage_h" %in% names(routes))) {
       if (warn) message("Adding advantage_h temporarily to the routes set.")
       airports <- ap_loc
@@ -243,23 +250,24 @@ map_routes <- function(
         left_join(rtes %>% select(.data$fullRouteID, .data$advantage_h, .data$circuity),
                   by = "fullRouteID") %>%
         arrange(.data$advantage_h)
+
+      routes$gc <- st_wrap(routes$gc, new_crs=crs)
+      routes <- st_set_geometry(routes, "gc") # default geometry for plots
     }
 
     #layer 3 (main lines)
     if (show_route=="time"){
-
       m <- m +  labs(colour = "Time Advantage") +
         geom_sf(data = routes,
-                aes(geometry=st_slice_transform(.data$gc, new_crs=crs),
-                    colour=.data$advantage_h), fill="white",
+                aes(colour = .data$advantage_h),
+                fill="white",
                 size=l_size, lineend="round", alpha=l_alpha) +
         scale_colour_viridis_c(direction = scale_direction)
     }
     if (show_route=="circuity"){
       m <- m +  labs(colour = "Circuity\n(best=0)") +
         geom_sf(data = routes,
-                aes(geometry=st_slice_transform(.data$gc, new_crs=crs),
-                    colour=.data$circuity), fill="white",
+                aes(colour = .data$circuity), fill = "white",
                 size=l_size, lineend="round", alpha=l_alpha) +
         scale_colour_viridis_c(direction = scale_direction,
                                labels = scales::percent)
@@ -267,16 +275,14 @@ map_routes <- function(
     if (show_route == "speed"){
       m <- m +  labs(colour = "Average speed on segment (kph)") +
         geom_sf(data = routes,
-                aes(geometry=st_slice_transform(.data$gc, new_crs=crs),
-                    colour=.data$speed_kph),
+                aes(colour = .data$speed_kph),
                 size=l_size, lineend="round", alpha=l_alpha) +
         scale_colour_viridis_c(direction = scale_direction)
     }
     if (show_route == "aircraft"){
       m <- m +  labs(colour = "Aircraft") +
         geom_sf(data = routes,
-                aes(geometry = st_slice_transform(.data$gc, new_crs=crs),
-                    colour = .data$acID),
+                aes(colour = .data$acID),
                 size=l_size, lineend="round", alpha=l_alpha,
                 show.legend = "line")+
         scale_colour_viridis_d(direction = scale_direction)
@@ -286,14 +292,14 @@ map_routes <- function(
   #layer 4: crow-flies
   if (crow){
     m <- m +
-      geom_sf(data = st_slice_transform(routes$crow, new_crs=crs),
+      geom_sf(data = st_wrap(routes$crow, new_crs = crs),
               colour=crow_col, size = crow_size)
   }
 
   #layer 5: range envelope
   if (route_envelope){
     m <- m +
-      geom_sf(data = st_wrap(st_cast(prj(routes$envelope, crs=crs), 'MULTILINESTRING')),
+      geom_sf(data = st_wrap(st_cast(routes$envelope, 'MULTILINESTRING'), new_crs=crs),
               fill = NA,
               colour = e_col, alpha = e_alpha, size = e_size)
   }
@@ -302,19 +308,26 @@ map_routes <- function(
   if (is.data.frame(ap_loc)){
     used_APs <- sort(unique(unlist(lapply(unique(routes$routeID),
                                      function(x)strsplit(x, "<>")))))
-    APs <- ap_loc %>% filter(.data$APICAO %in% used_APs)
+    APs <- ap_loc %>%
+      filter(.data$APICAO %in% used_APs)
+    APs$ap_locs <- prj(APs$ap_locs, crs = crs)
+    APs <- st_set_geometry(APs, "ap_locs")
+
     m <- m +
       geom_sf(data = APs,
-              aes(geometry=prj(.data$ap_locs, crs=crs)), colour=ap_col, size=ap_size)
+              colour=ap_col, size=ap_size)
   }
 
   #layer 7: refuel airports
   if (is.data.frame(refuel_airports)){
     used_refuel_APs <- sort(unique(routes$refuel_ap))
-    rAPs <- refuel_airports %>% filter(.data$APICAO %in% used_refuel_APs)
+    rAPs <- refuel_airports %>%
+      filter(.data$APICAO %in% used_refuel_APs)
+    rAPs$ap_locs <- prj(rAPs$ap_locs, crs = crs)
+    rAPs <- st_set_geometry(rAPs, "ap_locs")
+
     m <- m +
       geom_sf(data = rAPs,
-              aes(geometry=prj(.data$ap_locs, crs=crs)),
               colour=rap_col, size=rap_size)
   }
 
@@ -339,11 +352,25 @@ map_routes <- function(
 
 # wrapper for st_wrap_dateline, because it needs lat-longs
 # works for multilines without GDAL problems
-st_wrap <- function(m){
-  #this can be used wihtin a geom_sf plot statement
-  st_transform(st_wrap_dateline(st_transform(m, crs = crs_longlat),
-                                options = c("WRAPDATELINE=YES")),
-               crs=st_crs(m))
+st_wrap <- function(m, new_crs){
+  #this is for use within a geom_sf plot statement
+  stopifnot(st_is_longlat(m)) # should be called with gc which is in longlat
+
+  m %>%
+    st_wrap_dateline(options = c("WRAPDATELINE=YES")) %>%
+    st_transform(crs = new_crs)
+  # merid <- long_cent(new_crs)
+  # # rotate (to apply wrap dateline at 180)
+  # m_minus <- mod_long(m - c(merid, 0))
+  # attr(m_minus, "crs") <- attributes(m)$crs #reset the crs
+  # # wrap dateline at the new 180
+  # m_minus <- st_wrap_dateline(m_minus,
+  #                             options = c("WRAPDATELINE=YES"))
+  # # rotate back
+  # m <- mod_long(m_minus + c(merid, 0))
+  # attr(m, "crs") <- attributes(m_minus)$crs
+  # st_transform(m, crs=new_crs)
+
 }
 
 
@@ -361,14 +388,24 @@ st_bbox_longlat <- function(m){
 long_cent <- function(m){
   #full text version of crs
   tx <- st_as_text(st_crs(m))
-  tx <- stringr::str_remove_all(tx, "\"") #get rid of these
-  if (!stringr::str_detect(tx, "longitude_of_center")){
+  #search as vector
+  txv <- t(stringr::str_split(tx,",", simplify = TRUE))
+  txv <- stringr::str_remove_all(txv, "\\]") #get rid of these
+  # centre is made up of primemeridiand and long of center if either exists
+  w <- which(stringr::str_detect(txv, "PRIMEM"))
+  if (length(w) == 0){
+    # if not mentioned, default to 0
+    pm <- 0
+  } else {
+    pm <- as.numeric(txv[w + 1])
+  }
+
+  w <- which(stringr::str_detect(txv, "longitude_of_center"))
+  if (length(w) == 0){
     # if not mentioned, default to 0
     c_long <- 0
   } else {
-    c_long <- as.numeric(gsub(".*longitude_of_center,(.+?)].*",
-                              "\\1",
-                              tx))
+    c_long <- as.numeric(txv[w + 1])
   }
-  c_long
+  pm + c_long
 }

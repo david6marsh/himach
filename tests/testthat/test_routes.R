@@ -39,7 +39,7 @@ test_that("find_leg works",{
   options("quiet" = 0) #for no reporting
   # need to load some of the built-in data
   aircraft <- make_aircraft(warn = FALSE)
-  airports <- make_airports()
+  # airports <- make_airports()
   NZ_buffer_Pac <- sf::st_transform(NZ_buffer30, crs=crs_Pacific)
 
   # fail with unmatched CRS
@@ -59,7 +59,7 @@ test_that("find_leg works",{
                      route_grid = NZ_grid,
                      ap_loc = airports) %>%
     select(-timestamp)
-  expect_known_hash(routes, hash = "e185d20e91")
+  expect_known_hash(routes, hash = "b908d48dd3")
 
   options("quiet" = old_quiet)
 })
@@ -79,7 +79,7 @@ test_that("find_route works",{
                        route_grid = NZ_grid,
                        ap_loc = airports) %>%
     select(-timestamp)
-  expect_known_hash(routes, hash = "e185d20e91")
+  expect_known_hash(routes, hash = "b908d48dd3")
 
   # test with parallel subsonic aircraft
   routes <- find_route(aircraft[1,],
@@ -89,7 +89,7 @@ test_that("find_route works",{
                        ap_loc = airports,
                        cf_subsonic = aircraft[3,]) %>%
     select(-timestamp)
-  expect_known_hash(routes, hash = "9cf7ba4023")
+  expect_known_hash(routes, hash = "16d082d875")
 
   options("quiet" = old_quiet)
 })
@@ -117,7 +117,7 @@ test_that("Find Routes",{
                         temp_cache_path = NA) %>%
     select(-timestamp)
   ))
-  expect_known_hash(routes, hash = "ddeb9ea006")
+  expect_known_hash(routes, hash = "a14fd63410")
 
   # and again with a no-fly zone
   Buller_nofly <- sf::st_transform(NZ_Buller_buffer40, crs=crs_Pacific)
@@ -131,7 +131,7 @@ test_that("Find Routes",{
                           avoid = Buller_nofly) %>%
       select(-timestamp)
   ))
-  expect_known_hash(routes, hash = "c18e7b537b")
+  expect_known_hash(routes, hash = "ede73da89d")
 
   ap2 <- as.data.frame(matrix(c("NZAA","NZCH","NZAA","ZZZZ"),
                               ncol = 2, byrow = TRUE), stringsAsFactors = FALSE)

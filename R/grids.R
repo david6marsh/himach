@@ -118,7 +118,8 @@ make_route_grid <- function(fat_map, name,
   if (getOption("quiet",default=0)>0) message("Making the basic lattice:")
   sample_n <- nrow(ll_grid_seed)
   grp_size <- 1000
-  pb <- progress_estimated(sample_n , min_time = 3)
+  # pb <- progress_estimated(sample_n , min_time = 3)
+  pb <- progress::progress_bar$new(total = sample_n, format = "[:bar] :percent :eta")
 
   n_cand <- 3
   ll_lattice <- ll_grid_seed %>%
@@ -169,7 +170,8 @@ make_route_grid <- function(fat_map, name,
 
 
   if (getOption("quiet", default=0)>0) message("Adding geo & distance to the lattice...")
-  pb <- progress_estimated(nrow(ll_lattice), min_time = 3)
+  pb <- progress::progress_bar$new(total = nrow(ll_lattice),
+                                   format = "[:bar] :percent :eta")
   g@lattice <- ll_lattice %>%
     # add geometry
     # handle the 'overflow longitude' - slightly over the dateline
