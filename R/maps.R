@@ -102,16 +102,15 @@ make_range_envelope <- function(ac, ap, ap_locs = make_airports(),
 
   ap_loc <- ap_locs %>%
     filter(APICAO == ap)
-
-  # use CRS centred on cetnre of route envelopes
-  cen_prj <- sp::CRS(paste0("+proj=laea +lat_0=", round(ap_loc$lat,1),
-                            " +lon_0=", round(ap_loc$long,1),
-                            " +x_0=4321000 +y_0=3210000 +ellps=GRS80 +units=m +no_defs"))
-
+  # centre of range
   geo_c <- c(ap_loc$long, ap_loc$lat)
 
+  # use CRS centred on cetnre of route envelopes
+  cen_prj <- sp::CRS(paste0("+proj=laea +lat_0=", round(geo_c[2],1),
+                            " +lon_0=", round(geo_c[1],1),
+                            " +x_0=4321000 +y_0=3210000 +ellps=GRS80 +units=m +no_defs"))
   dist <- ac$range_km * 1000
-  theta <- seq(0, 2* pi, length.out = envelope_points)
+  theta <- seq(0, 360, length.out = envelope_points)
 
   geod <- geosphere::geodesic(geo_c, theta, dist)
 

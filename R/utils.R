@@ -23,7 +23,7 @@ paste_ADEPADES <- function(ADEP, ADES, unidirectional=FALSE){
 copy_attr <- function(from, to, atts){
   lapply(atts, function(x) {
     if (is.null(attr(from,x))){
-      warning("Warning: Attribute",x,"not found to copy.")
+      warning("Warning: Attribute ",x," not found to copy.")
     }
     attr(to,x) <- attr(from,x)
     p <- parent.env(environment()) #need to pass the value back to 'to' in the copy_attr environment
@@ -259,7 +259,8 @@ make_airports <- function(ap = NA, crs = 4326, warn = TRUE){
         'POINT'), crs = crs))
 }
 
-#rename a dataset in an environment, replacing *one* find with replace
+# rename a dataset in an environment,
+# replacing *one* find of a substring with replace
 ren_subst <- function(ds,
                       find_str, replace_str,
                       in_env){

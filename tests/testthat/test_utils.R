@@ -31,9 +31,16 @@ test_that("Default airport data loads", {
 })
 
 test_that("Airport data loads", {
+  # normal functioning
   airports <- data.frame(APICAO = "TEST", lat = 10, long = 10, stringsAsFactors = FALSE)
   expect_known_hash(make_airports(airports),
                     hash = "112ebdc9ca")
+
+  # with missing variable
+  airports_miss <- data.frame(APICAO = "TEST", lat = 10, stringsAsFactors = FALSE)
+  expect_error(make_airports(airports_miss), "is missing:")
+
+
 })
 
 test_that("NZ maps available", {
@@ -53,4 +60,22 @@ test_that("can make AP2",{
   #check sort order
   expect_equal(z$AP2, "EDDF<>BIKF")
   expect_error(make_AP2("EGLL","ZZZZ", aps), "unknown")
+})
+
+test_that("can copy attributes", {
+  x <- 1
+  attr(x, "test") <- "here"
+  y <- 1
+  y <- Mach2:::copy_attr(x, y, c("test"))
+  expect_equal(attributes(x), attributes(y))
+
+  expect_warning(Mach2:::copy_attr(x, y, c("not here")))
+})
+
+test_that("can rename in an environment", {
+  test_env <- new.env()
+  assign("rubbly", 5, envir = test_env)
+  woof <- Mach2:::ren_subst("rubbly", "ubbl", "obber",
+                            in_env = test_env)
+  expect_equal(get("robbery", envir = test_env), 5)
 })

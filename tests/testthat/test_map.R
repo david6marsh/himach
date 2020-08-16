@@ -58,3 +58,13 @@ test_that("World wrapping", {
                       "62ae830d048da98dc436924c678")
 
 })
+
+test_that("can make range envelope", {
+  airports <- make_airports(crs = crs_Atlantic, warn = FALSE)
+  aircraft <- make_aircraft(warn = FALSE)
+  expect_known_hash(Mach2:::make_range_envelope(aircraft[1, ],
+                                                "LFPG",
+                                                airports),
+                    "5e3a4eb9a4")
+
+})
