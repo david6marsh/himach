@@ -951,25 +951,20 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
       # and use its CRS henceforth as a basis
       use_crs <- st_crs(envelope)
 
+      # aprtly to avoid occasional sea-land inversion
       # crop the map - but reduce size first, and avoid self-overlap
       # find crop region for fat_map in its crs
-      # bb_re_map <- st_bbox(st_transform(envelope, st_crs(fat_map)))
-      # bb_map <- st_bbox(fat_map)
-      # bb_crop <- bb_re_map
-      # # need corrections because bb_re_map is misleading at poles
-      # # if it crosses long_180 you get a full strip, but that's ok
-      # if (st_within(st_transform(pole_N, use_crs),
-      #               envelope, sparse = FALSE)[1,1]) {
-      #   bb_crop["ymax"] <- bb_map["ymax"]
-      # }
-      # if (st_within(st_transform(pole_S, use_crs),
-      #               envelope, sparse = FALSE)[1,1]) {
-      #   bb_crop["ymin"] <- bb_map["ymin"]
-      # }
-      # mland <- st_crop(fat_map, bb_crop) # crop map in its own CRS
-      # # add more points on the straight bits & merge overlaps
-      # mls <- st_segmentize(mland, units::set_units(20, "km"))
+      bb_re_map <- st_bbox(st_transform(envelope, st_crs(fat_map)))
+      bb_map <- st_bbox(fat_map)
+      bb_crop <- bb_re_map
+      # crop just on longitude extent of envelope
+      bb_c <- bb_map
+      bb_c[1] <- bb_crop[1]
+      bb_c[3] <- bb_crop[3]
+
       mlsN <- fat_map %>%
+        st_crop(bb_c) %>%
+        st_segmentize(units::set_units(5, "km")) %>%
         st_transform(use_crs) %>%
         st_union() %>%
         st_make_valid()
