@@ -244,10 +244,12 @@ map_routes <- function(
         airports <- make_airports(warn = FALSE)
         if (warn) message("Using default airport set for temporary route summary.")
       }
-      rtes <- summarise_routes(routes, airports)
+      rtes <- summarise_routes(routes, airports) %>%
+        st_set_geometry(NULL) %>% # for left_join, must _not_ be sf
+        select(.data$fullRouteID, .data$advantage_h, .data$circuity)
+
       routes <- routes %>%
-        left_join(rtes %>% select(.data$fullRouteID, .data$advantage_h, .data$circuity),
-                  by = "fullRouteID") %>%
+        left_join(rtes, by = "fullRouteID") %>%
         arrange(.data$advantage_h)
 
       routes$gc <- st_wrap(routes$gc, new_crs=crs)
@@ -333,7 +335,7 @@ map_routes <- function(
   #apply bounds?
   if (is.data.frame(routes) && bound){
     #crop based on the bounding box of all of the routes
-    bbox <- st_bbox(prj(routes$gc, crs=crs)) +
+    bbox <- st_bbox(st_transform(routes$gc, crs=crs)) +
       # c(-1,-1,1,1)*10 #zoomed box + 10deg
       c(-1,-1,1,1) * bound_margin_km * 10^3 #zoomed box + 1000km
     m <- m +

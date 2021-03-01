@@ -1,5 +1,6 @@
 library(Mach2)
 library(dplyr)
+library(ggplot2)
 
 # Hadley rules out hash as not helpful: https://groups.google.com/forum/#!msg/ggplot2/JEvC86l_otA/i7k0yTDt2_UJ
 # vdiffr says may not be useful for sf objects - which is everything here :-(
@@ -34,13 +35,16 @@ test_that("Route mapping", {
  expect_true("ggplot" %in% class(z))
 
  # time advantage calculated explicitly + frills
- rtes <- summarise_routes(NZ_routes, airports)
+ rtes <- summarise_routes(NZ_routes, airports) %>%
+   st_set_geometry(NULL) %>%
+   select(fullRouteID, advantage_h)
  routes <- NZ_routes %>%
-   left_join(rtes %>% select(fullRouteID, advantage_h), by = "fullRouteID") %>%
+   filter(!is.na(phase)) %>% # remove non-routes
+   left_join(rtes, by = "fullRouteID") %>%
    arrange(advantage_h)
  expect_silent(z <- map_routes(NZ_thin, routes,
                               crs = crs_Pacific,
-                              fat_map = NZ_buffer30,
+                              # fat_map = NZ_buffer30,
                               ap_loc = airports,
                               refuel_airports =
                                 airports %>% filter(APICAO=="NZWN"),
@@ -50,21 +54,22 @@ test_that("Route mapping", {
 
 })
 
-test_that("World wrapping", {
-  world <- sf::st_as_sf(rnaturalearthdata::countries110)
-
-  expect_known_hash(st_slice_transform(world,
-                                        crs_Pacific),
-                      "62ae830d048da98dc436924c678")
-
-})
+# test_that("World wrapping", {
+#   world <- sf::st_as_sf(rnaturalearthdata::countries110)
+#
+#   expect_known_hash(st_slice_transform(world,
+#                                         crs_Pacific),
+#                       "62ae830d048da98dc436924c678")
+#
+# })
 
 test_that("can make range envelope", {
   airports <- make_airports(crs = crs_Atlantic, warn = FALSE)
   aircraft <- make_aircraft(warn = FALSE)
-  expect_known_hash(Mach2:::make_range_envelope(aircraft[1, ],
+  expect_known_value(Mach2:::make_range_envelope(aircraft[1, ],
                                                 "LFPG",
-                                                airports),
-                    "5e3a4eb9a4")
+                                                airports,
+                                                envelope_points = 20),
+                     "known/LFPG_envelope_20")
 
 })

@@ -20,13 +20,13 @@ test_that("Route summary", {
   rs1 <- summarise_routes(NZ_routes, ap)
   expect_equal(rs1[1, ]$refuel_ap, "NZWN")
   expect_equal(rs1[2, ]$M084_h, 1.68)
-  expect_equal(rs1[2, ]$advantage_h, -0.86)
-  expect_equal(rs1[3, ]$sea_dist_frac, 0.704)
+  expect_equal(rs1[2, ]$advantage_h, -0.87)
+  expect_equal(rs1[3, ]$sea_dist_frac, 0.702)
   expect_equal(rs1[4, ]$n_phases, 5)
   expect_equal(rs1[2, ]$n_accel, 2)
   expect_equal(rs1[2, ]$ave_fly_speed_M, 0.76)
-  expect_equal(rs1[1, ]$fly_time_h, 1.68)
-  expect_equal(rs1[4, ]$circuity, 0.22)
+  expect_equal(rs1[1, ]$fly_time_h, 1.69)
+  expect_equal(rs1[4, ]$circuity, 0.17)
   expect_true(rs1[5, ]$best)
   expect_true(is.na(rs1[6, ]$time_h))
   # parameter behaviour?
@@ -59,9 +59,11 @@ test_that("find_leg works",{
                      route_grid = NZ_grid,
                      ap_loc = airports) %>%
     select(-timestamp)
-  expect_known_hash(routes, hash = "b908d48dd3")
-
+  expect_known_value(routes, "known/test_leg_NZAA_NZCH")
   options("quiet" = old_quiet)
+  # for visual check:
+  # ggplot(NZ_buffer_Pac) + geom_sf() + geom_sf(data = routes$gc)
+
 })
 
 
@@ -79,7 +81,7 @@ test_that("find_route works",{
                        route_grid = NZ_grid,
                        ap_loc = airports) %>%
     select(-timestamp)
-  expect_known_hash(routes, hash = "b908d48dd3")
+  expect_known_value(routes, "known/test_route_NZAA_NZCH")
 
   # test with parallel subsonic aircraft
   routes <- find_route(aircraft[1,],
@@ -89,7 +91,7 @@ test_that("find_route works",{
                        ap_loc = airports,
                        cf_subsonic = aircraft[3,]) %>%
     select(-timestamp)
-  expect_known_hash(routes, hash = "16d082d875")
+  expect_known_value(routes, "known/test_route_subsonic_NZGS_NZDN")
 
   options("quiet" = old_quiet)
 })
@@ -117,7 +119,7 @@ test_that("Find Routes",{
                         temp_cache_path = NA) %>%
     select(-timestamp)
   ))
-  expect_known_hash(routes, hash = "a14fd63410")
+  expect_known_value(routes, "known/test_multiroute")
 
   # and again with a no-fly zone
   Buller_nofly <- sf::st_transform(NZ_Buller_buffer40, crs=crs_Pacific)
@@ -131,7 +133,7 @@ test_that("Find Routes",{
                           avoid = Buller_nofly) %>%
       select(-timestamp)
   ))
-  expect_known_hash(routes, hash = "ede73da89d")
+  expect_known_value(routes, "known/test_multiroute_nofly")
 
   ap2 <- as.data.frame(matrix(c("NZAA","NZCH","NZAA","ZZZZ"),
                               ncol = 2, byrow = TRUE), stringsAsFactors = FALSE)

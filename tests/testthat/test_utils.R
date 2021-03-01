@@ -25,16 +25,16 @@ test_that("Aircraft data loads", {
 })
 
 test_that("Default airport data loads", {
-  expect_message(make_airports())
-  expect_known_hash(make_airports(),
-                     hash = "00682f18dc")
+  expect_message(z <- make_airports())
+  # expect_known_hash(make_airports(),
+  #                    hash = "00682f18dc")
+  expect_known_value(z %>% filter(APICAO == "EGLL"), "known/default_airport_EGLL")
 })
 
 test_that("Airport data loads", {
   # normal functioning
   airports <- data.frame(APICAO = "TEST", lat = 10, long = 10, stringsAsFactors = FALSE)
-  expect_known_hash(make_airports(airports),
-                    hash = "112ebdc9ca")
+  expect_known_value(make_airports(airports), "known/TEST_airport")
 
   # with missing variable
   airports_miss <- data.frame(APICAO = "TEST", lat = 10, stringsAsFactors = FALSE)

@@ -24,6 +24,6 @@ NZ_routes <- purrr::reduce(lapply(
                         route_grid = NZ_grid,
                         ap_loc = airports)),
   rbind)
-
+NZ_routes <- st_set_geometry(NZ_routes, "gc") # convert to sf
 
 usethis::use_data(NZ_routes, overwrite = TRUE)
