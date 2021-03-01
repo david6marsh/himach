@@ -149,8 +149,8 @@ emptyRoute <- function(ac, ap2, fat_map,
 # path should include directory, but not file extension (RDS)
 temp_cache_save <- function(temp_cache_path){
   if (!is.na(temp_cache_path)){
-    save(rte_cache, file = paste0(temp_cache_path, "_routes.Rdata"))
-    save(star_cache, file = paste0(temp_cache_path, "_stars.Rdata"))
+    save(rte_cache, file = paste0(temp_cache_path, "_routes.rda"))
+    save(star_cache, file = paste0(temp_cache_path, "_stars.rda"))
   }
 }
 
@@ -496,6 +496,7 @@ find_route <- function(ac, ap2, fat_map, avoid=NA, route_grid, cf_subsonic=NA,
     }
 
   }
+  routes <- st_set_geometry(routes, "gc") #convert to sf
   return(routes)
 }
 

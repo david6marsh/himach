@@ -5,3 +5,5 @@
 ^Meta$
 ^ignore$
 ^LICENSE\.md$
+^ignore/scratchpad\.R$
+^ignore/test\.log$

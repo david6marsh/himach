@@ -73,7 +73,7 @@ st_slice_transform <- function(m, new_crs = crs_Pacific,
  # remove the slice
   # transform to new crs
  suppressWarnings(suppressMessages({
-   m_less <- s2_difference(m, sl)
+   m_less <- s2::s2_difference(m, sl)
    y <- st_transform(st_as_sfc(m_less), crs = new_crs)
  }))
  return(y)
@@ -211,6 +211,12 @@ map_routes <- function(
   # remove the non-routes (have time = NA)
   # these are where refuelling was needed
   if (is.data.frame(routes)) routes <- routes %>% filter(!is.na(time_h))
+
+  # older sets of routes may not be sf
+  if (is.data.frame(routes) && !"sf" %in% class(routes)){
+    if (warn) message("routes must be class sf. Doing this for you.")
+    routes <- st_set_geometry(routes, "gc")
+  }
 
   #thin map is the one without buffer
   thin_map <- st_slice_transform(thin_map, new_crs=crs) #force to CRS used for this map

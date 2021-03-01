@@ -1,7 +1,7 @@
 Type: Package
 Package: Mach2
 Title: Find best route for supersonic aircraft 
-Version: 0.0.0-9022
+Version: 0.0.0-9023
 Authors@R: 
     c(person(given = "David",
            family = "Marsh",
@@ -22,10 +22,11 @@ Imports:
     cppRouting,
     dplyr,
     ggplot2,
-    sf,
+    sf (>= 0.9-7),
     tidyr
 Suggests: 
     airportr,
+    cowplot,
     geosphere,
     knitr,
     lwgeom,
@@ -34,6 +35,8 @@ Suggests:
     progress,
     rmarkdown,
     rnaturalearthdata,
+    rnaturalearthhires,
+    s2,
     scales,
     sp,
     stringr,
