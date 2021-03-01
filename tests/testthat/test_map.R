@@ -44,7 +44,7 @@ test_that("Route mapping", {
    arrange(advantage_h)
  expect_silent(z <- map_routes(NZ_thin, routes,
                               crs = crs_Pacific,
-                              # fat_map = NZ_buffer30,
+                              fat_map = NZ_buffer30,
                               ap_loc = airports,
                               refuel_airports =
                                 airports %>% filter(APICAO=="NZWN"),

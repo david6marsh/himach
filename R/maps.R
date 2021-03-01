@@ -5,7 +5,7 @@
 #' Wrap the 'dateline' before \code{st_transform}
 #'
 #' \code{st_slice_transform} handles the 'far side' break first, then
-#' \code{st_tranform}
+#' \code{st_transform}
 #'
 #' \code{\link[sf:st_transform]{st_wrap_dateline}} should handle the break in a
 #' map projection but uses `GDAL` for this. Given persistent issues in
@@ -73,8 +73,8 @@ st_slice_transform <- function(m, new_crs = crs_Pacific,
  # remove the slice
   # transform to new crs
  suppressWarnings(suppressMessages({
-   m_less <- st_difference(m, sl)
-   y <- st_transform(m_less, crs = new_crs)
+   m_less <- s2_difference(m, sl)
+   y <- st_transform(st_as_sfc(m_less), crs = new_crs)
  }))
  return(y)
 }
