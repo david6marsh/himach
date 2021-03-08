@@ -12,7 +12,6 @@ vignette: >
 
 This vignette provides an end-to-end example of using the `Mach2` package to find the quickest route for a supersonic aircraft that is allowed to fly supersonic over sea, but only subsonic over land.
 
-
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
