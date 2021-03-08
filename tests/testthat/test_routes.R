@@ -5,11 +5,11 @@ library(dplyr)
 test_that("Route envelope", {
   ac <- make_aircraft(warn = FALSE)
   ap <- make_airports()
-  z <- make_route_envelope(ac[1,], make_AP2("EGLL","KJFK",ap))
+  z <- make_route_envelope(ac[1,], make_AP2("EGLL","KJFK",ap),
+                           envelope_points = 50)
   expect_type(z, "list")
   expect_s3_class(z, "sfc_POLYGON")
-  # default is 200 points
-  expect_gte(nrow(as.matrix(z[[1]])), 200)
+  expect_gte(nrow(as.matrix(z[[1]])), 50)
 })
 
 # avoid testing against stored result, since that's sensitive to
@@ -59,10 +59,19 @@ test_that("find_leg works",{
                      route_grid = NZ_grid,
                      ap_loc = airports) %>%
     select(-timestamp)
-  expect_known_value(routes, "known/test_leg_NZAA_NZCH")
+  # test just one line
+  expect_known_value(routes[4, ], "known/test_leg_NZAA_NZCH")
   options("quiet" = old_quiet)
   # for visual check:
   # ggplot(NZ_buffer_Pac) + geom_sf() + geom_sf(data = routes$gc)
+
+  # fail nicely with bad aircraft index
+  expect_error(find_leg(aircraft[400,],
+                        make_AP2("NZAA","NZCH",airports),
+                        fat_map = NZ_buffer_Pac,
+                        route_grid = NZ_grid,
+                        ap_loc = airports),
+                 "Aircraft invalid")
 
 })
 
@@ -81,7 +90,8 @@ test_that("find_route works",{
                        route_grid = NZ_grid,
                        ap_loc = airports) %>%
     select(-timestamp)
-  expect_known_value(routes, "known/test_route_NZAA_NZCH")
+  # just test one row
+  expect_known_value(routes[5, ], "known/test_route_NZAA_NZCH")
 
   # test with parallel subsonic aircraft
   routes <- find_route(aircraft[1,],
@@ -91,7 +101,8 @@ test_that("find_route works",{
                        ap_loc = airports,
                        cf_subsonic = aircraft[3,]) %>%
     select(-timestamp)
-  expect_known_value(routes, "known/test_route_subsonic_NZGS_NZDN")
+  # test a couple of rows
+  expect_known_value(routes[c(3, 10), ], "known/test_route_subsonic_NZGS_NZDN")
 
   options("quiet" = old_quiet)
 })
@@ -119,7 +130,8 @@ test_that("Find Routes",{
                         temp_cache_path = NA) %>%
     select(-timestamp)
   ))
-  expect_known_value(routes, "known/test_multiroute")
+  # just test a sample
+  expect_known_value(routes[c(3, 9, 19), ], "known/test_multiroute")
 
   # and again with a no-fly zone
   Buller_nofly <- sf::st_transform(NZ_Buller_buffer40, crs=crs_Pacific)
@@ -133,7 +145,8 @@ test_that("Find Routes",{
                           avoid = Buller_nofly) %>%
       select(-timestamp)
   ))
-  expect_known_value(routes, "known/test_multiroute_nofly")
+  # check one row from each route
+  expect_known_value(routes[c(7, 11, 23), ], "known/test_multiroute_nofly")
 
   ap2 <- as.data.frame(matrix(c("NZAA","NZCH","NZAA","ZZZZ"),
                               ncol = 2, byrow = TRUE), stringsAsFactors = FALSE)

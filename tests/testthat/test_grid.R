@@ -14,20 +14,20 @@ test_that("Grid creation", {
   options("quiet" = 0) #for no reporting
 
   # We project the in-built test maps
-  rg <- make_route_grid(NZ_buffer_Pac,"NZ lat-long at 300km",
-                        target_km = 300, classify = TRUE,
+  rg <- make_route_grid(NZ_buffer_Pac,"NZ lat-long at 500km",
+                        target_km = 500, classify = TRUE,
                         lat_min = -49, lat_max = -32,
                         long_min = 162, long_max = 182)
 
-    expect_equal(rg@name, "NZ lat-long at 300km")
+    expect_equal(rg@name, "NZ lat-long at 500km")
 
   expect_known_value(subset(rg@points, select = -xy),
-                      "known/NZ_300km_grid_points")
+                      "known/NZ_500km_grid_points")
   # expect_known_value(sf::st_as_binary(rg@points$xy),
   #                    "known/NZ_300km_grid_points_xy")
 
   expect_known_value(subset(rg@lattice, select = -geometry),
-                     "known/NZ_300km_grid_lattice")
+                     "known/NZ_500km_grid_lattice")
   # expect_known_value(sf::st_as_binary(rg@lattice$geometry),
   #                    "known/NZ_300km_grid_lattice_geometry")
 

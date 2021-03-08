@@ -853,6 +853,9 @@ find_leg <- function(ac, ap2, route_grid, fat_map, ap_loc,
                     ad_dist = 100 * 1000,
                     ad_nearest = 12,
                     ...){
+  stopifnot(is.data.frame(ac)) #should be a single-row dataframe
+  if (any(is.na(ac))) stop("Aircraft invalid (check selected row).") #should without NAs
+
   unidirectional <- FALSE #not an option in this version
 
   #can save and load the cache, with loadRDS readRDS
