@@ -26,8 +26,6 @@ test_that("Aircraft data loads", {
 
 test_that("Default airport data loads", {
   expect_message(z <- make_airports())
-  # expect_known_hash(make_airports(),
-  #                    hash = "00682f18dc")
   expect_known_value(z %>% filter(APICAO == "EGLL"), "known/default_airport_EGLL")
 })
 

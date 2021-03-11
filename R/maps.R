@@ -2,32 +2,28 @@
 #
 # Functions for plotting nice maps of routes
 
-#' Wrap the 'dateline' before \code{st_transform}
+#' Version of \code{st_transform} with view window to avoid dateline
 #'
-#' \code{st_slice_transform} handles the 'far side' break first, then
-#' \code{st_transform}
+#' \code{st_window} does a \code{st_transform} but first cuts the data to an
+#' appropriate view window and so avoids problems with objects wrapping around
+#' the back of the globe
 #'
-#' \code{\link[sf:st_transform]{st_wrap_dateline}} should handle the break in a
-#' map projection but uses `GDAL` for this. Given persistent issues in
-#' installing  GDAL, \code{st_slice_transform} achieves the same, at least for
-#' Atlantic to Pacific, without needing GDAL. This is only needed for
-#' polygons, otherwise \code{\link[sf:st_transform]{st_wrap_dateline}} works
-#' without the GDAL issues.
 #'
-#' Here 'simple' means, with a dateline that is a single line of longitude: ie
-#' the proj4string contains either "longitude_of_center", so the dateline is
-#' that +180; or not, in which case it assumes the "longitude_of_center" is 0.
+#' \code{\link[sf:st_transform]{st_wrap_dateline}} _should_ handle the break in
+#' a map projections but uses `GDAL` for this. Given persistent issues in
+#' installing GDAL, \code{st_window} achieves the same using \code{s2} instead.
 #'
-#' Caution: Use other than for \code{crs_Atlantic} to \code{crs_Pacific} is not
-#' guaranteed! Check by plotting!
+#' It works for any 'simple' projection, in the sense of one that has a dateline
+#' that is a single line of longitude: ie the proj4string contains either
+#' "longitude_of_center", so the dateline is that +180; or not, in which case it
+#' assumes the "longitude_of_center" is 0.
 #'
 #'
 #' @param m A map dataframe, ie of class \code{sf} and \code{data.frame}, or an
 #'   \code{sfc_MULTIPOLYGON}
-#' @param new_crs Destination coordinate reference system, as in \code{st_tranform}
-#' @param n_pts Number of steps used in creating the slice (per side).
-#' @param margin Any polygons that cross the dateline lose a small margin, for
-#'   safety
+#' @param crs Destination coordinate reference system, as in \code{st_tranform}
+#' @param longit_margin Amount trimmed off the 'far side' of the projection in
+#'   degrees.
 #'
 #' @return \code{sf} dataframe, same as the parameter \code{m}
 #'
@@ -37,7 +33,7 @@
 #'
 #' @examples
 #' world <- sf::st_as_sf(rnaturalearthdata::coastline110)
-#' w_pacific <- st_slice_transform(world, crs_Pacific)
+#' w_pacific <- st_window(world, crs_Pacific)
 #' ggplot2::ggplot(w_pacific) + ggplot2::geom_sf()
 #'
 #' # bad - not run - dateline problem example
@@ -45,41 +41,22 @@
 #' #   ggplot2::geom_sf()
 #'
 #' @export
-st_slice_transform <- function(m, new_crs = crs_Pacific,
-                       n_pts = 30, margin = 0.05){
-  crs = st_crs(m)
-  # quick exit if nothing to change
-  if (crs == st_crs(new_crs) | long_cent(m) == long_cent(new_crs)) return(m)
-
-  # slice centred for the 'new' crs
-  longit <- mod_long(long_cent(new_crs) + 180)
-
-  longit <- longit - margin/2
-  long2 <- longit + margin/2
-  latN <- 89.9
-  latS <- -89.9
-   pts <- bind_rows(
-    data.frame(lo = longit, la = seq(latN, latS, length.out = n_pts)),
-    data.frame(lo = seq(longit, long2, length.out = n_pts %/% 3), la = latS),
-    data.frame(lo = long2, la = seq(latS, latN, length.out = n_pts)),
-    data.frame(lo = seq(long2, longit, length.out = n_pts %/% 3), la = latN)) %>%
-    mutate(lo = mod_long(.data$lo)) %>%
-    #remove sequential repeats
-    filter(row_number() == 1 |
-             !(.data$lo == lag(.data$lo) & .data$la == lag(.data$la)))
- sl <- st_transform(
-    st_sfc(st_polygon(list(as.matrix(pts))), crs = crs_longlat),
-    crs = crs)
- # remove the slice
-  # transform to new crs
- suppressWarnings(suppressMessages({
-   m_less <- s2::s2_difference(m, sl)
-   y <- st_transform(st_as_sfc(m_less), crs = new_crs)
- }))
- return(y)
+st_window <- function(m, crs = crs_Atlantic, longit_margin = 0.1){
+  # 'dateline' of the crs
+  longit <- mod_long(long_cent(crs) + 180)
+  long1 <- mod_long(longit + longit_margin)
+  long2 <- mod_long(longit - longit_margin)
+  #make window: oriented = TRUE because otherwise so big, s2 assumes inverse
+  window <- s2::s2_make_polygon(c(rep(long1, 3), rep(long2, 3)),
+                                c(90, 0, -90, -90, 0, 90),
+                                oriented = TRUE)
+  m %>%
+    sf::st_as_s2() %>%
+    s2::s2_intersection(window,
+                        s2::s2_options(model = "open")) %>%
+    sf::st_as_sfc() %>%
+    sf::st_transform(crs)
 }
-
-
 
 #wrapper around ggplot/geom_sf for quick map
 plot_map <- function(msf,
@@ -219,13 +196,13 @@ map_routes <- function(
   }
 
   #thin map is the one without buffer
-  thin_map <- st_slice_transform(thin_map, new_crs=crs) #force to CRS used for this map
+  thin_map <- st_window(thin_map, crs) #force CRS and cut to view window
 
   #layer 1 (one or two base maps)
   if (is.na(fat_map)) {
     m <- plot_map(thin_map, c_border=NA, c_land=land_f)
   } else {
-    m <- plot_map(st_slice_transform(fat_map, new_crs=crs),
+    m <- plot_map(st_window(fat_map, crs),
                   c_border=NA, c_land=buffer_f) +
       geom_sf(data=thin_map, fill=land_f, colour=NA)
   }
@@ -233,7 +210,8 @@ map_routes <- function(
   #layer 2 (no fly-zone)
   if (!is.na(avoid_map)){
     m <- m +
-      geom_sf(data = prj(avoid_map, crs=crs), colour=avoid_f, fill=avoid_f)
+      geom_sf(data = st_window(avoid_map, crs),
+              colour=avoid_f, fill=avoid_f)
   }
 
   # 3: prelim: check if summarise_routes has been run
@@ -258,7 +236,7 @@ map_routes <- function(
         left_join(rtes, by = "fullRouteID") %>%
         arrange(.data$advantage_h)
 
-      routes$gc <- st_wrap(routes$gc, new_crs=crs)
+      routes$gc <- st_window(routes$gc, crs)
       routes <- st_set_geometry(routes, "gc") # default geometry for plots
     }
 
@@ -299,14 +277,15 @@ map_routes <- function(
   #layer 4: crow-flies
   if (crow){
     m <- m +
-      geom_sf(data = st_wrap(routes$crow, new_crs = crs),
+      geom_sf(data = st_window(routes$crow, crs),
               colour=crow_col, size = crow_size)
   }
 
   #layer 5: range envelope
   if (route_envelope){
     m <- m +
-      geom_sf(data = st_wrap(st_cast(routes$envelope, 'MULTILINESTRING'), new_crs=crs),
+      geom_sf(data = st_window(st_cast(routes$envelope, 'MULTILINESTRING'),
+                             crs),
               fill = NA,
               colour = e_col, alpha = e_alpha, size = e_size)
   }
@@ -354,32 +333,6 @@ map_routes <- function(
 
   return(m)
 }
-
-
-
-# wrapper for st_wrap_dateline, because it needs lat-longs
-# works for multilines without GDAL problems
-st_wrap <- function(m, new_crs){
-  #this is for use within a geom_sf plot statement
-  stopifnot(st_is_longlat(m)) # should be called with gc which is in longlat
-
-  m %>%
-    st_wrap_dateline(options = c("WRAPDATELINE=YES")) %>%
-    st_transform(crs = new_crs)
-  # merid <- long_cent(new_crs)
-  # # rotate (to apply wrap dateline at 180)
-  # m_minus <- mod_long(m - c(merid, 0))
-  # attr(m_minus, "crs") <- attributes(m)$crs #reset the crs
-  # # wrap dateline at the new 180
-  # m_minus <- st_wrap_dateline(m_minus,
-  #                             options = c("WRAPDATELINE=YES"))
-  # # rotate back
-  # m <- mod_long(m_minus + c(merid, 0))
-  # attr(m, "crs") <- attributes(m_minus)$crs
-  # st_transform(m, crs=new_crs)
-
-}
-
 
 #wrapper for st_bbox that always returns lat-longs
 st_bbox_longlat <- function(m){
