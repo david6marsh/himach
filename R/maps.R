@@ -78,7 +78,7 @@ make_range_envelope <- function(ac, ap, ap_locs = make_airports(),
   #create no-wind range ellipse
 
   ap_loc <- ap_locs %>%
-    filter(APICAO == ap)
+    filter(.data$APICAO == ap)
   # centre of range
   geo_c <- c(ap_loc$long, ap_loc$lat)
 

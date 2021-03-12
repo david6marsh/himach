@@ -1,16 +1,30 @@
 ## code to prepare `NZ_coast`, `NZ_buffer30`, `NZ_Buller_buffer40` dataset goes here
-#sf_use_s2(TRUE) ??
 NZ_shp <- sf::read_sf("~/R/2Speed/data/statsnzterritorial-authority-2020-clipped-generalised-SHP/territorial-authority-2020-clipped-generalised.shp")
-NZ_coast <- sf::st_simplify(sf::st_union(NZ_shp), dTolerance = 1000)
-NZ_buffer30 <- sf::st_union(sf::st_buffer(NZ_coast, 30 * 1000))
+NZ_coast <- NZ_shp  %>%
+  st_union() %>%
+  st_as_s2() %>%
+  s2::s2_simplify(1000) %>% # don't recommend simplify at this stage for real analysis
+  st_as_sfc()
+
+NZ_buffer30 <- NZ_coast %>%
+  st_as_s2() %>%
+  s2::s2_buffer_cells(distance = 30*1000, max_cells = 10000) %>%
+  st_as_sfc()
 
 usethis::use_data(NZ_coast, overwrite = TRUE)
 usethis::use_data(NZ_buffer30, overwrite = TRUE)
 
 NZ_Buller <- NZ_shp %>%
   filter(TA2020_V_1 == "Buller District")
-NZ_Buller_u <- sf::st_union(sf::st_simplify(NZ_Buller, dTolerance = 1000))
-NZ_Buller_buffer40 <- sf::st_union(sf::st_buffer(NZ_Buller_u, 40 * 1000))
+NZ_Buller_u <- NZ_Buller %>%
+  st_union() %>%
+  st_as_s2() %>%
+  s2::s2_simplify(1000) %>% # don't recommend simplify at this stage for real analysis
+  st_as_sfc()
+NZ_Buller_buffer40 <- NZ_Buller_u %>%
+  st_as_s2() %>%
+  s2::s2_buffer_cells(distance = 40*1000, max_cells = 10000) %>%
+  st_as_sfc()
 attr(NZ_Buller_buffer40, "avoid") <- "Buller+40km"
 
 usethis::use_data(NZ_Buller_buffer40, overwrite = TRUE)
