@@ -142,7 +142,8 @@ test_that("Find Routes",{
                           fat_map = NZ_buffer_Pac,
                           route_grid = NZ_grid,
                           refuel = refuel_ap,
-                          avoid = Buller_nofly) %>%
+                          avoid = Buller_nofly,
+                          temp_cache_path = NA) %>%
       select(-timestamp)
   ))
   # check one row from each route
@@ -152,7 +153,8 @@ test_that("Find Routes",{
                               ncol = 2, byrow = TRUE), stringsAsFactors = FALSE)
   expect_error(find_routes(ac, ap2, aircraft, airports,
                              fat_map = NZ_buffer_Pac,
-                             route_grid = NZ_grid),
+                             route_grid = NZ_grid,
+                           temp_cache_path = NA),
                "unknown")
 
   options("quiet" = old_quiet)

@@ -6,10 +6,10 @@ library(dplyr)
 old_quiet <- getOption("quiet", default=0)
 NZ_buffer_Pac <- sf::st_transform(NZ_buffer30, crs=crs_Pacific)
 
-# not really required?
-# test_that("Using s2", {
-#   expect_true(sf_use_s2())
-# })
+
+test_that("Using s2", {
+  expect_true(sf_use_s2())
+})
 
 test_that("Grid creation", {
   options("quiet" = 0) #for no reporting
