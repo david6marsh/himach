@@ -2,6 +2,8 @@
 #
 # grid-related functions
 
+utils::globalVariables(c("."))
+
 # round longitude back to -180 <= x < 180
 mod_long <- function(x){
   (x + 180) %% 360 - 180

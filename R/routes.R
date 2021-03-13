@@ -2,6 +2,7 @@
 #
 # functions for finding routes on a grid
 
+utils::globalVariables(c("crs_longlat"))
 
 #time in phase for an aircraft to  cover distance
 time_h <- function(ph, d_km, ac){
@@ -27,7 +28,6 @@ costLattice <- function(route_grid,ac){
       TRUE ~ dist_km/ac$trans_kph + ac$trans_h))
 }
 
-
 distFromLand <- function(long, lat, land){
   #return a distance for each point from land, in km
   #long and lat are vectors, land is a map (sfc_MULTIPOLYGON)
@@ -37,7 +37,6 @@ distFromLand <- function(long, lat, land){
     crs=st_crs(land))
   as.vector(st_distance(mp, land))/1000
 }
-
 
 
 #this will be called recursively
@@ -510,9 +509,9 @@ findToCToD <- function(ap, route_grid, fat_map, ac,
   #can save and load the cache, with loadRDS readRDS
   #use attr "map" of fat_map, and AircraftSet of ac to ensure it's the right cache
   #if cache doesn't exist, create it as a child of Global (so persists outside this function!)
-  if (!exists("star_cache") || (attr(star_cache,"map") != route_grid@name) ||
+  if ((attr(star_cache,"map") != route_grid@name) ||
       (attr(star_cache,"aircraftSet") != attr(ac,"aircraftSet"))) {
-    assign("star_cache", new.env(parent=.GlobalEnv), .GlobalEnv)
+    rm(list = ls(star_cache), pos=star_cache) # clean the cache
     attr(star_cache,"map") <- route_grid@name
     attr(star_cache,"aircraftSet") <- attr(ac,"aircraftSet")}
 
@@ -859,9 +858,9 @@ find_leg <- function(ac, ap2, route_grid, fat_map, ap_loc,
   unidirectional <- FALSE #not an option in this version
 
   #can save and load the cache, with loadRDS readRDS
-  #if cache doesn't exist, create it as a child of Global (so persists outside this function!)
-  if (!exists("rte_cache") || (attr(rte_cache,"map") != route_grid@name)) {
-    assign("rte_cache", new.env(parent=.GlobalEnv), .GlobalEnv)
+  #if cache doesn't match create it as a child of Global (so persists outside this function!)
+  if ((attr(rte_cache,"map") != route_grid@name)) {
+    rm(list = ls(rte_cache), pos=rte_cache) # empty cache
     attr(rte_cache,"map") <- route_grid@name}
 
   if (unidirectional) {

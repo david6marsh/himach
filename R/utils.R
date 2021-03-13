@@ -2,6 +2,7 @@
 # Private helper functions for 2speed package
 # that do not fit into the routes, grids or maps collections
 
+utils::globalVariables(c("mach_kph"))
 
 # helper to put European names first - assumes 4-letter ICAO code
 isEur <- function(x) substr(x,1,1) %in% c("E","L")

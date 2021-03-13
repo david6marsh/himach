@@ -2,6 +2,8 @@
 #
 # Functions for plotting nice maps of routes
 
+utils::globalVariables(c("crs_Atlantic"))
+
 #' Version of \code{st_transform} with view window to avoid dateline
 #'
 #' \code{st_window} does a \code{st_transform} but first cuts the data to an

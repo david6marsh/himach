@@ -100,7 +100,7 @@ refuel_ap <- airports %>%
 
 For the vignette, we'll assume that Wellington has a long enough runway. In fact `Mach2` does not currently check whether a runway is long enough for the aircraft selected.
 
-## Maps
+## Maps {#maps}
 
 Next you need a set of shapefiles covering your area of interest (usually worldwide). These need only to distinguish land and sea, but starting off at country level can be useful, for example to filter out the Antarctic, which is not likely to see traffic. You can save time by ignoring airspace South of 60S, for example.
 

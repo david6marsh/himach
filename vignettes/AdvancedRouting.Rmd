@@ -205,7 +205,7 @@ cowplot::plot_grid(m_old, m_s2, labels = c("bad", "good"),
 
 [Incorrect and Correct Buffer](buffer_example.pdf)
 
-In fact, the problem of finding too many apparently over-ocean routes is broader than this. The other main contributor to this is missing islands from the map. See the comments in (link TBD - other vignette) .
+In fact, the problem of finding too many apparently over-ocean routes is broader than this. The other main contributor to this is missing islands from the map. See the comments [in the first vignette](SupersonicRouting.html#maps).
 
 An example of this is in the same place. Some maps omit small islands (well, larger ones like Killniq down to tiny ones like Goodwin Island) at the mouth of the Hudson Strait. This affects the apparent width of the opening. Given the islands, and a 50km buffer, the Strait is _not_ open as the next example shows.
 
