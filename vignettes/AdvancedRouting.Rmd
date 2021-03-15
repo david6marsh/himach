@@ -33,13 +33,15 @@ library(sf)
 ```
 
 
-## Caches
+## Caches {#caches}
 
-`Mach2` uses caching to speed things up. Legs are cached in `.rte_cache` and arrival-departure links to airports are cached in `.star_cache` (STAR is short for standard arrival route, its counterpart being SID the standard instrument departure).
+`Mach2` uses caching to speed things up. Legs are cached in `route_cache` and arrival-departure links to airports are cached in `star_cache` (STAR is short for standard arrival route, its counterpart being SID the standard instrument departure). These sit in the `Mach2` namespace, so you either need to `library(Mach2)` or use `::`, eg `Mach2::route_cache`, to refer to them.
 
 Normally the caches just do the job. But you will want to save and load them as part of your standard workflow. Quite where you save them is up to you, but a set of routes is sensitive to (a) the route grid on which it is calculated (b) the list of aircraft used, and their performance. 
 
 So it is recommended to include the `name` of the grid, and the `aircraftSet` attribute of your aircraft set in the file name. Everything else is up to you.
+
+If you change either of these, then you can use `m2_clean_cache()` to empty the caches. You will also note that if you run `find_routes` and the map has changed, or `findToCToD` and the map or aircraft have changed, then the caches will be cleared automatically.
 
 We don't execute this code chunk here, since the files aren't available.
 
@@ -51,23 +53,19 @@ We don't execute this code chunk here, since the files aren't available.
 # and then...
 
 #not run
-rte_cache <- readRDS(paste("data/Route cache", p_grid_a@name, 
+m2_load_caches(paste("data/route_start_cache_", p_grid_a@name, 
                            attr(ac,"aircraftSet"), " 2050v3.RDS"))
-star_cache <- readRDS(paste("data/STAR cache", p_grid_a@name, 
-                            attr(ac,"aircraftSet"), " 2050v3.RDS"))
 
 # then calculate however many new routes
 
 #not run
 #Save the cache ----
-saveRDS(rte_cache,paste("data/Route cache", attr(rte_cache,"map"),
-                        attr(ac,"aircraftSet"), " 2050v3.RDS"))
-saveRDS(star_cache,paste("data/STAR cache",attr(star_cache,"map"),
-                         attr(ac,"aircraftSet"), " 2050v3.RDS"))
+# see example in next chunk
+
 
 ```
   
-Usually, the caches just work invisibly in the background - you will notice they speed up finding of routes no end. They also help with refuelling, because the `rte_cache` quickly remembers the routes from major hub airports to the main refuelling points, so they don't need to be calculated again.
+Usually, the caches just work invisibly in the background - you will notice they speed up finding of routes no end. They also help with refuelling, because the `route_cache` quickly remembers the routes from major hub airports to the main refuelling points, so they don't need to be calculated again.
 
 Incidentally, if you add a new refuelling point, then the caches remain _valid_ because only **legs are cached, not routes**. With a new refuelling point, `find_route` will check both old legs and new, cached or not, before selecting the best combination of legs to make the route.
 
@@ -82,6 +80,7 @@ Here we illustrate a few use cases for more general management of the cache. Fir
 ```{r inspecting the cache}
 #first create a cache ----
 # need to load some of the built-in data
+m2_clean_cache() # for this example, start with empty caches
 aircraft <- make_aircraft()
 airports <- make_airports(crs = crs_Pacific) 
 refuel_ap <- airports %>%
@@ -100,28 +99,30 @@ NZ_routes <- find_routes(ac, ap2, aircraft, airports,
                      temp_cache_path = NA)
 
 # now have the 2 caches ----
+# for the vignette we put in a temp directory, you don't want to do this
+m2_save_caches("v0", NZ_grid, aircraft, tempdir()) 
 
-# Use case 1: How big is my cache?
-length(rte_cache)
+# Use case 1: How big is my cache? 
+length(route_cache) # this is number of legs, not routes
 length(star_cache)
 # quiz: why are they not the same length?
 
 # Use case 2: find and remove a single leg
 # find matching elements in the rte cache - here for NZAA
-ls(rte_cache, pattern = "NZAA")
+ls(route_cache, pattern = "NZAA")
 # copy paste from the results into here to remove a single item
-rm("M22_test-NZAA-NZCH--TRUE-TRUE-NA-TRUE-100-12", envir = rte_cache)
+rm("M22_test-NZAA-NZCH--TRUE-TRUE-NA-TRUE-100-12", envir = route_cache)
 
 # Use case 3: remove all legs for a given airport
-length(rte_cache)
-rm(list=ls(rte_cache, pattern="NZDN"), envir = rte_cache)
-length(rte_cache)
+length(route_cache)
+rm(list=ls(route_cache, pattern="NZDN"), envir = route_cache)
+length(route_cache)
 
 # Use case 4: check for out-of-date elements in the cache
 # in this case check if consistent with 'new' version where there are 24 variables
 # get number of variables in each element in rte cache
-rte_cols <- lapply(1:length(rte_cache), function(x) length(get(ls(rte_cache)[1], rte_cache)))
-wrong <- which(rte_cols != 24)
+route_cols <- lapply(1:length(route_cache), function(x) length(get(ls(route_cache)[1], route_cache)))
+wrong <- which(route_cols != 24)
 
 ```
 
@@ -158,7 +159,7 @@ routes <- find_routes(ac, ap2, aircraft, airports,
                       avoid = Buller_nofly)
 
 #this shows versions of the legs with and without no-fly
-ls(rte_cache, pattern = "NZCH")
+ls(route_cache, pattern = "NZCH")
 
 # create route summary
 rtes <- summarise_routes(routes, airports)

@@ -44,7 +44,7 @@
 #' longitude-latitude coordinates. Used in analysis, but
 #' not recommended for plots.
 #'
-#' crs_N <- 4326
+#' crs_N is EPSG4326
 #'
 #' @seealso \code{\link{crs_Atlantic}}, \code{\link{crs_Pacific}},
 #'  \code{\link{crs_S}}, \code{\link{crs_N}}
@@ -59,14 +59,14 @@
 #' Atlantic-centred. Works for most analysis, but not recommended for N-region
 #' (eg New Zealand and Fiji), instead use \code{\link{crs_Pacific}}.
 #'
-#' crs_Atlantic <- 54030
+#' crs_Atlantic is "+proj=robin +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84
+#' +datum=WGS84 +units=m +no_defs"
 #'
 #' @seealso \code{\link{crs_Pacific}}
 #'
 #' @format CRS
 #'
 "crs_Atlantic"
-
 
 #' Pacific-centred coordinate reference system
 #'
@@ -80,7 +80,6 @@
 #' @seealso \code{\link{crs_Atlantic}}
 #'
 "crs_Pacific"
-
 
 #' Arctic-centred coordinate reference system
 #'
@@ -150,3 +149,55 @@
 #' @format dataframe with 49 fields.
 #'
 "NZ_routes"
+
+
+#' Cache of routes calculated during the session
+#'
+#' The routes calculated are automatically cached in this environment.
+#'
+#' In fact, the caches is of legs, not routes (one or two legs). So you can add
+#' refuelling stops and recalculate routes and the cache is still helpful.
+#'
+#' However, the routes *are* dependent on the grid & map, so if the map name
+#' changes, the cache will automatically be cleared in \code{\link{find_routes}}
+#' and a fresh one used.
+#'
+#' This is unusual package dataset since it changes as you work. It is exported
+#' in the package so that, when working on large sets of routes, you can manage
+#' the caches more easily. For this see the vignette [Advanced
+#' Routing](../doc/AdvancedRouting.html#caches).
+#'
+#' See \code{\link{m2_save_caches}} and \code{\link{m2_load_caches}} for quick
+#' functions to store and recover these caches.
+#'
+#'
+#' @seealso \code{\link{star_cache}} and \code{\link{m2_clean_cache}}.
+#'
+#' @format An environment containing the route datasets.
+#'
+"route_cache"
+
+
+#' Cache of SIDs and STARs calculated during the session
+#'
+#' The links between airport and the route grid (known as SIDs and STARs) are
+#' automatically cached in this environment.
+#'
+#' The SIDs and STARs are dependent on the grid & map, so if the map name
+#' changes, the cache will automatically be cleared in \code{\link{find_routes}}
+#' and a fresh one used. The same is true for aircraft.
+#'
+#' This is unusual package dataset since it changes as you work. It is exported
+#' in the package so that, when working on large sets of routes, you can manage
+#' the caches more easily. For this see the vignette [Advanced
+#' Routing](../doc/AdvancedRouting.html#caches).
+#'
+#' See \code{\link{m2_save_caches}} and \code{\link{m2_load_caches}} for quick
+#' functions to store and recover these caches.
+#'
+#'
+#' @seealso \code{\link{route_cache}} and \code{\link{m2_clean_cache}}.
+#'
+#' @format An environment containing the SID-STAR datasets.
+#'
+"star_cache"

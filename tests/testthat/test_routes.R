@@ -37,6 +37,7 @@ test_that("Route summary", {
 test_that("find_leg works",{
   old_quiet <- getOption("quiet", default=0)
   options("quiet" = 0) #for no reporting
+  m2_clean_cache() #start without cache
   # need to load some of the built-in data
   aircraft <- make_aircraft(warn = FALSE)
   # airports <- make_airports()
@@ -79,6 +80,7 @@ test_that("find_leg works",{
 test_that("find_route works",{
   old_quiet <- getOption("quiet", default=0)
   options("quiet" = 0) #for no reporting
+  m2_clean_cache() #start without cache
   # need to load some of the built-in data
   aircraft <- make_aircraft(warn = FALSE)
   NZ_buffer_Pac <- sf::st_transform(NZ_buffer30, crs=crs_Pacific)
@@ -110,6 +112,7 @@ test_that("find_route works",{
 test_that("Find Routes",{
   old_quiet <- getOption("quiet", default=0)
   options("quiet" = 0) #for no reporting
+  m2_clean_cache() #start without cache
   # need to load some of the built-in data
   aircraft <- make_aircraft(warn = FALSE)
   airports <- make_airports(crs = crs_Pacific)

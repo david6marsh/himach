@@ -148,7 +148,7 @@ emptyRoute <- function(ac, ap2, fat_map,
 # path should include directory, but not file extension (RDS)
 temp_cache_save <- function(temp_cache_path){
   if (!is.na(temp_cache_path)){
-    save(rte_cache, file = paste0(temp_cache_path, "_routes.rda"))
+    save(route_cache, file = paste0(temp_cache_path, "_routes.rda"))
     save(star_cache, file = paste0(temp_cache_path, "_stars.rda"))
   }
 }
@@ -511,6 +511,7 @@ findToCToD <- function(ap, route_grid, fat_map, ac,
   #if cache doesn't exist, create it as a child of Global (so persists outside this function!)
   if ((attr(star_cache,"map") != route_grid@name) ||
       (attr(star_cache,"aircraftSet") != attr(ac,"aircraftSet"))) {
+    if (getOption("quiet", default=0)>0) message("Map or aircraft have changed, so clearing route cache.")
     rm(list = ls(star_cache), pos=star_cache) # clean the cache
     attr(star_cache,"map") <- route_grid@name
     attr(star_cache,"aircraftSet") <- attr(ac,"aircraftSet")}
@@ -802,7 +803,7 @@ pathToGC <- function(path, route_grid,
 #'     of this last path. \code{shortcuts} defaults to TRUE.
 #' }
 #'
-#' Legs are automatically saved in \code{rte_cache} and retrieved from here if available
+#' Legs are automatically saved in \code{route_cache} and retrieved from here if available
 #' rather than re-calculated. See vignette TBD for cache management.
 #
 #'
@@ -859,9 +860,10 @@ find_leg <- function(ac, ap2, route_grid, fat_map, ap_loc,
 
   #can save and load the cache, with loadRDS readRDS
   #if cache doesn't match create it as a child of Global (so persists outside this function!)
-  if ((attr(rte_cache,"map") != route_grid@name)) {
-    rm(list = ls(rte_cache), pos=rte_cache) # empty cache
-    attr(rte_cache,"map") <- route_grid@name}
+  if ((attr(route_cache,"map") != route_grid@name)) {
+    if (getOption("quiet", default=0)>0) message("Map used by grid has changed, so clearing route cache.")
+    rm(list = ls(route_cache), pos=route_cache) # empty cache
+    attr(route_cache,"map") <- route_grid@name}
 
   if (unidirectional) {
     #note we use a different separator here, but not < > which file systems might reject
@@ -878,17 +880,17 @@ find_leg <- function(ac, ap2, route_grid, fat_map, ap_loc,
   }
 
   #if this query has not already been cached, calculate its value
-  if (!exists(cache_as, envir=rte_cache, inherits=F)) {
+  if (!exists(cache_as, envir=route_cache, inherits=F)) {
     if (getOption("quiet", default=0)>2) message("  Not cached: calculating...")
     r <- find_leg_really(ac, ap2, route_grid, fat_map, ap_loc, avoid,
                                 enforce_range, best_by_time, grace_km,
                                 shortcuts, ad_dist, ad_nearest, ...)
     if (is.na(r[1,1]))(return(r)) #quick end without caching if it's an empty route.
-    assign(cache_as, r, rte_cache)
+    assign(cache_as, r, route_cache)
   }
 
   #return value
-  get(cache_as, rte_cache)
+  get(cache_as, route_cache)
 }
 
 
