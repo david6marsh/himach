@@ -43,6 +43,8 @@ You need a dataframe that defines one or more aircraft. This needs, at minimum, 
 
 Other fields are optional, but it is recommended to include `notes` to give more information. 
 
+To convert between kph and Mach at the sort of cruise altitudes that supersonic aircraft use, we use a fixed value `mach_kph`.
+
 The cruise speeds over sea and over land are clearly intended to be supersonic and subsonic, respectively. But this is not required. You might want both subsonic, to include a comparator, subsonic aircraft. Or you might want to have both supersonic, to explore routes when so-called "mach cut-off" conditions prevail. `Mach2` doesn't enforce a range on either value. 
 
 Run this minimum dataset through `make_aircraft` to get the additional fields that are needed. Alternatively, if you run `make_aircraft` with no parameters, it creates a set of test aircraft. This test set is based on public data for 3 aircraft (though the `accel_Mpm`, `arrdep_kph` are educated guesses), and fantasy for the 4th one, which has been designed for testing purposes and might not be pleasant to fly in.

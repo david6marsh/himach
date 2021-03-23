@@ -5,10 +5,12 @@
 #'
 #' Empties the caches.
 #'
-#' @seealso #' For more details see the cache section in the vignette:
-#'   \code{vignette("AdvancedRouting", package = "Mach2")}
+#' @seealso For more details see the cache section in the vignette:
+#'   \code{vignette("AdvancedRouting", package = "Mach2")}. or
+#'   \href{../doc/AdvancedRouting.html#cache}{Vignette on caching}
 #'
-#' @param cache Which caches to clear. Default is both \code{c("route", "star")}.
+#' @param cache Which caches to clear. Default is both \code{c("route",
+#'   "star")}.
 #'
 #' @return TRUE silently
 #' @export

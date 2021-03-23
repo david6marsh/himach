@@ -176,26 +176,22 @@ make_route_grid <- function(fat_map, name,
                                    format = "[:bar] :percent :eta")
   g@lattice <- ll_lattice %>%
     # add geometry
-    # handle the 'overflow longitude' - slightly over the dateline
-    mutate(from_long = mod_long(.data$from_long),
-           to_long = mod_long(.data$to_long)) %>%
-    rowwise() %>%
-    mutate(geometry = st_transform(st_sfc(st_linestring(
-      withProgress(pb, matrix, c(.data$from_long, .data$from_lat, .data$to_long, .data$to_lat),
-                                                               ncol=2, byrow = TRUE)),
-                                          crs=4326),
-                                   crs=st_crs(fat_map))) %>%
+   rowwise() %>%
+    mutate(geometry = s2::s2_make_line(c(.data$from_long, .data$to_long),
+                                       c(.data$from_lat, .data$to_lat))) %>%
     ungroup() %>%
-    #calculate distance
-    mutate(dist_km = geosphere::distGeo(matrix(c(.data$from_long, .data$from_lat), ncol=2),
-                             matrix(c(.data$to_long, .data$to_lat), ncol=2))/1000) %>%
+    mutate(dist_km = s2::s2_length(geometry)/1000) %>%
+    mutate(geometry = sf::st_as_sfc(geometry),
+           geometry = sf::st_transform(geometry, crs = st_crs(fat_map))) %>%
     select(.data$from, .data$to, .data$geometry, .data$dist_km, .data$wrap)
   message("")
   if (getOption("quiet", default=0)>0) message("Added geo & distance to the lattice:",round(Sys.time() - tstart,1))
 
   #classify the points as sea or not
   if (classify){
+    if (getOption("quiet", default=0)>0) message("Classifying points in the lattice as land.")
     g@points$land <- as.vector(st_within(g@points$xy, fat_map, sparse=FALSE, prepared = TRUE))
+    if (getOption("quiet",default=0)>0) message("Classified as land:", round(Sys.time() - tstart,1))
     id_land <- g@points %>%
       as.data.frame() %>%
       select(.data$id, .data$land)
