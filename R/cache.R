@@ -22,8 +22,8 @@
 #'
 m2_clean_cache <- function(cache = c("route", "star")){
   stopifnot(length(intersect(c("route", "star"), cache))>0)
-  if ("route" %in% cache) rm(list = ls(route_cache), pos=route_cache)
-  if ("star" %in% cache) rm(list = ls(star_cache), pos=star_cache)
+  if ("route" %in% cache) rm(list = ls(.m2_cache$route_cache), pos=.m2_cache$route_cache)
+  if ("star" %in% cache) rm(list = ls(.m2_cache$star_cache), pos=.m2_cache$star_cache)
   invisible(TRUE)
 }
 
@@ -64,7 +64,8 @@ m2_save_caches <- function(id, grid, aircraft, path = "data/"){
                      "_",
                      attr(aircraft, "aircraftSet"),
                      ".rda")
-  save(route_cache, star_cache,
+  save("route_cache", "star_cache",
+       envir = .m2_cache,
        file = paste0(path, stringr::str_replace_all(filename, "\\s", "_")))
   invisible(TRUE)
 }
@@ -83,5 +84,5 @@ m2_save_caches <- function(id, grid, aircraft, path = "data/"){
 #' # m2_load_caches(file="") #load from this file
 #'
 m2_load_caches <- function(file){
-  load(file, envir = parent.env(environment()))
+  load(file, envir = .m2_cache)
 }

@@ -148,8 +148,8 @@ emptyRoute <- function(ac, ap2, fat_map,
 # path should include directory, but not file extension (RDS)
 temp_cache_save <- function(temp_cache_path){
   if (!is.na(temp_cache_path)){
-    save(route_cache, file = paste0(temp_cache_path, "_routes.rda"))
-    save(star_cache, file = paste0(temp_cache_path, "_stars.rda"))
+    save("route_cache", envir = .m2_cache, file = paste0(temp_cache_path, "_routes.rda"))
+    save("star_cache", envir = .m2_cache, file = paste0(temp_cache_path, "_stars.rda"))
   }
 }
 
@@ -509,24 +509,24 @@ findToCToD <- function(ap, route_grid, fat_map, ac,
   #can save and load the cache, with loadRDS readRDS
   #use attr "map" of fat_map, and AircraftSet of ac to ensure it's the right cache
   #if cache doesn't exist, create it as a child of Global (so persists outside this function!)
-  if ((attr(star_cache,"map") != route_grid@name) ||
-      (attr(star_cache,"aircraftSet") != attr(ac,"aircraftSet"))) {
+  if ((attr(.m2_cache$star_cache,"map") != route_grid@name) ||
+      (attr(.m2_cache$star_cache,"aircraftSet") != attr(ac,"aircraftSet"))) {
     if (getOption("quiet", default=0)>0) message("Map or aircraft have changed, so clearing route cache.")
-    rm(list = ls(star_cache), pos=star_cache) # clean the cache
-    attr(star_cache,"map") <- route_grid@name
-    attr(star_cache,"aircraftSet") <- attr(ac,"aircraftSet")}
+    m2_clean_cache("star")
+    attr(.m2_cache$star_cache,"map") <- route_grid@name
+    attr(.m2_cache$star_cache,"aircraftSet") <- attr(ac,"aircraftSet")}
 
   #cache the SID-STAR with data name which is the ACID, ap, ad_nearest & ad_dist.
   cache_as <- paste(ac$id, ap$APICAO, ad_nearest, ad_dist, sep="-")
 
   #if this query has not already been cached, calculate its value
-  if (!exists(cache_as, envir=star_cache, inherits=F)) {
+  if (!exists(cache_as, envir=.m2_cache$star_cache, inherits=F)) {
     if (getOption("quiet", default=0)>2) message("  TOC/TOD not cached: calculating...")
     assign(cache_as, findToCToD_really(ap, route_grid, fat_map, ac,
-                                       ad_dist, ad_nearest), star_cache)
+                                       ad_dist, ad_nearest), .m2_cache$star_cache)
   }
   #return value
-  get(cache_as, star_cache)
+  get(cache_as, .m2_cache$star_cache)
 }
 
 #link airport to top of climb and descent
@@ -860,10 +860,10 @@ find_leg <- function(ac, ap2, route_grid, fat_map, ap_loc,
 
   #can save and load the cache, with loadRDS readRDS
   #if cache doesn't match create it as a child of Global (so persists outside this function!)
-  if ((attr(route_cache,"map") != route_grid@name)) {
+  if ((attr(.m2_cache$route_cache,"map") != route_grid@name)) {
     if (getOption("quiet", default=0)>0) message("Map used by grid has changed, so clearing route cache.")
-    rm(list = ls(route_cache), pos=route_cache) # empty cache
-    attr(route_cache,"map") <- route_grid@name}
+    m2_clean_cache("route") # empty cache
+    attr(.m2_cache$route_cache,"map") <- route_grid@name}
 
   if (unidirectional) {
     #note we use a different separator here, but not < > which file systems might reject
@@ -880,17 +880,17 @@ find_leg <- function(ac, ap2, route_grid, fat_map, ap_loc,
   }
 
   #if this query has not already been cached, calculate its value
-  if (!exists(cache_as, envir=route_cache, inherits=F)) {
+  if (!exists(cache_as, envir=.m2_cache$route_cache, inherits=F)) {
     if (getOption("quiet", default=0)>2) message("  Not cached: calculating...")
     r <- find_leg_really(ac, ap2, route_grid, fat_map, ap_loc, avoid,
                                 enforce_range, best_by_time, grace_km,
                                 shortcuts, ad_dist, ad_nearest, ...)
     if (is.na(r[1,1]))(return(r)) #quick end without caching if it's an empty route.
-    assign(cache_as, r, route_cache)
+    assign(cache_as, r, .m2_cache$route_cache)
   }
 
   #return value
-  get(cache_as, route_cache)
+  get(cache_as, .m2_cache$route_cache)
 }
 
 

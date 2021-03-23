@@ -215,9 +215,8 @@ options("quiet" = 4) #for some output
 ap2 <- make_AP2("NZAA","NZCH",airports)
 
 # normally you do NOT want to do this, but for the vignette we
-# work without caches
-if (exists("rte_cache")) rm(rte_cache)
-if (exists("star_cache")) rm(star_cache)
+# work empty caches
+m2_clean_cache()
 
 routes <- find_route(aircraft[4,], 
                      ap2,

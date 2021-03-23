@@ -1,10 +1,12 @@
+.m2_cache <- new.env(FALSE, parent=globalenv())
+
 .onLoad <- function(libname, pkgname) {
 
-  assign("route_cache", new.env(parent=parent.env(environment())), parent.env(environment()))
-  attr(route_cache,"map") <- "" # no map name yet
+  assign("route_cache", new.env(parent=parent.env(environment())), .m2_cache)
+  attr(.m2_cache$route_cache,"map") <- "" # no map name yet
 
-  assign("star_cache", new.env(parent=parent.env(environment())), parent.env(environment()))
-  attr(star_cache,"map") <- "" # no map name yet
+  assign("star_cache", new.env(parent=parent.env(environment())), .m2_cache)
+  attr(.m2_cache$star_cache,"map") <- "" # no map name yet
 
    requireNamespace("s2", quietly = TRUE)
   sf::sf_use_s2(TRUE) # is this rude - changing a state silently?

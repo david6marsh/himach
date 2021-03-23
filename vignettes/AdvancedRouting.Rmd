@@ -35,7 +35,7 @@ library(sf)
 
 ## Caches {#caches}
 
-`Mach2` uses caching to speed things up. Legs are cached in `route_cache` and arrival-departure links to airports are cached in `star_cache` (STAR is short for standard arrival route, its counterpart being SID the standard instrument departure). These sit in the `Mach2` namespace, so you either need to `library(Mach2)` or use `::`, eg `Mach2::route_cache`, to refer to them.
+`Mach2` uses caching to speed things up. Legs are cached in `route_cache` and arrival-departure links to airports are cached in `star_cache` (STAR is short for standard arrival route, its counterpart being SID the standard instrument departure). These sit in the `.m2_cache` namespace, so you use `$`, eg `.m2_cache$route_cache`, to refer to them.
 
 Normally the caches just do the job. But you will want to save and load them as part of your standard workflow. Quite where you save them is up to you, but a set of routes is sensitive to (a) the route grid on which it is calculated (b) the list of aircraft used, and their performance. 
 
@@ -102,27 +102,30 @@ NZ_routes <- find_routes(ac, ap2, aircraft, airports,
 # for the vignette we put in a temp directory, you don't want to do this
 m2_save_caches("v0", NZ_grid, aircraft, tempdir()) 
 
-# Use case 1: How big is my cache? 
-length(route_cache) # this is number of legs, not routes
-length(star_cache)
-# quiz: why are they not the same length?
-
-# Use case 2: find and remove a single leg
-# find matching elements in the rte cache - here for NZAA
-ls(route_cache, pattern = "NZAA")
-# copy paste from the results into here to remove a single item
-rm("M22_test-NZAA-NZCH--TRUE-TRUE-NA-TRUE-100-12", envir = route_cache)
-
-# Use case 3: remove all legs for a given airport
-length(route_cache)
-rm(list=ls(route_cache, pattern="NZDN"), envir = route_cache)
-length(route_cache)
-
-# Use case 4: check for out-of-date elements in the cache
-# in this case check if consistent with 'new' version where there are 24 variables
-# get number of variables in each element in rte cache
-route_cols <- lapply(1:length(route_cache), function(x) length(get(ls(route_cache)[1], route_cache)))
-wrong <- which(route_cols != 24)
+# 
+# # Use case 1: How big is my cache? 
+# length(.m2_cache$route_cache) # this is number of legs, not routes
+# length(.m2_cache$star_cache)
+# # quiz: why are they not the same length?
+# 
+# # Use case 2: find and remove a single leg
+# # find matching elements in the rte cache - here for NZAA
+# ls(.m2_cache$route_cache, pattern = "NZAA")
+# # copy paste from the results into here to remove a single item
+# rm("M22_test-NZAA-NZCH--TRUE-TRUE-NA-TRUE-100-12", envir = .m2_cache$route_cache)
+# 
+# # Use case 3: remove all legs for a given airport
+# length(.m2_cache$route_cache)
+# rm(list=ls(.m2_cache$route_cache, pattern="NZDN"), envir = .m2_cache$route_cache)
+# length(.m2_cache$route_cache)
+# 
+# # Use case 4: check for out-of-date elements in the cache
+# # in this case check if consistent with 'new' version where there are 24 variables
+# # get number of variables in each element in rte cache
+# route_cols <- lapply(1:length(.m2_cache$route_cache), 
+#                      function(x) length(get(ls(.m2_cache$route_cache)[1],
+#                                             .m2_cache$route_cache)))
+# wrong <- which(route_cols != 24)
 
 ```
 
@@ -159,7 +162,7 @@ routes <- find_routes(ac, ap2, aircraft, airports,
                       avoid = Buller_nofly)
 
 #this shows versions of the legs with and without no-fly
-ls(route_cache, pattern = "NZCH")
+# ls(route_cache, pattern = "NZCH", envir = .m2_cache)
 
 # create route summary
 rtes <- summarise_routes(routes, airports)
@@ -204,7 +207,7 @@ cowplot::plot_grid(m_old, m_s2, labels = c("bad", "good"),
 
 ```
 
-[Incorrect and Correct Buffer](buffer_example.pdf)
+![Incorrect and Correct Buffer](buffer_example.pdf) 
 
 In fact, the problem of finding too many apparently over-ocean routes is broader than this. The other main contributor to this is missing islands from the map. See the comments [in the first vignette](SupersonicRouting.html#maps).
 
@@ -227,4 +230,4 @@ cowplot::plot_grid(m_s2, m_hires, labels = c("good", "better"),
 
 ```
 
-[Correct Buffer and with Better with More Islands](buffer_island_example.pdf)
+![Correct Buffer and with Better with More Islands](buffer_island_example.pdf)
