@@ -180,9 +180,9 @@ make_route_grid <- function(fat_map, name,
     mutate(geometry = s2::s2_make_line(c(.data$from_long, .data$to_long),
                                        c(.data$from_lat, .data$to_lat))) %>%
     ungroup() %>%
-    mutate(dist_km = s2::s2_length(geometry)/1000) %>%
-    mutate(geometry = sf::st_as_sfc(geometry),
-           geometry = sf::st_transform(geometry, crs = st_crs(fat_map))) %>%
+    mutate(dist_km = s2::s2_length(.data$geometry)/1000) %>%
+    mutate(geometry = sf::st_as_sfc(.data$geometry),
+           geometry = sf::st_transform(.data$geometry, crs = st_crs(fat_map))) %>%
     select(.data$from, .data$to, .data$geometry, .data$dist_km, .data$wrap)
   message("")
   if (getOption("quiet", default=0)>0) message("Added geo & distance to the lattice:",round(Sys.time() - tstart,1))
