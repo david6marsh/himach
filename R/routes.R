@@ -75,10 +75,11 @@ findGC <- function(subp, withMap, avoidMap, max_depth = 250){
     #does a gt circle from start to end still miss the land?
     #default is bycol..
 
-    test_line <- st_gcIntermediate(p1=c(first(subp$long), first(subp$lat)),
-                                   p2=c(last(subp$long), last(subp$lat)),
-                                   n=nrow(subp)-2, addStartEnd=TRUE,
-                                   crs=st_crs(useMap))
+    test_line <- s2::s2_make_line(c(first(subp$long), last(subp$long)),
+                                  c(first(subp$lat), last(subp$lat))) %>%
+      st_as_sfc() %>%
+      st_transform(st_crs(useMap))
+
     #just extract the single binary result
     sea_only <- ! as.logical(st_intersects(test_line, useMap, sparse=FALSE))
     if (sea_only) {
@@ -91,10 +92,6 @@ findGC <- function(subp, withMap, avoidMap, max_depth = 250){
     }
     else {
       #do recursion.
-      # d <- dist2gc(p1=c(first(subp$long), first(subp$lat)),
-      #              p2=c(last(subp$long), last(subp$lat)),
-      #              p3 = rbind(as.matrix(subp %>% select(long, lat)),
-      #                         c(last(subp$long), last(subp$lat))))
       #split on first step at furthest from Gt circle
       # and after that where closest to land, excluding start and end
       #except if length is 3 when it has to the middle
@@ -728,9 +725,13 @@ pathToGC <- function(path, route_grid,
             if (length(phases)==1) {
               # if (length(phases)==1 && phases == "sea") {
               #check from the start (from) of A to the far end (to) of B
-              test_line <- st_gcIntermediate(p1=c(gcid[baseID,]$from_long, gcid[baseID,]$from_lat),
-                                             p2=c(gcid[farID,]$to_long, gcid[farID,]$to_lat),
-                                             n=20, addStartEnd=TRUE, crs=st_crs(fat_map))
+              # test_line <- st_gcIntermediate(p1=c(gcid[baseID,]$from_long, gcid[baseID,]$from_lat),
+              #                                p2=c(gcid[farID,]$to_long, gcid[farID,]$to_lat),
+              #                                n=20, addStartEnd=TRUE, crs=st_crs(fat_map))
+              test_line <- s2::s2_make_line(c(gcid[baseID,]$from_long, gcid[farID,]$to_long),
+                                            c(gcid[baseID,]$from_lat, gcid[farID,]$to_lat)) %>%
+                st_as_sfc() %>%
+                st_transform(st_crs(fat_map))
               #just extract the single binary result: All sea?
               all_sea <- ! as.logical(st_intersects(test_line, fat_map, sparse=FALSE))
               if (all_sea) {
