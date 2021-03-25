@@ -955,46 +955,11 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
       envelope <-  make_route_envelope(ac, ap2, ...)
       # and use its CRS henceforth as a basis
       use_crs <- st_crs(envelope)
-
-      # aprtly to avoid occasional sea-land inversion
-      # crop the map - but reduce size first, and avoid self-overlap
-      # find crop region for fat_map in its crs
-      bb_re_map <- st_bbox(st_transform(envelope, st_crs(fat_map)))
-      bb_map <- st_bbox(fat_map)
-      bb_crop <- bb_re_map
-      # crop just on longitude extent of envelope
-      bb_c <- bb_map
-      bb_c[1] <- bb_crop[1]
-      bb_c[3] <- bb_crop[3]
-
-      mlsN <- fat_map %>%
-        st_crop(bb_c) %>%
-        st_segmentize(units::set_units(5, "km")) %>%
-        st_transform(use_crs) %>%
-        st_union() %>%
-        st_make_valid()
-      fat_map <- st_intersection(envelope, mlsN)
-
-      #shift route grid for this leg
-      # turn off warning about 'spatially constant attributes"
-      # suppressWarnings(
-      #   pts <- route_grid@points %>%
-      #   st_as_sf() %>%
-      #   st_crop(bb_crop) %>%
-      #   st_transform(crs=use_crs, quiet=FALSE)
-      # )
-      # route_grid@points <- cbind(pts %>% st_drop_geometry(), pts$xy) %>%
-      #   rename(xy = .data$geometry)
-      # now cut points to the envelope itself
+      fat_map <- st_transform(fat_map, use_crs)
 
       route_grid@points <- route_grid@points %>%
         mutate(xy = st_transform(.data$xy, crs=use_crs, quiet=FALSE)) %>%
         filter(st_intersects(.data$xy, envelope, sparse = FALSE))
-
-      #check for the rare map-inversion problem on st_transform (when land and sea are switched)
-      check_pt <- route_grid@points[1, ]
-      is_land <- as.logical(st_intersects(check_pt$xy, fat_map, sparse = FALSE))
-      if (is_land != check_pt$land) fat_map <- st_difference(envelope, fat_map)
 
       # 'crop' using ids - to reduce transform challenge
       route_grid@lattice <- route_grid@lattice %>%
@@ -1005,13 +970,6 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
       ap_loc$ap_locs <- st_transform(ap_loc$ap_locs, crs=use_crs, quiet=FALSE)
       # and shift avoid if you have to
       if (!is.na(avoid)) avoid <- st_transform(avoid, use_crs)
-
-
-     # reduce the lattice - but do it via the points
-      # the equivalent filter(st_intersects...) takes 6*longer
-      # route_grid@lattice <- route_grid@lattice %>%
-      #   inner_join(route_grid@points %>% select(.data$id), by=c("from"="id")) %>%
-      #   inner_join(route_grid@points %>% select(.data$id), by=c("to"="id"))
 
       if (getOption("quiet", default=0)>1) message(" Cut envelope from lattice: ",round(Sys.time() - tstart,1))
     }
