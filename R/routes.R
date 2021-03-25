@@ -333,12 +333,6 @@ find_route <- function(ac, ap2, fat_map, avoid=NA, route_grid, cf_subsonic=NA,
   #   return(emptyRoute(ac, ap2, fat_map))
   # }
 
-  # #debug  - find good crs
-  # useCRS <- "+proj=laea +lon_0=150 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
-  # fat_map <- st_transform(fat_map, crs=useCRS)
-  # route_grid@points$xy <- st_transform(route_grid@points$xy, crs=useCRS)
-  # if (!is.na(avoid)) avoid <- st_transform(avoid, useCRS)
-  #
   #note ap2$routeID is in a specific order, but ADEP/ADES might not reflect that
   #switch if necessary
   ap2 <- ap2 %>%
@@ -511,7 +505,7 @@ findToCToD <- function(ap, route_grid, fat_map, ac,
   #if cache doesn't exist, create it as a child of Global (so persists outside this function!)
   if ((attr(.m2_cache$star_cache,"map") != route_grid@name) ||
       (attr(.m2_cache$star_cache,"aircraftSet") != attr(ac,"aircraftSet"))) {
-    if (getOption("quiet", default=0)>0) message("Map or aircraft have changed, so clearing route cache.")
+    if (getOption("quiet", default=0)>0) message("Map or aircraft have changed, so clearing star cache.")
     m2_clean_cache("star")
     attr(.m2_cache$star_cache,"map") <- route_grid@name
     attr(.m2_cache$star_cache,"aircraftSet") <- attr(ac,"aircraftSet")}
@@ -535,6 +529,13 @@ findToCToD_really <- function(ap, route_grid, fat_map, ac,
   #for a each point in ap - which is the airport list with locs
   #find where the airport connects to the 'cruise' grid points
   #not super accurate - because use st_distance rathe than distGeo
+
+  # these should match in the inputs
+  use_crs <- st_crs(route_grid@lattice$geometry)
+  stopifnot(st_crs(route_grid@points$xy) == use_crs)
+  # these are fast, so transform them rather than assume
+  if (st_crs(fat_map) != use_crs) st_transform(fat_map, use_crs)
+  ap$ap_locs <- st_transform(ap$ap_locs, crs=use_crs, quiet=FALSE)
 
   y <- as.matrix(st_distance(route_grid@points$xy, ap$ap_locs)) #slow but simple
   #and less slow now that this is route_grid after the route envelope has been applied
@@ -937,10 +938,18 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
     return(emptyRoute(ac, ap2, fat_map))
   }
 
+  # these should match in the inputs
+  use_crs <- st_crs(route_grid@lattice$geometry)
+  stopifnot(st_crs(route_grid@points$xy) == use_crs)
+  # these are fast, so transform them rather than assume
+  if (st_crs(fat_map) != use_crs) st_transform(fat_map, use_crs)
+  ap_loc$ap_locs <- st_transform(ap_loc$ap_locs, crs=use_crs, quiet=FALSE)
+  if (!is.na(avoid)) avoid <- st_transform(avoid, use_crs)
+
   if (getOption("quiet", default=0)>2) message("  Starting envelope: ",round(Sys.time() - tstart,1))
   #make the envelope - so can plot even if don't enforce it
   #we work with the envelope in map CRS, then save at last stage in crs_longlat
-  envelope <-  st_sfc(st_polygon(), crs=st_crs(fat_map)) #null by default
+  envelope <-  st_sfc(st_polygon(), crs=use_crs) #null by default
   if (gcdist <= ac$range_km) {
 
     #if necessary add a grace distance, to allow routing to be found if within 2%.
@@ -948,29 +957,20 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
 
     # v.v. if gcdist is small, reduce the range using max_circuity
     ac$range_km <- min(ac$range_km, gcdist * max_circuity)
-    #if quicker over the Pacific...
     if (enforce_range) {
-
       #find route Envelope
-      envelope <-  make_route_envelope(ac, ap2, ...)
-      # and use its CRS henceforth as a basis
-      use_crs <- st_crs(envelope)
-      fat_map <- st_transform(fat_map, use_crs)
-
+      envelope <-  make_route_envelope(ac, ap2, ...) %>%
+        st_transform(use_crs)
+      # crop first points then lattice to envelope
       route_grid@points <- route_grid@points %>%
-        mutate(xy = st_transform(.data$xy, crs=use_crs, quiet=FALSE)) %>%
+        filter(s2::s2_intersects(st_as_s2(.data$xy),
+                                 st_as_s2(envelope)))
+      route_grid@points <- route_grid@points %>%
         filter(st_intersects(.data$xy, envelope, sparse = FALSE))
-
-      # 'crop' using ids - to reduce transform challenge
+      # 'crop' using ids - to reduce geo-intersection challenge
       route_grid@lattice <- route_grid@lattice %>%
         inner_join(route_grid@points, by = c("from"="id")) %>%
         inner_join(route_grid@points, by = c("to"="id"))
-      route_grid@lattice$geometry <- st_transform(route_grid@lattice$geometry,
-                                                  crs=use_crs, quiet=FALSE)
-      ap_loc$ap_locs <- st_transform(ap_loc$ap_locs, crs=use_crs, quiet=FALSE)
-      # and shift avoid if you have to
-      if (!is.na(avoid)) avoid <- st_transform(avoid, use_crs)
-
       if (getOption("quiet", default=0)>1) message(" Cut envelope from lattice: ",round(Sys.time() - tstart,1))
     }
   }
@@ -987,7 +987,7 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
 
   #check if need to avoid areas
   if (!is.na(avoid)){
-    # remove the avoid aread from the search grid
+    # remove the avoid area from the search grid
     z <- st_intersects(avoid, route_grid@lattice$geometry, sparse=FALSE)
     #remove this from lattice
     route_grid@lattice <- route_grid@lattice %>% filter(!z)
@@ -1106,7 +1106,8 @@ make_route_envelope <- function(ac, ap2,
   b <- sqrt((r/2)^2-(geo_m/2)^2)
   psi <- geosphere::bearing(geo_c, c(ap2$to_long, ap2$to_lat))
 
-  theta <- seq(0, 360, length.out = envelope_points)
+  # reverse order for s2 left-hand rule
+  theta <- seq(360, 0, length.out = envelope_points)
   tp_rad <- theta*pi/180
   #polar form for radius of an ellipse from the centre with semi-major axis length a
   #and starting with the longest
@@ -1115,18 +1116,19 @@ make_route_envelope <- function(ac, ap2,
   geod <- geosphere::geodesic(geo_c, theta + psi, dist)
 
   # use CRS centred on cetnre of route envelope
-  cen_prj <- sp::CRS(paste0("+proj=laea +lat_0=", round(geo_c[2],1),
-                           " +lon_0=", round(geo_c[1],1),
-                           " +x_0=4321000 +y_0=3210000 +ellps=GRS80 +datum=WGS84 +units=m +no_defs"))
+  # cen_prj <- sp::CRS(paste0("+proj=laea +lat_0=", round(geo_c[2],1),
+  #                          " +lon_0=", round(geo_c[1],1),
+  #                          " +x_0=4321000 +y_0=3210000 +ellps=GRS80 +datum=WGS84 +units=m +no_defs"))
   # convert to simple feature
   pg <- st_multipoint(geod[,1:2]) %>%
     st_sfc(crs=crs_longlat) %>%
     st_cast('LINESTRING') %>%
-    st_cast('POLYGON') %>%
-    st_transform(cen_prj) %>%
-    # occasionally fails as self-intersection when later st_intersection
-    # so this should solve that
-    st_make_valid()
+    st_cast('POLYGON')
+  # %>%
+  #   st_transform(use_crs) %>%
+  #   # occasionally fails as self-intersection when later st_intersection
+  #   # so this should solve that
+  #   st_make_valid()
 
 }
 
