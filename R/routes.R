@@ -964,9 +964,6 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
         st_transform(use_crs)
       # crop first points then lattice to envelope
       route_grid@points <- route_grid@points %>%
-        filter(s2::s2_intersects(st_as_s2(.data$xy),
-                                 st_as_s2(envelope)))
-      route_grid@points <- route_grid@points %>%
         filter(st_intersects(.data$xy, envelope, sparse = FALSE))
       # 'crop' using ids - to reduce geo-intersection challenge
       route_grid@lattice <- route_grid@lattice %>%
@@ -1108,7 +1105,7 @@ make_route_envelope <- function(ac, ap2,
   psi <- geosphere::bearing(geo_c, c(ap2$to_long, ap2$to_lat))
 
   # reverse order for s2 left-hand rule
-  theta <- seq(360, 0, length.out = envelope_points)
+  theta <- seq(359, 0, length.out = envelope_points)
   tp_rad <- theta*pi/180
   #polar form for radius of an ellipse from the centre with semi-major axis length a
   #and starting with the longest
@@ -1121,15 +1118,17 @@ make_route_envelope <- function(ac, ap2,
   #                          " +lon_0=", round(geo_c[1],1),
   #                          " +x_0=4321000 +y_0=3210000 +ellps=GRS80 +datum=WGS84 +units=m +no_defs"))
   # convert to simple feature
-  pg <- st_multipoint(geod[,1:2]) %>%
-    st_sfc(crs=crs_longlat) %>%
-    st_cast('LINESTRING') %>%
-    st_cast('POLYGON')
+  # pg <- st_multipoint(geod[,1:2]) %>%
+  #   st_sfc(crs=crs_longlat) %>%
+  #   st_cast('LINESTRING') %>%
+  #   st_cast('POLYGON')
   # %>%
   #   st_transform(use_crs) %>%
   #   # occasionally fails as self-intersection when later st_intersection
   #   # so this should solve that
   #   st_make_valid()
+  pg <- s2::s2_make_polygon(geod[,1], geod[,2]) %>%
+    st_as_sfc()
 
 }
 
