@@ -907,7 +907,7 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
                             best_by_time=TRUE,
                             grace_km=NA,
                             shortcuts=TRUE,
-                            ad_dist, ad_nearest, max_circuity = 1.6,
+                            ad_dist, ad_nearest, max_leg_circuity = 1.4,
                             ...){
   #start with a grid, find the routes for this aircraft
   #ap2 is a row of a dataframe with at least AP2 from_long, from_lat, to_long, to_lat
@@ -956,8 +956,8 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
     #if necessary add a grace distance, to allow routing to be found if within 2%.
     if (!is.na(grace_km) & (gcdist/ac$range_km > 0.97)) ac$range_km <- ac$range_km + grace_km
 
-    # v.v. if gcdist is small, reduce the range using max_circuity
-    ac$range_km <- min(ac$range_km, gcdist * max_circuity)
+    # v.v. if gcdist is small, reduce the range using max_leg_circuity
+    ac$range_km <- min(ac$range_km, gcdist * max_leg_circuity)
     if (enforce_range) {
       #find route Envelope
       envelope <-  make_route_envelope(ac, ap2, ...) %>%
@@ -969,6 +969,8 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
       route_grid@lattice <- route_grid@lattice %>%
         inner_join(route_grid@points, by = c("from"="id")) %>%
         inner_join(route_grid@points, by = c("to"="id"))
+      # crop map to envelope, too
+      fat_map <- st_intersection(fat_map, envelope)
       if (getOption("quiet", default=0)>1) message(" Cut envelope from lattice: ",round(Sys.time() - tstart,1))
     }
   }

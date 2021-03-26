@@ -43,25 +43,17 @@ test_that("find_leg works",{
   # airports <- make_airports()
   NZ_buffer_Pac <- sf::st_transform(NZ_buffer30, crs=crs_Pacific)
 
-  # fail with unmatched CRS
-  # # transformed in code, so no longer fails
-  # expect_error(
-  # find_leg(aircraft[4,],
-  #                   make_AP2("NZAA","NZCH",airports),
-  #                   fat_map = NZ_buffer_Pac,
-  #                   route_grid = NZ_grid,
-  #                   ap_loc = airports))
-
   airports <- make_airports(crs = crs_Pacific)
+  # --- This test works, and is implicit in find_routes
   # can't test against a route with a timestamp!
-  routes <- find_leg(aircraft[4,],
-                     make_AP2("NZAA","NZCH",airports),
-                     fat_map = NZ_buffer_Pac,
-                     route_grid = NZ_grid,
-                     ap_loc = airports) %>%
-    select(-timestamp)
-  # test just one line
-  expect_known_value(routes[4, ], "known/test_leg_NZAA_NZCH")
+  # routes <- find_leg(aircraft[4,],
+  #                    make_AP2("NZAA","NZCH",airports),
+  #                    fat_map = NZ_buffer_Pac,
+  #                    route_grid = NZ_grid,
+  #                    ap_loc = airports) %>%
+  #   select(-timestamp)
+  # # test just one line
+  # expect_known_value(routes[4, ], "known/test_leg_NZAA_NZCH")
   options("quiet" = old_quiet)
   # for visual check:
   # ggplot(NZ_buffer_Pac) + geom_sf() + geom_sf(data = routes$gc)
@@ -86,14 +78,15 @@ test_that("find_route works",{
   NZ_buffer_Pac <- sf::st_transform(NZ_buffer30, crs=crs_Pacific)
 
   airports <- make_airports(crs = crs_Pacific)
-  routes <- find_route(aircraft[4,],
-                       make_AP2("NZAA","NZCH",airports),
-                       fat_map = NZ_buffer_Pac,
-                       route_grid = NZ_grid,
-                       ap_loc = airports) %>%
-    select(-timestamp)
-  # just test one row
-  expect_known_value(routes[5, ], "known/test_route_NZAA_NZCH")
+  # ---- this is implicit in the next test
+  # routes <- find_route(aircraft[4,],
+  #                      make_AP2("NZAA","NZCH",airports),
+  #                      fat_map = NZ_buffer_Pac,
+  #                      route_grid = NZ_grid,
+  #                      ap_loc = airports) %>%
+  #   select(-timestamp)
+  # # just test one row
+  # expect_known_value(routes[5, ], "known/test_route_NZAA_NZCH")
 
   # test with parallel subsonic aircraft
   routes <- find_route(aircraft[1,],
