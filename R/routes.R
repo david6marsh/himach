@@ -41,7 +41,8 @@ distFromLand <- function(long, lat, land){
 
 #this will be called recursively
 # for trans-Pacific, depth of > 150 is quite possible
-findGC <- function(subp, withMap, avoidMap, max_depth = 250){
+#
+findGC <- function(subp, withMap_s2, avoidMap_s2, max_depth = 250){
 
   if(getOption("quiet", default=0)>2) message("  ",first(subp$phase), " ",
                                              first(subp$phaseID), "  ", nrow(subp))
@@ -52,11 +53,11 @@ findGC <- function(subp, withMap, avoidMap, max_depth = 250){
     warning("Gone too deep at: ", first(subp$phaseID), "for", first(subp$id))
   }
 
-  #if is.na(avoidMap) then a simplified approach for the non-sea phases
-  #for sea phases use withMap (avoiding land & avoid areas, already union)
-  #for other phases use avoidMap
-  if (first(subp$phase) != "sea") useMap <- avoidMap
-  else useMap <- withMap
+  #if is.na(avoidMap_s2) then a simplified approach for the non-sea phases
+  #for sea phases use withMap_s2 (avoiding land & avoid areas, already union)
+  #for other phases use avoidMap_s2
+  if (first(subp$phase) != "sea") useMap <- avoidMap_s2
+  else useMap <- withMap_s2
 
   #land or transition, we assume a single GC
   #sea, but single step, then the same
@@ -73,15 +74,9 @@ findGC <- function(subp, withMap, avoidMap, max_depth = 250){
   else {
     #here references to sea also stand for avoid areas on non-sea phases
     #does a gt circle from start to end still miss the land?
-    #default is bycol..
-
     test_line <- s2::s2_make_line(c(first(subp$long), last(subp$long)),
-                                  c(first(subp$lat), last(subp$lat))) %>%
-      st_as_sfc() %>%
-      st_transform(st_crs(useMap))
-
-    #just extract the single binary result
-    sea_only <- ! as.logical(st_intersects(test_line, useMap, sparse=FALSE))
+                                  c(first(subp$lat), last(subp$lat)))
+    sea_only <- ! s2::s2_intersects(test_line, useMap)
     if (sea_only) {
       if (nrow(subp)==1) subp %>% select(.data$phase, .data$phaseID, .data$id)
       else {
@@ -102,9 +97,9 @@ findGC <- function(subp, withMap, avoidMap, max_depth = 250){
         TRUE ~ which.min(subp$fromLand_km[2:(nrow(subp)-2)]) + 1)
       #recurse - extending phaseID each time
       bind_rows( findGC(subp %>% slice(1:split) %>%
-                          mutate(phaseID=paste0(.data$phaseID,"0")), withMap, avoidMap),
+                          mutate(phaseID=paste0(.data$phaseID,"0")), withMap_s2, avoidMap_s2),
                  findGC(subp %>% slice(split:nrow(subp)) %>%
-                          mutate(phaseID=paste0(.data$phaseID,"1")), withMap, avoidMap))
+                          mutate(phaseID=paste0(.data$phaseID,"1")), withMap_s2, avoidMap_s2))
     }
   }
 }
@@ -663,6 +658,8 @@ pathToGC <- function(path, route_grid,
     }
 
     if(getOption("quiet", default=0)>1) message(" Calculated phase changes")
+    fat_map_s2 <- st_as_s2(fat_map) # do this conversion only once
+    if (!is.na(avoid)) avoid_s2 <- st_as_s2(avoid)
     p <- p %>%
       #now duplicate each row and simplify to a single id instead of from-to
       #deliberately create doubles then drop them
@@ -690,7 +687,7 @@ pathToGC <- function(path, route_grid,
     if (getOption("quiet", default=0)>2) message("  Ready to recurse")
 
     gcid <- purrr::reduce(lapply(unique(p$phaseID), function(i, m) findGC(p[p$phaseID==i,],
-                                                                          fat_map, avoid)),
+                                                                          fat_map_s2, avoid_s2)),
                           bind_rows) %>%
       #after a single hop line you can start too late, so correct any gaps
       mutate(from = .data$id,
@@ -729,11 +726,9 @@ pathToGC <- function(path, route_grid,
               #                                p2=c(gcid[farID,]$to_long, gcid[farID,]$to_lat),
               #                                n=20, addStartEnd=TRUE, crs=st_crs(fat_map))
               test_line <- s2::s2_make_line(c(gcid[baseID,]$from_long, gcid[farID,]$to_long),
-                                            c(gcid[baseID,]$from_lat, gcid[farID,]$to_lat)) %>%
-                st_as_sfc() %>%
-                st_transform(st_crs(fat_map))
+                                            c(gcid[baseID,]$from_lat, gcid[farID,]$to_lat))
               #just extract the single binary result: All sea?
-              all_sea <- ! as.logical(st_intersects(test_line, fat_map, sparse=FALSE))
+              all_sea <- ! s2::s2_intersects(test_line, fat_map_s2)
               if (all_sea) {
                 #can drop the intermediate points
                 if (getOption("quiet", default=0)>2) message("  Shortcut from ",baseID," to ",farID)
