@@ -61,10 +61,14 @@ findGC <- function(subp, withMap_s2, avoidMap_s2, max_depth = 250){
 
   #land or transition, we assume a single GC
   #sea, but single step, then the same
+  # if more than 10km from coast, then deep sea, and the splitting rule is not reliable
+  #   - instead the shortcuts method is more reliable
+  deep_sea <- min(subp$fromLand_km[2:(nrow(subp)-2)]) > 10
   if (too_deep |
       (first(subp$phase) != "sea" & is.na(useMap)) |
-      nrow(subp) <= 2){
-    if (nrow(subp)==1) subp %>% select(.data$phase, .data$phaseID, .data$id)
+      nrow(subp) <= 2 |
+      deep_sea){
+    if (nrow(subp)==1 | deep_sea) subp %>% select(.data$phase, .data$phaseID, .data$id)
     else {
       subp %>% summarise(phase = first(.data$phase),
                          phaseID = first(.data$phaseID),
@@ -660,6 +664,8 @@ pathToGC <- function(path, route_grid,
     if(getOption("quiet", default=0)>1) message(" Calculated phase changes")
     fat_map_s2 <- st_as_s2(fat_map) # do this conversion only once
     if (!is.na(avoid)) avoid_s2 <- st_as_s2(avoid)
+    else
+      avoid_s2 <- avoid
     p <- p %>%
       #now duplicate each row and simplify to a single id instead of from-to
       #deliberately create doubles then drop them
@@ -692,7 +698,9 @@ pathToGC <- function(path, route_grid,
       #after a single hop line you can start too late, so correct any gaps
       mutate(from = .data$id,
              to = coalesce(lead(.data$id), last(p$id))) %>%
-      rename(w_id = .data$id)
+      rename(w_id = .data$id) %>%
+      filter(! .data$from == .data$to) # not sure why it occasionally churns these out
+
 
     if (getOption("quiet", default=0)>1) message(" Done recursion")
 
@@ -706,8 +714,7 @@ pathToGC <- function(path, route_grid,
                 by = c("to"="id")) %>%
       rename(to_long = .data$long, to_lat = .data$lat)
 
-    #post-processing
-    #loop to look for shortcuts
+    # loop to look for great-circle shortcuts
     if (shortcuts) {
       if (getOption("quiet", default=0)>1) message(" Checking Shortcuts")
       baseID <- 1
@@ -720,24 +727,47 @@ pathToGC <- function(path, route_grid,
             #only check the geometry if all a sea phase
             phases <- unique(gcid[baseID:farID,"phase"])
             if (length(phases)==1) {
-              # if (length(phases)==1 && phases == "sea") {
-              #check from the start (from) of A to the far end (to) of B
-              # test_line <- st_gcIntermediate(p1=c(gcid[baseID,]$from_long, gcid[baseID,]$from_lat),
-              #                                p2=c(gcid[farID,]$to_long, gcid[farID,]$to_lat),
-              #                                n=20, addStartEnd=TRUE, crs=st_crs(fat_map))
               test_line <- s2::s2_make_line(c(gcid[baseID,]$from_long, gcid[farID,]$to_long),
                                             c(gcid[baseID,]$from_lat, gcid[farID,]$to_lat))
               #just extract the single binary result: All sea?
               all_sea <- ! s2::s2_intersects(test_line, fat_map_s2)
               if (all_sea) {
-                #can drop the intermediate points
-                if (getOption("quiet", default=0)>2) message("  Shortcut from ",baseID," to ",farID)
-                #first update the 'next step' info in the baseID
-                gcid[baseID, c("to","to_long","to_lat")] <- gcid[farID, c("to","to_long","to_lat")]
-                #then skip the intermediate points
-                gcid <- gcid %>% slice(-((baseID+1):farID))
-                #no need to search further for this baseID - so set farID to a value which stops this loop
-                farID <- baseID
+                if (getOption("quiet", default=0)>2) message("  Shortcut from ", baseID, " to ", farID)
+                #shift the intermediate points onto the new shortcut line
+                interm <- (baseID+1):farID
+                old_pts <- s2::s2_lnglat(gcid[interm, ]$from_long, gcid[interm, ]$from_lat)
+                new_pts <- s2::s2_closest_point(test_line, old_pts)
+                gcid[interm, "from_long"] <- s2::s2_x(new_pts)
+                gcid[interm, "from_lat"] <- s2::s2_y(new_pts)
+                # update the next step info
+                gcid[baseID:(farID-1), c("to_long","to_lat")] <- gcid[interm, c("from_long","from_lat")]
+                # if you've a shortcut direct to the end then stop, otherwise look for an
+                #  efficient place to restart the further-first search
+                if (farID == nrow(gcid) | gcid[baseID,"phase"] != gcid[farID + 1,"phase"]) {
+                  new_baseID <- farID
+                } else {
+                  # fast-forward through the intermediate points
+                  # with _forward_ search to the _next_ point
+                  # rather than furthest first, because the _next_ point must be occluded
+                  new_baseID <- baseID
+                  hits_land <- TRUE # since furthest first search, this is true for baseID>farID+1
+                  while (hits_land) {
+                    new_baseID <- new_baseID + 1
+                    test_line <- s2::s2_make_line(c(gcid[new_baseID,]$from_long, gcid[farID + 1,]$to_long),
+                                                  c(gcid[new_baseID,]$from_lat, gcid[farID + 1,]$to_lat))
+                    hits_land <- s2::s2_intersects(test_line, fat_map_s2)
+                  }
+                }
+                # drop the intermediate values
+                if (new_baseID - baseID > 1) {
+                  gcid <- gcid %>% slice(-((baseID + 1):(new_baseID - 1)))
+                  new_baseID <- baseID + 1
+                  # update to-end of vector
+                  gcid[baseID, c("to_long","to_lat")] <- gcid[new_baseID, c("from_long","from_lat")]
+                }
+                #on the fly switch to a new search
+                baseID <- new_baseID
+                farID <- nrow(gcid) + 1
               }
             }
             farID <- farID - 1
@@ -796,8 +826,8 @@ pathToGC <- function(path, route_grid,
 #'     \item A grid path, consisting of segments of the routing grid, plus departure
 #'     and arrival routes from the airports
 #'     \item A simplification of the grid path to great circle segments
-#'     \item An optional (but recommended because it's quick) further simplification
-#'     of this last path. \code{shortcuts} defaults to TRUE.
+#'     \item \code{shortcuts} defaults to TRUE. Without this, you see near-raw
+#'     Dijkstra results, which are _not_ shortest great circle.
 #' }
 #'
 #' Legs are automatically saved in \code{route_cache} and retrieved from here if available
@@ -1110,20 +1140,6 @@ make_route_envelope <- function(ac, ap2,
   dist <- a * b / sqrt(a^2*sin(tp_rad)^2 + b^2*cos(tp_rad)^2)
   geod <- geosphere::geodesic(geo_c, theta + psi, dist)
 
-  # use CRS centred on cetnre of route envelope
-  # cen_prj <- sp::CRS(paste0("+proj=laea +lat_0=", round(geo_c[2],1),
-  #                          " +lon_0=", round(geo_c[1],1),
-  #                          " +x_0=4321000 +y_0=3210000 +ellps=GRS80 +datum=WGS84 +units=m +no_defs"))
-  # convert to simple feature
-  # pg <- st_multipoint(geod[,1:2]) %>%
-  #   st_sfc(crs=crs_longlat) %>%
-  #   st_cast('LINESTRING') %>%
-  #   st_cast('POLYGON')
-  # %>%
-  #   st_transform(use_crs) %>%
-  #   # occasionally fails as self-intersection when later st_intersection
-  #   # so this should solve that
-  #   st_make_valid()
   pg <- s2::s2_make_polygon(geod[,1], geod[,2]) %>%
     st_as_sfc()
 
