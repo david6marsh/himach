@@ -1,6 +1,6 @@
-#' Mach2: A package for computing supersonic aircraft routes
+#' himach: A package for computing supersonic aircraft routes
 #'
-#' The Mach2 package finds the quickest route between airports, for
+#' The himach package finds the quickest route between airports, for
 #' supersonic aircraft that fly subsonic over land.
 #'
 #'
@@ -20,5 +20,5 @@
 #' @import dplyr
 #'
 #' @docType package
-#' @name Mach2
+#' @name himach
 NULL

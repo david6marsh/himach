@@ -1,5 +1,5 @@
 library(testthat)
-library(Mach2)
+library(himach)
 
 test_that("Default aircraft data loads", {
   expect_warning(make_aircraft())
@@ -64,16 +64,16 @@ test_that("can copy attributes", {
   x <- 1
   attr(x, "test") <- "here"
   y <- 1
-  y <- Mach2:::copy_attr(x, y, c("test"))
+  y <- himach:::copy_attr(x, y, c("test"))
   expect_equal(attributes(x), attributes(y))
 
-  expect_warning(Mach2:::copy_attr(x, y, c("not here")))
+  expect_warning(himach:::copy_attr(x, y, c("not here")))
 })
 
 test_that("can rename in an environment", {
   test_env <- new.env()
   assign("rubbly", 5, envir = test_env)
-  woof <- Mach2:::ren_subst("rubbly", "ubbl", "obber",
+  woof <- himach:::ren_subst("rubbly", "ubbl", "obber",
                             in_env = test_env)
   expect_equal(get("robbery", envir = test_env), 5)
 })

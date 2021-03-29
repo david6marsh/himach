@@ -1,5 +1,5 @@
 library(testthat)
-library(Mach2)
+library(himach)
 library(dplyr)
 
 test_that("Route envelope", {

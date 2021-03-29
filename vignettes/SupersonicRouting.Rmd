@@ -10,7 +10,7 @@ vignette: >
 ---
 ## Introduction
 
-This vignette provides an end-to-end example of using the `Mach2` package to find the quickest route for a supersonic aircraft that is allowed to fly supersonic over sea, but only subsonic over land.
+This vignette provides an end-to-end example of using the `himach` package to find the quickest route for a supersonic aircraft that is allowed to fly supersonic over sea, but only subsonic over land.
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
@@ -21,7 +21,7 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 #the libraries needed for the vignette are
-library(Mach2)
+library(himach)
 library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
 library(ggplot2)
 library(sf)
@@ -45,7 +45,7 @@ Other fields are optional, but it is recommended to include `notes` to give more
 
 To convert between kph and Mach at the sort of cruise altitudes that supersonic aircraft use, we use a fixed value `mach_kph`.
 
-The cruise speeds over sea and over land are clearly intended to be supersonic and subsonic, respectively. But this is not required. You might want both subsonic, to include a comparator, subsonic aircraft. Or you might want to have both supersonic, to explore routes when so-called "mach cut-off" conditions prevail. `Mach2` doesn't enforce a range on either value. 
+The cruise speeds over sea and over land are clearly intended to be supersonic and subsonic, respectively. But this is not required. You might want both subsonic, to include a comparator, subsonic aircraft. Or you might want to have both supersonic, to explore routes when so-called "mach cut-off" conditions prevail. `himach` doesn't enforce a range on either value. 
 
 Run this minimum dataset through `make_aircraft` to get the additional fields that are needed. Alternatively, if you run `make_aircraft` with no parameters, it creates a set of test aircraft. This test set is based on public data for 3 aircraft (though the `accel_Mpm`, `arrdep_kph` are educated guesses), and fantasy for the 4th one, which has been designed for testing purposes and might not be pleasant to fly in.
 
@@ -90,7 +90,7 @@ airports <- make_airports(crs = crs_Pacific) %>%
 
 ```
 
-In fact you need two airport sets, because you need to say where flights can stop to refuel. If an aircraft cannot make a journey in a single leg, due to lack of range, `Mach2` automatically searches for the best refuelling option. This can easily multiply the number of searches by 5 or 10, so choose a limited number of likely 'good' options: islands, coastal points, or on narrow segments of land where the aircraft would have to slow down anyway. In our theoretical example, we have a test aircraft with an artificially-reduced range, and we make just one refuel point available: coastal and central at the same time, Wellington.
+In fact you need two airport sets, because you need to say where flights can stop to refuel. If an aircraft cannot make a journey in a single leg, due to lack of range, `himach` automatically searches for the best refuelling option. This can easily multiply the number of searches by 5 or 10, so choose a limited number of likely 'good' options: islands, coastal points, or on narrow segments of land where the aircraft would have to slow down anyway. In our theoretical example, we have a test aircraft with an artificially-reduced range, and we make just one refuel point available: coastal and central at the same time, Wellington.
 
 The refuelling dataset needs to be the same format as the full airports set. So easiest is to filter the airports set, or do an inner join if your refuelling list is a dataset read in from a file.
 
@@ -100,7 +100,7 @@ refuel_ap <- airports %>%
 
 ```
 
-For the vignette, we'll assume that Wellington has a long enough runway. In fact `Mach2` does not currently check whether a runway is long enough for the aircraft selected.
+For the vignette, we'll assume that Wellington has a long enough runway. In fact `himach` does not currently check whether a runway is long enough for the aircraft selected.
 
 ## Maps {#maps}
 
@@ -114,7 +114,7 @@ For the purpose of testing and this vignette, we use a map which is provided by 
 
 In fact, we need two files: one is the basic outline of the land, largely used for visualisation; the second is derived from this, and adds a 30km buffer around the coastline to indicate the area where supersonic flight is not allowed. A different buffer is of course possible, 30km is about right for the expected radius of the footprint of the supersonic boom, but your expertise will determine what is needed.
 
-Since the shape file is large, we provide a simplified outline `NZ_coast` and also the buffer `NZ_buffer30` within `Mach2`. These are in the original projection used by Stats NZ. For global work, it's strongly recommended to use one of the following:
+Since the shape file is large, we provide a simplified outline `NZ_coast` and also the buffer `NZ_buffer30` within `himach`. These are in the original projection used by Stats NZ. For global work, it's strongly recommended to use one of the following:
 
 * `crs_Atlantic`: "Robinson", a mid 20C classic view, with Atlantic centre
 * `crs_Pacific`: A Pacific-centred variant on this with `crs=CRS("+proj=robin +lon_0=180 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")`.
@@ -166,14 +166,14 @@ map_NZ_2k <- map_NZ %>%
    s2::s2_simplify(tolerance = 2000) %>%
    st_as_sfc() 
 
-# example map, Mach2::map_routes but without any routes
+# example map, himach::map_routes but without any routes
 map_routes(map_NZ_2k, fat_map = NZ_plus30, crs = crs_Pacific)
 ```
 
 
 ## Create a grid
 
-The route is constructed on a grid that covers the entire map. You could think of this grid as being a regular network of waypoints and route segments at some high, cruise flight level, though `Mach2` doesn't assign a flight level to it. The links in this grid have nominal length: 30-40km appears sufficient, though we will use a coarser grid for this test. By 'nominal' we mean that the grid is constructed not on a strict distance basis, but between points along particular lines of latitude, so the links vary in length.
+The route is constructed on a grid that covers the entire map. You could think of this grid as being a regular network of waypoints and route segments at some high, cruise flight level, though `himach` doesn't assign a flight level to it. The links in this grid have nominal length: 30-40km appears sufficient, though we will use a coarser grid for this test. By 'nominal' we mean that the grid is constructed not on a strict distance basis, but between points along particular lines of latitude, so the links vary in length.
 
 To this are added connections to airports. These connections have a nominal or target length, say 150km, to represent the distance covered when accelerating to cruise speed, or decelerating back when landing. In practice, the length varies, because it depends on the (horizontal) distance from airport to grid.
 

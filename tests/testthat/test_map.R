@@ -1,4 +1,4 @@
-library(Mach2)
+library(himach)
 library(dplyr)
 library(ggplot2)
 
@@ -67,7 +67,7 @@ test_that("can make range envelope", {
   airports <- make_airports(crs = crs_Atlantic, warn = FALSE)
   aircraft <- make_aircraft(warn = FALSE)
   # test only a sample of points
-  expect_known_value(Mach2:::make_range_envelope(aircraft[1, ],
+  expect_known_value(himach:::make_range_envelope(aircraft[1, ],
                                                 "LFPG",
                                                 airports,
                                                 envelope_points = 20)[c(1, 5, 10, 15), ],

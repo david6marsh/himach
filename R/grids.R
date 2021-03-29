@@ -32,7 +32,7 @@ mod_long <- function(x){
 #' for the diagonal links.
 #'
 #' For more details see the help vignette:
-#' \code{vignette("Supersonic Routing", package = "Mach2")}
+#' \code{vignette("Supersonic Routing", package = "himach")}
 #'
 #' @param fat_map MULTIPOLYGON map defining land regions
 #' @param name String assigned to the name slot of the result

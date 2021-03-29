@@ -53,7 +53,7 @@ copy_attr <- function(from, to, atts){
 #' (Unidirectional not currently supported)
 #'
 #' For more details see the help vignette:
-#' \code{vignette("Supersonic Routing", package = "Mach2")}
+#' \code{vignette("Supersonic Routing", package = "himach")}
 #'
 #' @param adep,ades Identical-length lists of airport codes
 #' @param ap List of locations of airports, defaults to the output
@@ -126,7 +126,7 @@ prj <- function(x, crs) {
 #'
 #'
 #' For more details see the help vignette:
-#' \code{vignette("SupersonicRouting", package = "Mach2")}
+#' \code{vignette("SupersonicRouting", package = "himach")}
 #'
 #' @param ac Dataframe containing the minimum fields, or NA (default)
 #' @param sound_kph Speed of sound used to convert from Mach to kph, default
@@ -160,7 +160,7 @@ prj <- function(x, crs) {
 make_aircraft <- function(ac = NA, sound_kph = mach_kph, warn = TRUE){
   if (is.na(ac[1])) {
     if (warn) warning("Using default aircraft file.")
-    file <- system.file("extdata", "test_aircraft.csv", package = "Mach2", mustWork = TRUE)
+    file <- system.file("extdata", "test_aircraft.csv", package = "himach", mustWork = TRUE)
     ac <- utils::read.csv(file, stringsAsFactors = FALSE)
     attr(ac, "aircraftSet") <- "test_aircraft" #keep track
   }

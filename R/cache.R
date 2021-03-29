@@ -6,7 +6,7 @@
 #' Empties the caches.
 #'
 #' @seealso For more details see the cache section in the vignette:
-#'   \code{vignette("AdvancedRouting", package = "Mach2")}. or
+#'   \code{vignette("AdvancedRouting", package = "himach")}. or
 #'   \href{../doc/AdvancedRouting.html#cache}{Vignette on caching}
 #'
 #' @param cache Which caches to clear. Default is both \code{c("route",
@@ -46,7 +46,7 @@ m2_clean_cache <- function(cache = c("route", "star")){
 #' @param path By default \code{"data/"}, where the file will be saved.
 #'
 #' @seealso #' For more details see the cache section in the vignette:
-#'   \code{vignette("AdvancedRouting", package = "Mach2")}
+#'   \code{vignette("AdvancedRouting", package = "himach")}
 #'
 #' @return Invisible true
 #' @export

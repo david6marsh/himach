@@ -1,7 +1,7 @@
 Type: Package
-Package: Mach2
+Package: himach
 Title: Find best route for supersonic aircraft 
-Version: 0.0.2-9002
+Version: 0.0.2-9003
 Authors@R: 
     c(person(given = "David",
            family = "Marsh",
