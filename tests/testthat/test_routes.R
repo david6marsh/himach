@@ -117,13 +117,11 @@ test_that("Find Routes",{
                               ncol = 2, byrow = TRUE), stringsAsFactors = FALSE)
   ac <- aircraft[c(1,4), ]$id
 
-  # turn off the temporary cache
   invisible(capture.output(
     routes <- find_routes(ac, ap2, aircraft, airports,
                         fat_map = NZ_buffer_Pac,
                         route_grid = NZ_grid,
-                        refuel = refuel_ap,
-                        temp_cache_path = NA) %>%
+                        refuel = refuel_ap) %>%
     select(-timestamp)
   ))
   # just test a sample
@@ -138,8 +136,7 @@ test_that("Find Routes",{
                           fat_map = NZ_buffer_Pac,
                           route_grid = NZ_grid,
                           refuel = refuel_ap,
-                          avoid = Buller_nofly,
-                          temp_cache_path = NA) %>%
+                          avoid = Buller_nofly) %>%
       select(-timestamp)
   ))
   # check one row from each route
@@ -149,8 +146,7 @@ test_that("Find Routes",{
                               ncol = 2, byrow = TRUE), stringsAsFactors = FALSE)
   expect_error(find_routes(ac, ap2, aircraft, airports,
                              fat_map = NZ_buffer_Pac,
-                             route_grid = NZ_grid,
-                           temp_cache_path = NA),
+                             route_grid = NZ_grid),
                "unknown")
 
   options("quiet" = old_quiet)
