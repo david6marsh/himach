@@ -2,7 +2,7 @@ library(tidyverse)
 library(sf)
 
 ## code to prepare `NZ_coast`, `NZ_buffer30`, `NZ_Buller_buffer40` dataset goes here
-NZ_shp <- read_sf("~/R/2Speed/data/statsnzterritorial-authority-2020-clipped-generalised-SHP/territorial-authority-2020-clipped-generalised.shp")
+NZ_shp <- read_sf("ignore/statsnzterritorial-authority-2020-clipped-generalised-SHP/territorial-authority-2020-clipped-generalised.shp")
 NZ_coast <- NZ_shp  %>%
   st_union() %>%
   st_as_s2() %>%

@@ -12,7 +12,7 @@ vignette: >
 
 [Supersonic Routing](SupersonicRouting.html) provides a quick end-to-end introduction to using the `himach` package and is the place to start. This vignette provides advice on more advanced use, explaining details that the introduction skates over.
 
-Much of this vignette is optional or for occasional use, but the advice on saving and reading the caches is likely to be _essential_ for a speedy workflow. 
+Much of this vignette is optional or for occasional use, but the advice on saving and reading the cache is likely to be _essential_ for a speedy workflow. 
 
 
 ```{r, include = FALSE}
@@ -33,15 +33,15 @@ library(sf)
 ```
 
 
-## Caches {#caches}
+## Cache {#cache}
 
-`himach` uses caching to speed things up. Legs are cached in `route_cache` and arrival-departure links to airports are cached in `star_cache` (STAR is short for standard arrival route, its counterpart being SID the standard instrument departure). These sit in the `.m2_cache` namespace, so you use `$`, eg `.m2_cache$route_cache`, to refer to them.
+`himach` uses caching to speed things up. Legs are cached in `route_cache` and arrival-departure links to airports are cached in `star_cache` (STAR is short for standard arrival route, its counterpart being SID the standard instrument departure). These sit in the `.hm_cache` namespace, so you use `$`, eg `.hm_cache$route_cache`, to refer to them.
 
 Normally the caches just do the job. But you will want to save and load them as part of your standard workflow. Quite where you save them is up to you, but a set of routes is sensitive to (a) the route grid on which it is calculated (b) the list of aircraft used, and their performance. 
 
 So it is recommended to include the `name` of the grid, and the `aircraftSet` attribute of your aircraft set in the file name. Everything else is up to you.
 
-If you change either of these, then you can use `m2_clean_cache()` to empty the caches. You will also note that if you run `find_routes` and the map has changed, or `findToCToD` and the map or aircraft have changed, then the caches will be cleared automatically.
+If you change either of these, then you can use `hm_clean_cache()` to empty the cache. You will also note that if you run `find_routes` and the map has changed, or `findToCToD` and the map or aircraft have changed, then the cache will be cleared automatically.
 
 We don't execute this code chunk here, since the files aren't available.
 
@@ -53,7 +53,7 @@ We don't execute this code chunk here, since the files aren't available.
 # and then...
 
 #not run
-m2_load_caches(paste("data/route_start_cache_", p_grid_a@name, 
+hm_load_cache(paste("data/route_start_cache_", p_grid_a@name, 
                            attr(ac,"aircraftSet"), " 2050v3.RDS"))
 
 # then calculate however many new routes
@@ -80,7 +80,7 @@ Here we illustrate a few use cases for more general management of the cache. Fir
 ```{r inspecting the cache}
 #first create a cache ----
 # need to load some of the built-in data
-m2_clean_cache() # for this example, start with empty caches
+hm_clean_cache() # for this example, start with empty cache
 aircraft <- make_aircraft()
 airports <- make_airports(crs = crs_Pacific) 
 refuel_ap <- airports %>%
@@ -99,31 +99,31 @@ NZ_routes <- find_routes(ac, ap2, aircraft, airports,
 
 # now have the 2 caches ----
 # for the vignette we put in a temp directory, you don't want to do this
-m2_save_caches("v0", NZ_grid, aircraft, tempdir()) 
+hm_save_cache("v0", NZ_grid, aircraft, tempdir()) 
 
 # 
 # # Use case 1: How big is my cache? 
-# length(.m2_cache$route_cache) # this is number of legs, not routes
-# length(.m2_cache$star_cache)
+# length(.hm_cache$route_cache) # this is number of legs, not routes
+# length(.hm_cache$star_cache)
 # # quiz: why are they not the same length?
 # 
 # # Use case 2: find and remove a single leg
 # # find matching elements in the rte cache - here for NZAA
-# ls(.m2_cache$route_cache, pattern = "NZAA")
+# ls(.hm_cache$route_cache, pattern = "NZAA")
 # # copy paste from the results into here to remove a single item
-# rm("M22_test-NZAA-NZCH--TRUE-TRUE-NA-TRUE-100-12", envir = .m2_cache$route_cache)
+# rm("M22_test-NZAA-NZCH--TRUE-TRUE-NA-TRUE-100-12", envir = .hm_cache$route_cache)
 # 
 # # Use case 3: remove all legs for a given airport
-# length(.m2_cache$route_cache)
-# rm(list=ls(.m2_cache$route_cache, pattern="NZDN"), envir = .m2_cache$route_cache)
-# length(.m2_cache$route_cache)
+# length(.hm_cache$route_cache)
+# rm(list=ls(.hm_cache$route_cache, pattern="NZDN"), envir = .hm_cache$route_cache)
+# length(.hm_cache$route_cache)
 # 
 # # Use case 4: check for out-of-date elements in the cache
 # # in this case check if consistent with 'new' version where there are 24 variables
 # # get number of variables in each element in rte cache
-# route_cols <- lapply(1:length(.m2_cache$route_cache), 
-#                      function(x) length(get(ls(.m2_cache$route_cache)[1],
-#                                             .m2_cache$route_cache)))
+# route_cols <- lapply(1:length(.hm_cache$route_cache), 
+#                      function(x) length(get(ls(.hm_cache$route_cache)[1],
+#                                             .hm_cache$route_cache)))
 # wrong <- which(route_cols != 24)
 
 ```
@@ -161,7 +161,7 @@ routes <- find_routes(ac, ap2, aircraft, airports,
                       avoid = Buller_nofly)
 
 #this shows versions of the legs with and without no-fly
-# ls(route_cache, pattern = "NZCH", envir = .m2_cache)
+# ls(route_cache, pattern = "NZCH", envir = .hm_cache)
 
 # create route summary
 rtes <- summarise_routes(routes, airports)

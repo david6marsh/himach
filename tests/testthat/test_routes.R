@@ -20,13 +20,13 @@ test_that("Route summary", {
   rs1 <- summarise_routes(NZ_routes, ap)
   expect_equal(rs1[1, ]$refuel_ap, "NZWN")
   expect_equal(rs1[2, ]$M084_h, 1.68)
-  expect_equal(rs1[2, ]$advantage_h, -0.87)
-  expect_equal(rs1[3, ]$sea_dist_frac, 0.702)
+  expect_equal(rs1[2, ]$advantage_h, -0.88)
+  expect_equal(rs1[3, ]$sea_dist_frac, 0.70)
   expect_equal(rs1[4, ]$n_phases, 5)
   expect_equal(rs1[2, ]$n_accel, 2)
-  expect_equal(rs1[2, ]$ave_fly_speed_M, 0.76)
-  expect_equal(rs1[1, ]$fly_time_h, 1.69)
-  expect_equal(rs1[4, ]$circuity, 0.17)
+  expect_equal(rs1[2, ]$ave_fly_speed_M, 0.80)
+  expect_equal(rs1[1, ]$fly_time_h, 1.67)
+  expect_equal(rs1[4, ]$circuity, 0.21)
   expect_true(rs1[5, ]$best)
   expect_true(is.na(rs1[6, ]$time_h))
   # parameter behaviour?
@@ -37,23 +37,14 @@ test_that("Route summary", {
 test_that("find_leg works",{
   old_quiet <- getOption("quiet", default=0)
   options("quiet" = 0) #for no reporting
-  m2_clean_cache() #start without cache
+  hm_clean_cache() #start without cache
   # need to load some of the built-in data
   aircraft <- make_aircraft(warn = FALSE)
   # airports <- make_airports()
   NZ_buffer_Pac <- sf::st_transform(NZ_buffer30, crs=crs_Pacific)
 
   airports <- make_airports(crs = crs_Pacific)
-  # --- This test works, and is implicit in find_routes
-  # can't test against a route with a timestamp!
-  # routes <- find_leg(aircraft[4,],
-  #                    make_AP2("NZAA","NZCH",airports),
-  #                    fat_map = NZ_buffer_Pac,
-  #                    route_grid = NZ_grid,
-  #                    ap_loc = airports) %>%
-  #   select(-timestamp)
-  # # test just one line
-  # expect_known_value(routes[4, ], "known/test_leg_NZAA_NZCH")
+
   options("quiet" = old_quiet)
   # for visual check:
   # ggplot(NZ_buffer_Pac) + geom_sf() + geom_sf(data = routes$gc)
@@ -65,28 +56,17 @@ test_that("find_leg works",{
                         route_grid = NZ_grid,
                         ap_loc = airports),
                  "Aircraft invalid")
-
 })
 
 
 test_that("find_route works",{
   old_quiet <- getOption("quiet", default=0)
   options("quiet" = 0) #for no reporting
-  m2_clean_cache() #start without cache
+  hm_clean_cache() #start without cache
   # need to load some of the built-in data
   aircraft <- make_aircraft(warn = FALSE)
   NZ_buffer_Pac <- sf::st_transform(NZ_buffer30, crs=crs_Pacific)
-
   airports <- make_airports(crs = crs_Pacific)
-  # ---- this is implicit in the next test
-  # routes <- find_route(aircraft[4,],
-  #                      make_AP2("NZAA","NZCH",airports),
-  #                      fat_map = NZ_buffer_Pac,
-  #                      route_grid = NZ_grid,
-  #                      ap_loc = airports) %>%
-  #   select(-timestamp)
-  # # just test one row
-  # expect_known_value(routes[5, ], "known/test_route_NZAA_NZCH")
 
   # test with parallel subsonic aircraft
   routes <- find_route(aircraft[1,],
@@ -105,7 +85,7 @@ test_that("find_route works",{
 test_that("Find Routes",{
   old_quiet <- getOption("quiet", default=0)
   options("quiet" = 0) #for no reporting
-  m2_clean_cache() #start without cache
+  hm_clean_cache() #start without cache
   # need to load some of the built-in data
   aircraft <- make_aircraft(warn = FALSE)
   airports <- make_airports(crs = crs_Pacific)
@@ -127,12 +107,12 @@ test_that("Find Routes",{
   # just test a sample
   expect_known_value(routes[c(3, 9, 19), ], "known/test_multiroute")
 
-  # and again with a no-fly zone
+  # and again with a no-fly zone - and just one AP2
   Buller_nofly <- sf::st_transform(NZ_Buller_buffer40, crs=crs_Pacific)
   attr(Buller_nofly, "avoid") <- "Buller+40km" #required for correct caching
 
   invisible(capture.output(
-    routes <- find_routes(ac, ap2, aircraft, airports,
+    routes <- find_routes(ac, ap2[1, ], aircraft, airports,
                           fat_map = NZ_buffer_Pac,
                           route_grid = NZ_grid,
                           refuel = refuel_ap,

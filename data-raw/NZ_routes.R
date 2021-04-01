@@ -1,5 +1,8 @@
 ## code to prepare `NZ_routes` dataset goes here
+# need to run NZ_maps then NZ_grid
 # to help with testing and vignettes
+library(himach)
+library(tidyverse)
 
 # need to load some of the built-in data
 ac <- make_aircraft()

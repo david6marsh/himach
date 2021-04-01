@@ -10,7 +10,7 @@ vignette: >
 ---
 ## Introduction
 
-This vignette provides an end-to-end example of using the `himach` package to find the quickest route for a supersonic aircraft that is allowed to fly supersonic over sea, but only subsonic over land.
+This vignette provides an end-to-end example of using the `himach` package to find the quickest route for a supersonic ("high Mach") aircraft that is allowed to fly supersonic over sea, but only subsonic over land.
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
@@ -215,8 +215,8 @@ options("quiet" = 4) #for some output
 ap2 <- make_AP2("NZAA","NZCH",airports)
 
 # normally you do NOT want to do this, but for the vignette we
-# work empty caches
-m2_clean_cache()
+# work empty cache
+hm_clean_cache()
 
 routes <- find_route(aircraft[4,], 
                      ap2,
