@@ -10,7 +10,8 @@ test_that("Aircraft data loads", {
   ac <- data.frame(id = "test", type = "test aircraft",
                    over_sea_M = 2.0, over_land_M = 0.9, accel_Mpm = 0.2,
                    arrdep_kph = 300, range_km = 6000, stringsAsFactors=FALSE)
-  expect_known_value(make_aircraft(ac), "known/ac_load")
+  # it was with 2+ rows that this failed, so test that
+  expect_known_value(make_aircraft(rbind(ac, ac)), "known/ac_load")
   #missing vbl
   ac <- data.frame(id = "test", type = "test aircraft",
                    over_sea_M = 2.0, over_land_M = 0.9,
@@ -31,8 +32,9 @@ test_that("Default airport data loads", {
 
 test_that("Airport data loads", {
   # normal functioning
-  airports <- data.frame(APICAO = "TEST", lat = 10, long = 10, stringsAsFactors = FALSE)
-  expect_known_value(make_airports(airports), "known/TEST_airport")
+  airports <- data.frame(APICAO = c("TEST", "test2"), lat = c(10, 5),
+                         long = c(10, -5), stringsAsFactors = FALSE)
+  expect_known_value(make_airports(airports[1, ]), "known/TEST_airport")
 
   # with missing variable
   airports_miss <- data.frame(APICAO = "TEST", lat = 10, stringsAsFactors = FALSE)

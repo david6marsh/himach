@@ -158,7 +158,7 @@ prj <- function(x, crs) {
 #'
 #' @export
 make_aircraft <- function(ac = NA, sound_kph = mach_kph, warn = TRUE){
-  if (is.na(ac[1])) {
+  if (!is.data.frame(ac)) {
     if (warn) warning("Using default aircraft file.")
     file <- system.file("extdata", "test_aircraft.csv", package = "himach", mustWork = TRUE)
     ac <- utils::read.csv(file, stringsAsFactors = FALSE)
@@ -238,7 +238,7 @@ make_aircraft <- function(ac = NA, sound_kph = mach_kph, warn = TRUE){
 #'
 #' @export
 make_airports <- function(ap = NA, crs = 4326, warn = TRUE){
-  if (is.na(ap[1])) {
+  if (!is.data.frame(ap)) {
     if (warn) message("Using default airport data: airportr::airport.")
     ap <- airportr::airports %>%
       dplyr::filter(.data$Type == "airport") %>%

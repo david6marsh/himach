@@ -1,7 +1,7 @@
 Type: Package
 Package: himach
 Title: Find best route for supersonic aircraft 
-Version: 0.0.2-9004
+Version: 0.0.2-9005
 Authors@R: 
     c(person(given = "David",
            family = "Marsh",
@@ -20,7 +20,7 @@ Depends:
     R (>= 3.5.0)
 Imports:
     cppRouting,
-    dplyr,
+    dplyr (>= 1.0.0),
     ggplot2,
     sf (>= 0.9-7),
     tidyr
