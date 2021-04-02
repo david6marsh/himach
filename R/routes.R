@@ -18,14 +18,15 @@ time_h <- function(ph, d_km, ac){
 
 #assign aircraft-specific costs to a lattice
 costLattice <- function(route_grid,ac){
-  #given a GridLat and an Aircraft return a dataframe lattice with costs
+  #given a GridLat and an Aircraft return a datatable lattice with costs
   stopifnot(class(route_grid)=="GridLat")
 
   cl <- route_grid@lattice %>%
     mutate(cost = case_when(
       phase == "land" ~ dist_km/ac$over_land_kph,
       phase == "sea" ~ dist_km/ac$over_sea_kph,
-      TRUE ~ dist_km/ac$trans_kph + ac$trans_h))
+      TRUE ~ dist_km/ac$trans_kph + ac$trans_h)) %>%
+    data.table::as.data.table()
 }
 
 distFromLand <- function(long, lat, land){
@@ -538,16 +539,18 @@ findToCToD_really <- function(ap, route_grid, fat_map, ac,
     mutate(cost = (.data$dist_m/1000)/.data$arrdep_kph) %>%
     #add the long lats
     left_join(ap %>%
-                as.data.frame() %>%
+                data.frame() %>%
                 select(.data$APICAO, .data$lat, .data$long),
               by=c("from"="APICAO")) %>%
+    data.table::as.data.table() %>%
     left_join(route_grid@points %>%
                 select(.data$id, .data$long, .data$lat, .data$land) %>%
                 mutate(id = as.character(.data$id)),
               by = c("to"="id"), suffix=c("_ap", "_grid")) %>%
     #if no transition leg, then take the acceleration subsonic cruise-supersonic penalty here
-    mutate(cost = .data$cost + if_else(.data$land, 0, ac$trans_h)) %>%
-    select(-.data$land)
+    mutate(cost = .data$cost + ifelse(.data$land, 0, ac$trans_h)) %>%
+    select(-.data$land) %>%
+    as.data.frame()
 
 }
 
@@ -578,7 +581,7 @@ pathToGC <- function(path, route_grid,
                     steps = 1, stringsAsFactors = FALSE) %>%
     #add distance and time for the departure
     left_join(arrDep %>% select(-id, -.data$arrdep_kph),
-              by=c("from","to")) %>%
+              by=c("from","to") ) %>%
     #flip the types back to match gcid
     mutate(gcdist_km = .data$dist_m/1000,
            from = 0, to = as.numeric(.data$to)) %>%
@@ -616,10 +619,11 @@ pathToGC <- function(path, route_grid,
     #the lattice might be stored in the opposite sense, so check both
     p <- data.frame(from = as.numeric(path[1:n-1]),
                     to = as.numeric(path[2:n])) %>%
-      left_join(route_grid@lattice %>% select(.data$from, .data$to, .data$phase),
+      left_join(route_grid@lattice[ , c("from", "to", "phase")] ,
                 by=c("from","to")) %>%
-      left_join(route_grid@lattice %>% select(.data$from, .data$to, .data$phase),
+      left_join(route_grid@lattice[ , c("from", "to", "phase")],
                 by=c("from"="to","to"="from")) %>%
+      as.data.frame() %>%
       mutate(phase=coalesce(.data$phase.x, .data$phase.y)) %>%
       select(-.data$phase.x, -.data$phase.y)
 
@@ -662,8 +666,9 @@ pathToGC <- function(path, route_grid,
       select(-.data$from, -.data$to) %>%
       distinct() %>%
       #need the long lat too
-      left_join(route_grid@points %>% select(.data$id, .data$long, .data$lat),
+      left_join(route_grid@points[ , c("id", "long", "lat")],
                 by = c("id")) %>%
+      as.data.frame() %>%
       #add in the distances from land - by phase since if <>"sea" then 0
       group_by(.data$phase) %>%
       mutate(fromLand_km = if_else(.data$phase == "sea",
@@ -690,13 +695,15 @@ pathToGC <- function(path, route_grid,
 
     #code is split just because there's less to highlight in the debugger
     gcid <- gcid %>%
+      data.table::as.data.table() %>%
       #add back the geo data
-      left_join(route_grid@points %>% select(.data$id, .data$long, .data$lat),
+      left_join(route_grid@points[ , c("id", "long", "lat")],
                 by = c("from"="id")) %>%
       rename(from_long = .data$long, from_lat = .data$lat) %>%
-      left_join(route_grid@points %>% select(.data$id, .data$long, .data$lat),
+      left_join(route_grid@points[ , c("id", "long", "lat")],
                 by = c("to"="id")) %>%
-      rename(to_long = .data$long, to_lat = .data$lat)
+      rename(to_long = .data$long, to_lat = .data$lat) %>%
+      as.data.frame()
 
     # loop to look for great-circle shortcuts
     if (shortcuts) {
@@ -928,6 +935,13 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
 
   tstart <- Sys.time()
   stopifnot(class(route_grid)=="GridLat")
+  # temporary - eventually gridLat will always be data.table
+  if (! "data.table" %in% class(route_grid@points)) {
+    route_grid@points <- data.table::as.data.table(route_grid@points)
+  }
+  if (! "data.table" %in% class(route_grid@lattice)) {
+    route_grid@lattice <- data.table::as.data.table(route_grid@lattice)
+  }
 
   if (getOption("quiet", default=0)>0) message("Leg: ", ap2$AP2, " Aircraft: ", ac$type)
 
@@ -972,12 +986,23 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
       envelope <-  make_route_envelope(ac, ap2, ...) %>%
         st_transform(use_crs)
       # crop first points then lattice to envelope
-      route_grid@points <- route_grid@points %>%
-        filter(st_intersects(.data$xy, envelope, sparse = FALSE))
-      # 'crop' using ids - to reduce geo-intersection challenge
+      # crop first by lat long then by intersection
+      env_rec <- s2::s2_bounds_rect(envelope)
+      if (env_rec$lng_lo < env_rec$lng_hi) {
+        rgp <- route_grid@points %>%
+          filter(.data$long >= env_rec$lng_lo & .data$long <= env_rec$lng_hi)}
+      else {
+        rgp <- route_grid@points %>%
+          filter(.data$long >= env_rec$lng_lo | .data$long <= env_rec$lng_hi)}
+      route_grid@points <- rgp %>%
+        filter(.data$lat >= env_rec$lat_lo & .data$lat <= env_rec$lat_hi) %>%
+        filter(st_intersects(.data$xy, envelope, sparse = FALSE) %>% as.vector()) %>%
+        data.table::as.data.table()
+      # 'crop' using ids - much faster than geo-intersection
       route_grid@lattice <- route_grid@lattice %>%
-        inner_join(route_grid@points, by = c("from"="id")) %>%
-        inner_join(route_grid@points, by = c("to"="id"))
+        inner_join(route_grid@points %>% select(.data$id), by=c("from"="id")) %>%
+        inner_join(route_grid@points %>% select(.data$id), by=c("to"="id")) %>%
+        data.table::as.data.table()
       # crop map to envelope, too
       fat_map <- st_intersection(fat_map, envelope)
       if (getOption("quiet", default=0)>1) message(" Cut envelope from lattice: ",round(Sys.time() - tstart,1))
@@ -999,7 +1024,9 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
     # remove the avoid area from the search grid
     z <- st_intersects(avoid, route_grid@lattice$geometry, sparse=FALSE)
     #remove this from lattice
-    route_grid@lattice <- route_grid@lattice %>% filter(!z)
+    route_grid@lattice <- route_grid@lattice %>%
+      filter(!z) %>%
+      data.table::as.data.table()
 
     #need an extra map
     #for over-sea flight ensure the avoid areas are included, so they are not allowed
@@ -1016,12 +1043,15 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
     select(.data$from, .data$to, .data$cost, .data$dist_km) %>%
     #add on the arrival dep - indices are now strings
     mutate_at(vars(.data$from, .data$to), ~as.character(.)) %>%
+    data.table::as.data.table() %>% # seem to be limits to complexity of pipe for dtplyr
     bind_rows(arrDep %>%
                 mutate(dist_km = .data$dist_m/1000) %>%
-                select(.data$from, .data$to, .data$cost, .data$dist_km))
+                select(.data$from, .data$to, .data$cost, .data$dist_km)) %>%
+    data.table::as.data.table()
 
   if (!best_by_time) {costed_lattice <- costed_lattice %>%
-    mutate(cost = .data$dist_km) #if !bytime, just use distance..
+    mutate(cost = .data$dist_km)  %>%
+    data.table::as.data.table()#if !bytime, just use distance..
   }
   if (getOption("quiet", default=0)>2) message("  Got costed lattice: ",round(Sys.time() - tstart,1))
 

@@ -27,6 +27,7 @@ Imports:
 Suggests: 
     airportr,
     cowplot,
+    data.table,
     geosphere,
     knitr,
     lwgeom,
