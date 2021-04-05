@@ -64,10 +64,11 @@ hm_save_cache <- function(id, grid, aircraft, path = "data/"){
                      "_",
                      attr(aircraft, "aircraftSet"),
                      ".rda")
+  full_filename <- paste0(path, stringr::str_replace_all(filename, "\\s", "_"))
   save("route_cache", "star_cache",
        envir = .hm_cache,
-       file = paste0(path, stringr::str_replace_all(filename, "\\s", "_")))
-  invisible(TRUE)
+       file = full_filename)
+  invisible(full_filename)
 }
 
 #' Load route and SID/STAR cache

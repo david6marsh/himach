@@ -1,5 +1,3 @@
-library(testthat)
-library(himach)
 
 test_that("Default aircraft data loads", {
   expect_warning(make_aircraft())

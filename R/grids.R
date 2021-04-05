@@ -219,6 +219,10 @@ make_route_grid <- function(fat_map, name,
       select(-.data$Xland)
   }
 
+  if (getOption("quiet", default=0)>0) message("Converting points and lattice to data table.")
+  g@points <- data.table::as.data.table(g@points)
+  g@lattice <- data.table::as.data.table(g@lattice)
+
   return(g)
 
 }

@@ -1,5 +1,3 @@
-library(testthat)
-library(himach)
 library(dplyr)
 
 test_that("Route envelope", {
@@ -34,7 +32,7 @@ test_that("Route summary", {
   expect_equal(rs2[1, ]$advantage_h - rs1[1, ]$advantage_h, 0.5)
 })
 
-test_that("find_leg works",{
+test_that("find_leg catches input error",{
   old_quiet <- getOption("quiet", default=0)
   options("quiet" = 0) #for no reporting
   hm_clean_cache() #start without cache
@@ -42,9 +40,7 @@ test_that("find_leg works",{
   aircraft <- make_aircraft(warn = FALSE)
   # airports <- make_airports()
   NZ_buffer_Pac <- sf::st_transform(NZ_buffer30, crs=crs_Pacific)
-
   airports <- make_airports(crs = crs_Pacific)
-
   options("quiet" = old_quiet)
   # for visual check:
   # ggplot(NZ_buffer_Pac) + geom_sf() + geom_sf(data = routes$gc)
@@ -59,9 +55,9 @@ test_that("find_leg works",{
 })
 
 
-test_that("find_route works",{
-  old_quiet <- getOption("quiet", default=0)
-  options("quiet" = 0) #for no reporting
+test_that("find_route works with subsonic option",{
+  old_quiet <- getOption("quiet", default = 0)
+  options("quiet" = 3) #for full reporting
   hm_clean_cache() #start without cache
   # need to load some of the built-in data
   aircraft <- make_aircraft(warn = FALSE)
@@ -69,20 +65,32 @@ test_that("find_route works",{
   airports <- make_airports(crs = crs_Pacific)
 
   # test with parallel subsonic aircraft
-  routes <- find_route(aircraft[1,],
-                       make_AP2("NZGS","NZDN",airports),
+  # just ditch the output
+  invisible(capture.output(
+    routes <- find_route(aircraft[1, ],
+                       make_AP2("NZGS", "NZDN", airports),
                        fat_map = NZ_buffer_Pac,
                        route_grid = NZ_grid,
                        ap_loc = airports,
-                       cf_subsonic = aircraft[3,]) %>%
+                       cf_subsonic = aircraft[3, ]) %>%
     select(-timestamp)
+  ))
   # test a couple of rows
   expect_known_value(routes[c(3, 10), ], "known/test_route_subsonic_NZGS_NZDN")
+
+  # and test saving of cache
+  tmp_dir <- tempdir()
+  full_filename <- hm_save_cache("test", NZ_grid, aircraft, path = tmp_dir)
+  hm_clean_cache() #empty cache
+  hm_load_cache(full_filename)
+  expect_true(length(.hm_cache) == 2)
+  expect_true(length(.hm_cache$route_cache) == 2)
+  expect_true(length(.hm_cache$star_cache) == 4)
 
   options("quiet" = old_quiet)
 })
 
-test_that("Find Routes",{
+test_that("Find multiple routes for multiple aircraft",{
   old_quiet <- getOption("quiet", default=0)
   options("quiet" = 0) #for no reporting
   hm_clean_cache() #start without cache
@@ -90,7 +98,7 @@ test_that("Find Routes",{
   aircraft <- make_aircraft(warn = FALSE)
   airports <- make_airports(crs = crs_Pacific)
   refuel_ap <- airports %>%
-    filter(APICAO=="NZWN")
+    filter(APICAO == "NZWN")
   NZ_buffer_Pac <- sf::st_transform(NZ_buffer30, crs=crs_Pacific)
 
   ap2 <- as.data.frame(matrix(c("NZAA","NZCH","NZAA","NZDN"),
@@ -122,7 +130,8 @@ test_that("Find Routes",{
   # check one row from each route
   expect_known_value(routes[c(7, 11, 23), ], "known/test_multiroute_nofly")
 
-  ap2 <- as.data.frame(matrix(c("NZAA","NZCH","NZAA","ZZZZ"),
+  # check for faulty airports
+  ap2 <- as.data.frame(matrix(c("ZZZZ", "NZAA", "NZCH", "NZAA"),
                               ncol = 2, byrow = TRUE), stringsAsFactors = FALSE)
   expect_error(find_routes(ac, ap2, aircraft, airports,
                              fat_map = NZ_buffer_Pac,

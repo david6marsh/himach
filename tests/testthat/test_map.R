@@ -1,4 +1,3 @@
-library(himach)
 library(dplyr)
 library(ggplot2)
 

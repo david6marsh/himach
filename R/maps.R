@@ -336,16 +336,6 @@ map_routes <- function(
   return(m)
 }
 
-#wrapper for st_bbox that always returns lat-longs
-st_bbox_longlat <- function(m){
-  bb <- st_bbox(m)
-  if (!st_is_longlat(bb)) {
-    bb <- st_bbox(st_transform(m,
-                       crs = crs_longlat))
-  }
-  return(bb)
-}
-
 #find the longitude of centre
 long_cent <- function(m){
   #full text version of crs

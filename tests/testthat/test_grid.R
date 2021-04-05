@@ -1,5 +1,3 @@
-library(testthat)
-library(himach)
 library(sf)
 library(dplyr)
 

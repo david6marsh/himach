@@ -935,13 +935,6 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
 
   tstart <- Sys.time()
   stopifnot(class(route_grid)=="GridLat")
-  # temporary - eventually gridLat will always be data.table
-  if (! "data.table" %in% class(route_grid@points)) {
-    route_grid@points <- data.table::as.data.table(route_grid@points)
-  }
-  if (! "data.table" %in% class(route_grid@lattice)) {
-    route_grid@lattice <- data.table::as.data.table(route_grid@lattice)
-  }
 
   if (getOption("quiet", default=0)>0) message("Leg: ", ap2$AP2, " Aircraft: ", ac$type)
 
