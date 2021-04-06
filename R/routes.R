@@ -705,6 +705,12 @@ pathToGC <- function(path, route_grid,
       rename(to_long = .data$long, to_lat = .data$lat) %>%
       as.data.frame()
 
+    #re-assert order
+    gcid <- p %>%
+      select(id) %>% distinct() %>%
+      inner_join(gcid, by = c("id"="w_id")) %>%
+      rename("w_id" = "id")
+
     # loop to look for great-circle shortcuts
     if (shortcuts) {
       if (getOption("quiet", default=0)>1) message(" Checking Shortcuts")

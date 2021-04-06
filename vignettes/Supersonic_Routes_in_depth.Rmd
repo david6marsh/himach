@@ -10,7 +10,7 @@ vignette: >
 ---
 ## Introduction
 
-[Supersonic Routing](SupersonicRouting.html) provides a quick end-to-end introduction to using the `himach` package and is the place to start. This vignette provides advice on more advanced use, explaining details that the introduction skates over.
+[Supersonic Routes](SupersonicRouting.html) provides a quick end-to-end introduction to using the `himach` package and is the place to start. This vignette provides advice on more advanced use, explaining details that the introduction skates over.
 
 Much of this vignette is optional or for occasional use, but the advice on saving and reading the cache is likely to be _essential_ for a speedy workflow. 
 
@@ -35,99 +35,59 @@ library(sf)
 
 ## Cache {#cache}
 
-`himach` uses caching to speed things up. Legs are cached in `route_cache` and arrival-departure links to airports are cached in `star_cache` (STAR is short for standard arrival route, its counterpart being SID the standard instrument departure). These sit in the `.hm_cache` namespace, so you use `$`, eg `.hm_cache$route_cache`, to refer to them.
+`himach` uses caching to speed things up. Legs are cached in `route_cache` and arrival-departure links to airports are cached in `star_cache` (STAR is short for standard arrival route, its counterpart being SID the standard instrument departure).
 
-Normally the caches just do the job. But you will want to save and load them as part of your standard workflow. Quite where you save them is up to you, but a set of routes is sensitive to (a) the route grid on which it is calculated (b) the list of aircraft used, and their performance. 
-
-So it is recommended to include the `name` of the grid, and the `aircraftSet` attribute of your aircraft set in the file name. Everything else is up to you.
+You will want to save and load the cache (meaning the combination of `route_cache` and `star_cache`) as part of your standard workflow. Quite where you save it is up to you, but a set of routes is sensitive to (a) the route grid on which it is calculated (b) the list of aircraft used, and their performance. The saving function `hm_save_cache` forces you to refer to these two datasets, and uses metadata from them in the file name for the cache. 
 
 If you change either of these, then you can use `hm_clean_cache()` to empty the cache. You will also note that if you run `find_routes` and the map has changed, or `findToCToD` and the map or aircraft have changed, then the cache will be cleared automatically.
 
-We don't execute this code chunk here, since the files aren't available.
+For the vignette, we save to a temporary directory. You really don't want to do this in practice ;-) 
 
 ```{r cache saving, eval=FALSE} 
-# at the beginning of the session
-# some data loading including
-# load a GridLat: p_grid_a
-# load an aircraft set: ac
-# and then...
+hm_clean_cache() #start without cache
 
-#not run
-hm_load_cache(paste("data/route_start_cache_", p_grid_a@name, 
-                           attr(ac,"aircraftSet"), " 2050v3.RDS"))
+# need to load some of the built-in data for this example
+aircraft <- make_aircraft(warn = FALSE)
+NZ_buffer_Pac <- sf::st_transform(NZ_buffer30, crs=crs_Pacific)
+airports <- make_airports(crs = crs_Pacific)
 
-# then calculate however many new routes
+options("quiet"= 2) # for a little reporting
+# how long does it take with an empty cache?
+system.time(
+  routes <- find_route(aircraft[1, ],
+                       make_AP2("NZAA", "NZDN", airports),
+                       fat_map = NZ_buffer_Pac,
+                       route_grid = NZ_grid,
+                       ap_loc = airports)
+)
 
-#not run
-#Save the cache ----
-# see example in next chunk
+# test saving of cache to a disposable directory
+tmp_dir <- tempdir()
+# for convenience, hm_save_cache gives the full name, including path
+full_filename <- hm_save_cache("test", NZ_grid, aircraft, path = tmp_dir)
 
+#empty cache - just to demonstrate the re-loading
+# this isn't part of your normal workflow!
+hm_clean_cache() 
+# but normally a session will begin with loading a cache like this
+hm_load_cache(full_filename)
 
+# how long does it take with a cache?
+system.time(
+  routes <- find_route(aircraft[1, ],
+                       make_AP2("NZAA", "NZDN", airports),
+                       fat_map = NZ_buffer_Pac,
+                       route_grid = NZ_grid,
+                       ap_loc = airports)
+)
+
+# if you want to see a map
+# map_routes(NZ_coast, routes, crs_Pacific, fat_map = NZ_buffer_Pac)
 ```
   
-Usually, the caches just work invisibly in the background - you will notice they speed up finding of routes no end. They also help with refuelling, because the `route_cache` quickly remembers the routes from major hub airports to the main refuelling points, so they don't need to be calculated again.
+The cache just works invisibly in the background - you will notice it speeds up finding of routes no end: in that example, from 1.5s (user) to 0.04s (user) on my machine. In particular, it helps with refuelling, because the `route_cache` quickly remembers the routes from major hub airports to the main refuelling points, so they don't need to be calculated again.
 
-Incidentally, if you add a new refuelling point, then the caches remain _valid_ because only **legs are cached, not routes**. With a new refuelling point, `find_route` will check both old legs and new, cached or not, before selecting the best combination of legs to make the route.
-
-Here we illustrate a few use cases for more general management of the cache. First, the code chunk takes a little time to generate a few routes, and hence the two caches. The use cases are:
-
-1. How big is my cache? How many legs or arrival/departure links does it contain?
-2. Remove a single item. If you think the input data were wrong, for example. Two steps, list the possible candidates using a search string, then copy paste the name of the one you want (usually obvious based on aircraft and airport-pair) into the code for deletion.
-3. Remove all legs for a single airport, for example if the location turned out to be wrong. Then update the lat-long and re-run. This pattern is easily adapted to airport pairs (all different aircraft), or all for a given aircraft.
-4. If you think you have merged caches from 2 different versions of `himach` in which the contents of a route dataframe have changed, then this is for you. Of course that never happens.
-
-
-```{r inspecting the cache}
-#first create a cache ----
-# need to load some of the built-in data
-hm_clean_cache() # for this example, start with empty cache
-aircraft <- make_aircraft()
-airports <- make_airports(crs = crs_Pacific) 
-refuel_ap <- airports %>%
-  filter(APICAO=="NZWN")
-NZ_buffer_Pac <- sf::st_transform(NZ_buffer30, crs=crs_Pacific)
-
-ap2 <- matrix(c("NZAA","NZCH","NZAA","NZDN","NZGS","NZCH"), 
-              ncol = 2, byrow = TRUE)
-ac <- aircraft[c(1,4), ]$id
-
-options("quiet" = 0) # just the progress bar
-NZ_routes <- find_routes(ac, ap2, aircraft, airports,
-                      fat_map = NZ_buffer_Pac, 
-                     route_grid = NZ_grid,
-                     refuel = refuel_ap)
-
-# now have the 2 caches ----
-# for the vignette we put in a temp directory, you don't want to do this
-hm_save_cache("v0", NZ_grid, aircraft, tempdir()) 
-
-# 
-# # Use case 1: How big is my cache? 
-# length(.hm_cache$route_cache) # this is number of legs, not routes
-# length(.hm_cache$star_cache)
-# # quiz: why are they not the same length?
-# 
-# # Use case 2: find and remove a single leg
-# # find matching elements in the rte cache - here for NZAA
-# ls(.hm_cache$route_cache, pattern = "NZAA")
-# # copy paste from the results into here to remove a single item
-# rm("M22_test-NZAA-NZCH--TRUE-TRUE-NA-TRUE-100-12", envir = .hm_cache$route_cache)
-# 
-# # Use case 3: remove all legs for a given airport
-# length(.hm_cache$route_cache)
-# rm(list=ls(.hm_cache$route_cache, pattern="NZDN"), envir = .hm_cache$route_cache)
-# length(.hm_cache$route_cache)
-# 
-# # Use case 4: check for out-of-date elements in the cache
-# # in this case check if consistent with 'new' version where there are 24 variables
-# # get number of variables in each element in rte cache
-# route_cols <- lapply(1:length(.hm_cache$route_cache), 
-#                      function(x) length(get(ls(.hm_cache$route_cache)[1],
-#                                             .hm_cache$route_cache)))
-# wrong <- which(route_cols != 24)
-
-```
-
+Incidentally, if you add a new refuelling point, then the cache remains _valid_ because only **legs are cached, not routes**. With a new refuelling point, `find_route` will check both old legs and new (to the new refuelling points), gaining where the legs are cached, before selecting the best combination of legs to make the route.
 
 # No-fly zones
 
@@ -150,13 +110,20 @@ In this example, no offence is intended to the citizens of Buller District of Ne
 Buller_nofly <- sf::st_transform(NZ_Buller_buffer40, crs=crs_Pacific)
 attr(Buller_nofly, "avoid") <- "Buller+40km" #required for correct caching
 
-# run the same routes, but with the avoid region
+# this uses data as in the previous code chunk
+aircraft <- make_aircraft(warn = FALSE)
+NZ_buffer_Pac <- sf::st_transform(NZ_buffer30, crs=crs_Pacific)
+airports <- make_airports(crs = crs_Pacific)
+
+
+# run the same route, but with the avoid region
 options("quiet"= 0) #just the progress bar
-ac <- aircraft[c(4), ]$id
-routes <- find_routes(ac, ap2, aircraft, airports,
+ac <- aircraft[c(1, 4), ]$id
+routes <- find_routes(ac, 
+                      data.frame(ADEP = "NZAA", ADES = "NZDN"),
+                      aircraft, airports,
                       fat_map = NZ_buffer_Pac, 
                       route_grid = NZ_grid,
-                      refuel = refuel_ap,
                       cf_subsonic = aircraft[3,],
                       avoid = Buller_nofly)
 
@@ -167,11 +134,10 @@ routes <- find_routes(ac, ap2, aircraft, airports,
 rtes <- summarise_routes(routes, airports)
 
 # draw a basic map
-NZ_coast_Pac <- sf::st_transform(NZ_coast, crs=crs_Pacific)
-map_routes(NZ_coast_Pac, routes, crs = crs_Pacific, fat_map = NZ_buffer_Pac,
+map_routes(NZ_coast, routes, crs_Pacific, fat_map = NZ_buffer_Pac,
           avoid_map = Buller_nofly)
 
-map_routes(NZ_coast_Pac, routes, show_route = "aircraft",
+map_routes(NZ_coast, routes, show_route = "aircraft",
            crs = crs_Pacific, fat_map = NZ_buffer_Pac,
           avoid_map = Buller_nofly)
 
