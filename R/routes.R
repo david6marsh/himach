@@ -716,18 +716,24 @@ pathToGC <- function(path, route_grid,
       if (getOption("quiet", default=0)>1) message(" Checking Shortcuts")
       baseID <- 1
       while (baseID < nrow(gcid)-1) {
-        #skip this baseID if not 'sea'
-        if (gcid[baseID,"phase"]=="sea"){
+        #skip this baseID if not 'sea' or 'land'
+        if (gcid[baseID, ]$phase %in% c("sea", "land")){
           #check the furthest first
           farID <- nrow(gcid)
           while (farID > baseID + 1) {
-            #only check the geometry if all a sea phase
+            #only check the geometry if all the same phase (all sea, all land)
             phases <- unique(gcid[baseID:farID,"phase"])
-            if (length(phases)==1) {
+            if (nrow(phases) == 1) {
               test_line <- s2::s2_make_line(c(gcid[baseID,]$from_long, gcid[farID,]$to_long),
                                             c(gcid[baseID,]$from_lat, gcid[farID,]$to_lat))
               #just extract the single binary result: All sea?
-              all_sea <- ! s2::s2_intersects(test_line, fat_map_s2)
+              if (gcid[baseID, ]$phase == "sea") {
+                use_map <- fat_map_s2
+              } else {
+                # if land, then only worried if we hit the avoid area
+                use_map <- avoid_s2
+              }
+              all_sea <- ! s2::s2_intersects(test_line, use_map)
               if (all_sea) {
                 if (getOption("quiet", default=0)>2) message("  Shortcut from ", baseID, " to ", farID)
                 #shift the intermediate points onto the new shortcut line
@@ -737,7 +743,8 @@ pathToGC <- function(path, route_grid,
                 gcid[interm, "from_long"] <- s2::s2_x(new_pts)
                 gcid[interm, "from_lat"] <- s2::s2_y(new_pts)
                 # update the next step info
-                gcid[baseID:(farID-1), c("to_long","to_lat")] <- gcid[interm, c("from_long","from_lat")]
+                gcid[baseID:(farID-1), c("to", "to_long","to_lat")] <- gcid[interm,
+                                                                               c("from", "from_long","from_lat")]
                 # if you've a shortcut direct to the end then stop, otherwise look for an
                 #  efficient place to restart the further-first search
                 if (farID == nrow(gcid) | gcid[baseID,"phase"] != gcid[farID + 1,"phase"]) {
@@ -752,7 +759,7 @@ pathToGC <- function(path, route_grid,
                     new_baseID <- new_baseID + 1
                     test_line <- s2::s2_make_line(c(gcid[new_baseID,]$from_long, gcid[farID + 1,]$to_long),
                                                   c(gcid[new_baseID,]$from_lat, gcid[farID + 1,]$to_lat))
-                    hits_land <- s2::s2_intersects(test_line, fat_map_s2)
+                    hits_land <- s2::s2_intersects(test_line, use_map)
                   }
                 }
                 # drop the intermediate values
@@ -760,7 +767,8 @@ pathToGC <- function(path, route_grid,
                   gcid <- gcid %>% slice(-((baseID + 1):(new_baseID - 1)))
                   new_baseID <- baseID + 1
                   # update to-end of vector
-                  gcid[baseID, c("to_long","to_lat")] <- gcid[new_baseID, c("from_long","from_lat")]
+                  gcid[baseID, c("to", "to_long", "to_lat")] <- gcid[new_baseID,
+                                                                        c("from", "from_long","from_lat")]
                 }
                 #on the fly switch to a new search
                 baseID <- new_baseID
@@ -995,7 +1003,7 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
           filter(.data$long >= env_rec$lng_lo | .data$long <= env_rec$lng_hi)}
       route_grid@points <- rgp %>%
         filter(.data$lat >= env_rec$lat_lo & .data$lat <= env_rec$lat_hi) %>%
-        filter(st_intersects(.data$xy, envelope, sparse = FALSE) %>% as.vector()) %>%
+        filter(sf::st_intersects(.data$xy, envelope, sparse = FALSE) %>% as.vector()) %>%
         data.table::as.data.table()
       # 'crop' using ids - much faster than geo-intersection
       route_grid@lattice <- route_grid@lattice %>%
@@ -1021,15 +1029,20 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
   #check if need to avoid areas
   if (!is.na(avoid)){
     # remove the avoid area from the search grid
-    z <- st_intersects(avoid, route_grid@lattice$geometry, sparse=FALSE)
-    #remove this from lattice
-    route_grid@lattice <- route_grid@lattice %>%
-      filter(!z) %>%
-      data.table::as.data.table()
+    z <- sf::st_intersects(avoid, route_grid@lattice$geometry, sparse=FALSE) %>%
+      as.vector()
+    if (all(!z)) {
+      avoid <- NA # no intersection so treat as no avoid
+    } else {
+      #remove this from lattice
+      route_grid@lattice <- route_grid@lattice %>%
+        filter(!z) %>%
+        data.table::as.data.table()
+      #need an extra map
+      #for over-sea flight ensure the avoid areas are included, so they are not allowed
+      fat_map <- st_union(fat_map, avoid)
+    }
 
-    #need an extra map
-    #for over-sea flight ensure the avoid areas are included, so they are not allowed
-    fat_map <- st_union(fat_map, avoid)
     if (getOption("quiet", default=0)>2) message("  Adjusted for avoid areas: ", round(Sys.time() - tstart,1))
     #and for non-seas flight, also need to avoid 'avoid'
   }

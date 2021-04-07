@@ -12,6 +12,7 @@ NZ_coast <- NZ_shp  %>%
 NZ_buffer30 <- NZ_coast %>%
   st_as_s2() %>%
   s2::s2_buffer_cells(distance = 30*1000, max_cells = 10000) %>%
+  s2::s2_simplify(2000) %>%
   st_as_sfc()
 
 usethis::use_data(NZ_coast, overwrite = TRUE)
@@ -27,6 +28,7 @@ NZ_Buller_u <- NZ_Buller %>%
 NZ_Buller_buffer40 <- NZ_Buller_u %>%
   st_as_s2() %>%
   s2::s2_buffer_cells(distance = 40*1000, max_cells = 10000) %>%
+  s2::s2_simplify(2000) %>%
   st_as_sfc()
 attr(NZ_Buller_buffer40, "avoid") <- "Buller+40km"
 

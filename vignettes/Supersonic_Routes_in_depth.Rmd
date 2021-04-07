@@ -10,7 +10,7 @@ vignette: >
 ---
 ## Introduction
 
-[Supersonic Routes](SupersonicRouting.html) provides a quick end-to-end introduction to using the `himach` package and is the place to start. This vignette provides advice on more advanced use, explaining details that the introduction skates over.
+[Supersonic Routes](Supersonic_Routes.html) provides a quick end-to-end introduction to using the `himach` package and is the place to start. This vignette provides advice on more advanced use, explaining details that the introduction skates over.
 
 Much of this vignette is optional or for occasional use, but the advice on saving and reading the cache is likely to be _essential_ for a speedy workflow. 
 
@@ -107,8 +107,6 @@ In this example, no offence is intended to the citizens of Buller District of Ne
 # NZ_Buller_buffer50 <- sf::st_union(sf::st_buffer(NZ_Buller_u, 50 * 1000))
 # attr(NZ_Buller_buffer50, "avoid") <- "Buller+50km"
 # the quicker version, using a built-in no fly zone
-Buller_nofly <- sf::st_transform(NZ_Buller_buffer40, crs=crs_Pacific)
-attr(Buller_nofly, "avoid") <- "Buller+40km" #required for correct caching
 
 # this uses data as in the previous code chunk
 aircraft <- make_aircraft(warn = FALSE)
@@ -117,7 +115,7 @@ airports <- make_airports(crs = crs_Pacific)
 
 
 # run the same route, but with the avoid region
-options("quiet"= 0) #just the progress bar
+options("quiet"= 2) #just the progress bar
 ac <- aircraft[c(1, 4), ]$id
 routes <- find_routes(ac, 
                       data.frame(ADEP = "NZAA", ADES = "NZDN"),
@@ -125,7 +123,7 @@ routes <- find_routes(ac,
                       fat_map = NZ_buffer_Pac, 
                       route_grid = NZ_grid,
                       cf_subsonic = aircraft[3,],
-                      avoid = Buller_nofly)
+                      avoid = NZ_Buller_buffer40)
 
 #this shows versions of the legs with and without no-fly
 # ls(route_cache, pattern = "NZCH", envir = .hm_cache)
@@ -135,11 +133,11 @@ rtes <- summarise_routes(routes, airports)
 
 # draw a basic map
 map_routes(NZ_coast, routes, crs_Pacific, fat_map = NZ_buffer_Pac,
-          avoid_map = Buller_nofly)
+          avoid_map = NZ_Buller_buffer40)
 
 map_routes(NZ_coast, routes, show_route = "aircraft",
            crs = crs_Pacific, fat_map = NZ_buffer_Pac,
-          avoid_map = Buller_nofly)
+          avoid_map = NZ_Buller_buffer40)
 
 ```
 

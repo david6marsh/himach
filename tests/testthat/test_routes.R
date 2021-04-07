@@ -113,22 +113,19 @@ test_that("Find multiple routes for multiple aircraft",{
     select(-timestamp)
   ))
   # just test a sample
-  expect_known_value(routes[c(3, 9, 19), ], "known/test_multiroute")
+  expect_known_value(routes[c(3, 7, 20), ], "known/test_multiroute")
 
   # and again with a no-fly zone - and just one AP2
-  Buller_nofly <- sf::st_transform(NZ_Buller_buffer40, crs=crs_Pacific)
-  attr(Buller_nofly, "avoid") <- "Buller+40km" #required for correct caching
-
   invisible(capture.output(
     routes <- find_routes(ac, ap2[1, ], aircraft, airports,
                           fat_map = NZ_buffer_Pac,
                           route_grid = NZ_grid,
                           refuel = refuel_ap,
-                          avoid = Buller_nofly) %>%
+                          avoid = NZ_Buller_buffer40) %>%
       select(-timestamp)
   ))
   # check one row from each route
-  expect_known_value(routes[c(7, 11, 23), ], "known/test_multiroute_nofly")
+  expect_known_value(routes[c(2, 9, 12), ], "known/test_multiroute_nofly")
 
   # check for faulty airports
   ap2 <- as.data.frame(matrix(c("ZZZZ", "NZAA", "NZCH", "NZAA"),
