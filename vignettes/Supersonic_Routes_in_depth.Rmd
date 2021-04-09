@@ -43,7 +43,7 @@ If you change either of these, then you can use `hm_clean_cache()` to empty the 
 
 For the vignette, we save to a temporary directory. You really don't want to do this in practice ;-) 
 
-```{r cache saving, eval=FALSE} 
+```{r cache saving} 
 hm_clean_cache() #start without cache
 
 # need to load some of the built-in data for this example
@@ -91,11 +91,11 @@ Incidentally, if you add a new refuelling point, then the cache remains _valid_ 
 
 # No-fly zones
 
-It is not unusual for parts of the airspace to be closed, or be considered unsafe for flying. `himach` allows regions to be marked as 'avoid'. They will not feature in the grid, so routes will avoid them, with one exception: an arrival or departure airport can be inside a no-fly zone, as long as the connection point to the grid is outside. So they might more precisely be called 'no-overfly' zones.
+It is not unusual for parts of the airspace to be closed, or be considered unsafe for flying. `himach` allows regions to be marked as 'avoid'. They will not feature in the grid, so routes will avoid them, with one exception: an arrival or departure airport can be inside a no-fly zone, as long as at least one connection point to the grid is outside. So they might more precisely be called 'no-overfly' zones.
 
 A no-fly zone is prepared in the same way as a map of land. If specific countries are to be avoided, this is where having a country name in the geographic data comes in handy.
 
-One essential item is the `avoid` attribute of the no-fly zone. This is used to distinguish sets of legs with different, or no, no-fly zone.
+One essential item is the `avoid` attribute of the no-fly zone. This is used to distinguish sets of legs with different, or no, no-fly zone. Set `attr(your_avoid_map, "avoid") <- "your summary of that avoid map"` which will (a) remind you what was used (b) tell `himach` to recalculate all legs that have not already been calculated with that value of `avoid`. If you were to add an avoid area for North Korean airspace, say, then in reality North Atlantic routes are not affected, but currently `himach` plays safe and assumes that they are.
 
 In this example, no offence is intended to the citizens of Buller District of New Zealand; it is a convenient example for showing how routes are forced to change when airspace is unavailable.
 
@@ -141,6 +141,14 @@ map_routes(NZ_coast, routes, show_route = "aircraft",
 
 ```
 
+# Why do I have `NA` routes?
+
+After a call to `find_routes`, the output can have `NA` entries in some columns for some routes. There are two reasons for this:
+
+* This airport pair is too far for a single leg for this aircraft. If you have given a list of possible refuelling airports `refuel = xxx`, then you will find other entries for the same `routeID` (eg "EGLL<>KSFO") but with different `fullRouteID` (eg "EGLL<>PANC<>KSFO") showing a good route including refuelling.
+* One of the airports may be unreachable because all of the top-of-climb (=top-of-descent) points are within an avoid airspace. You will have received a warning message at the end of the run of `find_routes`.
+
+So these appear when the specified route is not possible.
 
 # Too many ocean routes: Buffer widths and projections {#bufferaccuracy}
 
@@ -170,7 +178,7 @@ cowplot::plot_grid(m_old, m_s2, labels = c("bad", "good"),
 
 ```
 
-![Incorrect and Correct Buffer](buffer_example.pdf) 
+![Incorrect and Correct Buffer](buffer_example.png) 
 
 In fact, the problem of finding too many apparently over-ocean routes is broader than this. The other main contributor to this is missing islands from the map. See the comments [in the first vignette](SupersonicRouting.html#maps).
 
@@ -193,4 +201,14 @@ cowplot::plot_grid(m_s2, m_hires, labels = c("good", "better"),
 
 ```
 
-![Correct Buffer and with Better with More Islands](buffer_island_example.pdf)
+![Correct Buffer and with Better with More Islands](buffer_island_example.png)
+
+# Why do I need a coordinate reference system?
+
+There are a number of place in the vignettes, eg making an airport dataset, where we have shown the use of a parameter to specify a coordinate reference system. `himach` has recently transitioned to using spherical geometry directly using the `s2` package, both directly and through the `sf` package. Before `s2` was available in `sf` there was a constant need to align the coordinate reference systems of objects before combining them.
+
+Now, in theory, all geometrical operations use spherical geometry, so a coordinate reference system should only be needed when you plot a map. At that point, the coordinate reference system is saying how to move from spherical coordinates to a flat projection. Four basic projections are supplied `crs_Atlantic`, `crs_Pacific`, `crs_North` and `crs_South` which you can use in `map_routes` to get the right map for your particular set of routes. You can create others as shown in the vignette.
+
+We will remove remaining references to coordinate reference systems during route creation in later versions of `himach`.
+
+

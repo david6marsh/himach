@@ -210,7 +210,7 @@ map_routes <- function(
   }
 
   #layer 2 (no fly-zone)
-  if (!is.na(avoid_map)){
+  if (is.list(avoid_map)){
     m <- m +
       geom_sf(data = st_window(avoid_map, crs),
               colour=avoid_f, fill=avoid_f)

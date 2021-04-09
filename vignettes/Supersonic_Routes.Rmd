@@ -43,9 +43,9 @@ You need a dataframe that defines one or more aircraft. This needs, at minimum, 
 
 Other fields are optional, but it is recommended to include `notes` to give more information. 
 
-To convert between kph and Mach at the sort of cruise altitudes that supersonic aircraft use, we use a fixed value `mach_kph`.
+To convert between kph and Mach at the sort of cruise altitudes that supersonic aircraft use, we use a fixed value `mach_kph`=`r mach_kph`.
 
-The cruise speeds over sea and over land are clearly intended to be supersonic and subsonic, respectively. But this is not required. You might want both subsonic, to include a comparator, subsonic aircraft. Or you might want to have both supersonic, to explore routes when so-called "mach cut-off" conditions prevail. `himach` doesn't enforce a range on either value. 
+The cruise speeds over sea and over land are clearly intended to be supersonic and subsonic, respectively. But this is not required. You might want both subsonic, to include a comparator, subsonic aircraft. Or you might want to have both supersonic, to explore routes when so-called "mach cut-off" conditions prevail. `himach` doesn't require either speed to be within a particular range of values. 
 
 Run this minimum dataset through `make_aircraft` to get the additional fields that are needed. Alternatively, if you run `make_aircraft` with no parameters, it creates a set of test aircraft. This test set is based on public data for 3 aircraft (though the `accel_Mpm`, `arrdep_kph` are educated guesses), and fantasy for the 4th one, which has been designed for testing purposes and might not be pleasant to fly in.
 
@@ -53,7 +53,7 @@ Run this minimum dataset through `make_aircraft` to get the additional fields th
 
 
 ```{r define aircraft} 
-# example for your own data
+# example for your own data - see above for column headings
 # aircraft <- read.csv("data/aircraft.csv", stringAsFactors = FALSE)
 # aircraft <- make_aircraft(aircraft)
 # strongly recommended to record the source file name for later reference
@@ -106,11 +106,12 @@ For the vignette, we'll assume that Wellington has a long enough runway. In fact
 
 Next you need a set of shapefiles covering your area of interest (usually worldwide). These need only to distinguish land and sea, but starting off at country level can be useful, for example to filter out the Antarctic, which is not likely to see traffic. You can save time by ignoring airspace South of 60S, for example.
 
-Finer resolution is better, because small islands can become larger obstacles. After a no-fly coastal buffer, say around 30km wide, is applied, even a 1km wide island is an obstacle 61km wide. There are some useful starter maps in `rnaturalearth` (use the `countries` versions), but you need to decide what is good enough for your purposes. One test - if you have a 30km buffer do you have aircraft passing between Crete and mainland Greece without slowing down? Then you're missing the island of Antikythera, famous for its ancient, analogue computer.
+Finer resolution is better, because small islands can become larger obstacles. After a no-fly coastal buffer, say around 30km wide, is applied, even a 1km wide island is an obstacle 61km wide. There are some useful starter maps in `rnaturalearth` (use the `countries` versions), but you need to decide what is good enough for your purposes. Two tests:
 
-Licensing and your intended use may influence which maps are available to you. We have used data from Eurostat in the past (at 1:1M scale, [Eurostat country shape files](https://ec.europa.eu/eurostat/web/gisco/geodata/reference-data/administrative-units-statistical-units/countries)). 
+* If you have a 30km buffer do you have aircraft passing between Crete and mainland Greece without slowing down? Then you're missing the island of Antikythera, famous for its ancient, analogue computer. 
+* With a 50km buffer, do you have routes passing supersonically between Taiwan and the Phillipines? Then you are missing either Y'Ami or Xiao-lan Yu, which are just 98km apart.
 
-For the purpose of testing and this vignette, we use a map which is provided by [Stats NZ](https://www.stats.govt.nz/information-releases/geographic-boundary-data-annual-release-as-at-1-january-2020) and licensed by Stats NZ for re-use under the Creative Commons Attribution 4.0 International licence. 
+Licensing and your intended use may influence which maps are available to you. We have used data from Eurostat in the past (at 1:1M scale, [Eurostat country shape files](https://ec.europa.eu/eurostat/web/gisco/geodata/reference-data/administrative-units-statistical-units/countries)). For the purpose of rapid testing and this vignette, we use a map which is provided by [Stats NZ](https://www.stats.govt.nz/information-releases/geographic-boundary-data-annual-release-as-at-1-january-2020) and licensed by Stats NZ for re-use under the Creative Commons Attribution 4.0 International licence. 
 
 In fact, we need two files: one is the basic outline of the land, largely used for visualisation; the second is derived from this, and adds a 30km buffer around the coastline to indicate the area where supersonic flight is not allowed. A different buffer is of course possible, 30km is about right for the expected radius of the footprint of the supersonic boom, but your expertise will determine what is needed.
 
@@ -138,6 +139,7 @@ ggplot(NZ_buffer_Pac) +
     theme_minimal()
 
 # a quicker way to do all of this is to use map_routes, with no routes
+# this also saves the projection step
 map_routes(NZ_coast, fat_map = NZ_buffer30, crs = crs_Pacific)
 
 ```
@@ -152,12 +154,19 @@ The version in comments in the chunk above uses the basic `sf` functionality to 
 map_NZ <- rnaturalearthdata::countries50 %>%
    st_as_sf() %>%
    filter(name == "New Zealand")
+# use attributes to track where this came from
+attr(map_NZ, "source") <- "rnaturalearthdata::countries50"
+attr(map_NZ, "Antarctic") <- FALSE
+attr(map_NZ, "simplify_m") <- NA
 
 # using s2 for buffering
 NZ_plus30 <- map_NZ %>%
    st_as_s2() %>%
    s2::s2_buffer_cells(distance = 30000, max_cells = 1000) %>%
    st_as_sfc() 
+# again, use attributes to record the metadata
+attr(NZ_plus30,"buffer_m") <- 30000
+attr(NZ_plus30,"max_cells") <- 1000
 
 # and then simplify for plotting
 # just give 1 example here
@@ -165,6 +174,7 @@ map_NZ_2k <- map_NZ %>%
    st_as_s2() %>%
    s2::s2_simplify(tolerance = 2000) %>%
    st_as_sfc() 
+attr(map_NZ_2k, "simplify_m") <- 2000
 
 # example map, himach::map_routes but without any routes
 map_routes(map_NZ_2k, fat_map = NZ_plus30, crs = crs_Pacific)
@@ -205,9 +215,9 @@ ggplot(NZ_buffer_Pac) +
 
 Finally we're ready to do some routing of aircraft.
 
-The result is a little coarse, because we have used a coarse grid. You can experiment by using the built-in `NZ_grid` instead. That has a 30km resolution, but is built on the same `NZ_buffer` map, so nothing else needs to change.
+The result is a little coarse, because we have used a coarse grid. `himach` simplifies sections of route to great circles where it can, but all points where two great-circle segments join will be vertices of this grid. You can experiment by using the built-in `NZ_grid` instead. That has a 30km resolution, but is built on the same `NZ_buffer` map, so nothing else needs to change.
 
-You can control the amount of reporting during the creation of routes with the `quiet` option, cumulatively you get: 0) nothing, 1) route & legs, 2) major stages (envelope, phases, shortcuts) 3) use of cache, route stages & some timings. The routing function reports when Dijkstra is used whatever happens. 
+You can control the amount of reporting during the creation of routes with the `quiet` option, cumulatively you get: 0) nothing, 1) route & legs, 2) major stages (envelope, phases, shortcuts) 3) use of cache, route stages & some timings. 
 
 ```{r a simple route}
 options("quiet" = 4) #for some output
@@ -215,7 +225,7 @@ options("quiet" = 4) #for some output
 ap2 <- make_AP2("NZAA","NZCH",airports)
 
 # normally you do NOT want to do this, but for the vignette we
-# work empty cache
+# work with an empty cache
 hm_clean_cache()
 
 routes <- find_route(aircraft[4,], 
@@ -226,9 +236,9 @@ routes <- find_route(aircraft[4,],
 
 ```
 
-In fact, normally you'll want to run a select of routes. While `find_route` takes only one aircraft and one airport-pair, there is a wrapper which takes a list of aircraft ids (as in the first column in the aircraft data), and a 2-column matrix or dataframe of 4-letter ICAO codes. It creates all combinations of these, and runs `find_route` for each. This is called `find_routes`.
+In fact, normally you'll want to run a selection of routes in one batch. While `find_route` takes only one aircraft and one airport-pair, there is a wrapper which takes a list of aircraft ids (as in the first column in the aircraft data), and a 2-column matrix or dataframe of 4-letter ICAO codes. It creates all combinations of these, and runs `find_route` for each. This wrapper function is called `find_routes`.
 
-There is a progress bar, though this interacts
+There is a progress bar, though this interacts with the progress messaging and the remaining time estimate tends to be too high because calculation speeds up as the cache fills up.
 
 ```{r find multiple routes}
 options("quiet" = 2) # anything more than 1 is messy, because of the progress bar
@@ -244,14 +254,11 @@ routes <- find_routes(ac, ap2, aircraft, airports,
 ```
 
 
-
 Once you have some routes, you will probably want (a) a summary of the routes created (b) a map. There are functions for both of these.
 
 ```{r Route Summary and Map}
-
 # create route summary
 rtes <- summarise_routes(routes, airports)
-
 
 # draw a basic map
 map_routes(NZ_coast_Pac, routes, crs = crs_Pacific, fat_map = NZ_buffer_Pac)

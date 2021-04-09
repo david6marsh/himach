@@ -651,7 +651,7 @@ pathToGC <- function(path, route_grid,
 
     if(getOption("quiet", default=0)>1) message(" Calculated phase changes")
     fat_map_s2 <- st_as_s2(fat_map) # do this conversion only once
-    if (!is.na(avoid)) avoid_s2 <- st_as_s2(avoid)
+    if (is.list(avoid)) avoid_s2 <- st_as_s2(avoid)
     else
       avoid_s2 <- avoid
     p <- p %>%
@@ -975,7 +975,11 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
   # these are fast, so transform them rather than assume
   if (st_crs(fat_map) != use_crs) st_transform(fat_map, use_crs)
   ap_loc$ap_locs <- st_transform(ap_loc$ap_locs, crs=use_crs, quiet=FALSE)
-  if (!is.na(avoid)) avoid <- st_transform(avoid, use_crs)
+  if (is.list(avoid)) {
+    avoid <- st_transform(avoid, use_crs)
+    # merge the list into one, eg if avoid is currently separate countries
+    avoid <- st_union(avoid)
+  }
 
   if (getOption("quiet", default=0)>2) message("  Starting envelope: ",round(Sys.time() - tstart,1))
   #make the envelope - so can plot even if don't enforce it
@@ -1027,7 +1031,7 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
                          ac, ad_dist, ad_nearest))
 
   #check if need to avoid areas
-  if (!is.na(avoid)){
+  if (is.list(avoid)){
     # remove the avoid area from the search grid
     z <- sf::st_intersects(avoid, route_grid@lattice$geometry, sparse=FALSE) %>%
       as.vector()
