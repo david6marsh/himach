@@ -1041,10 +1041,26 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
       #need an extra map
       #for over-sea flight ensure the avoid areas are included, so they are not allowed
       fat_map <- st_union(fat_map, avoid)
+      # check for validity of arr-departure routes now.
+      # check in two parts for better error reporting
+      ap1_toc <- arrDep %>% filter(.data$from == ap2$ADEP) %>%
+        mutate(pt = s2::s2_lnglat(.data$long_grid, .data$lat_grid))
+      if (all(s2::s2_contains(avoid, ap1_toc$pt))) {
+        warning("Avoid airspace prevents reaching ", ap2$ADEP, call. = FALSE)
+        #return something mostly empty
+        return(emptyRoute(ac, ap2, fat_map))
+      }
+      ap2_toc <- arrDep %>% filter(.data$from == ap2$ADES) %>%
+        mutate(pt = s2::s2_lnglat(.data$long_grid, .data$lat_grid))
+      if (all(s2::s2_contains(avoid, ap2_toc$pt))) {
+        warning("Avoid airspace prevents reaching ", ap2$ADES, call. = FALSE)
+        #return something mostly empty
+        return(emptyRoute(ac, ap2, fat_map))
+      }
     }
 
     if (getOption("quiet", default=0)>2) message("  Adjusted for avoid areas: ", round(Sys.time() - tstart,1))
-    #and for non-seas flight, also need to avoid 'avoid'
+    #and for non-overseas flight, also need to avoid 'avoid'
   }
 
   #in debug, quick plot of sea points in grid
