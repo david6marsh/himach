@@ -8,3 +8,4 @@
 ^ignore/scratchpad\.R$
 ^ignore/test\.log$
 ^ignore/2103_dateline_test\.RData$
+^codecov\.yml$
