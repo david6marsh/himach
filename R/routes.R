@@ -170,18 +170,15 @@ emptyRoute <- function(ac, ap2, fat_map,
 #'
 #' @examples
 #' # need to load some of the built-in data
-#' library(dplyr)
 #' aircraft <- make_aircraft()
-#' airports <- make_airports(crs = crs_Pacific) %>%
-#'    filter(substr(APICAO,1,1) == "N") #just around New Zealand
-#' NZ_buffer <- sf::st_transform(NZ_buffer30, crs=crs_Pacific)
+#' airports <- make_airports(crs = crs_Pacific)
 #'
 #' options("quiet" = 4) #for heavy reporting
 #' # from Auckland to Christchurch
 #' ap2 <- make_AP2("NZAA","NZCH",airports)
 #' routes <- find_route(aircraft[4,],
 #'                     ap2,
-#'                     fat_map = NZ_buffer,
+#'                     fat_map = NZ_buffer30,
 #'                     route_grid = NZ_grid,
 #'                     ap_loc = airports)
 #'
@@ -278,18 +275,15 @@ find_routes <- function(ac_ids, ap2_ids, aircraft, airports, ...){
 #'
 #' @examples
 #' # need to load some of the built-in data
-#' library(dplyr)
 #' aircraft <- make_aircraft()
-#' airports <- make_airports(crs = crs_Pacific) %>%
-#'     filter(substr(APICAO, 1, 1) == "N") #just around New Zealand
-#' NZ_buffer <- sf::st_transform(NZ_buffer30, crs=crs_Pacific)
+#' airports <- make_airports(crs = crs_Pacific)
 #'
 #' options("quiet" = 4) #for heavy reporting
 #' # from Auckland to Christchurch
 #' ap2 <- make_AP2("NZAA","NZCH",airports)
 #' routes <- find_route(aircraft[4,],
 #'                     ap2,
-#'                     fat_map = NZ_buffer,
+#'                     fat_map = NZ_buffer30,
 #'                     route_grid = NZ_grid,
 #'                     ap_loc = airports)
 #'
@@ -866,10 +860,8 @@ pathToGC <- function(path, route_grid,
 #'
 #' @examples
 #' # need to load some of the built-in data
-#' library(dplyr)
 #' aircraft <- make_aircraft()
-#' airports <- make_airports(crs = crs_Pacific) %>%
-#'     filter(substr(APICAO, 1, 1) == "N") #just around New Zealand
+#' airports <- make_airports(crs = crs_Pacific)
 #'
 #' options("quiet" = 4) #for heavy reporting
 #' # from Auckland to Christchurch

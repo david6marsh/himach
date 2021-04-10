@@ -122,24 +122,20 @@ Since the shape file is large, we provide a simplified outline `NZ_coast` and al
 
 We leave this transformation step in the process to emphasise the need to think about which projection to use.
 
-```{r load maps}
+```{r load_maps}
 # if you are using your own shp file 
 # NZ_shp <- sf::read_sf("...../territorial-authority-2020-clipped-generalised.shp")
 # NZ_coast <- NZ_shp %>% sf::st_simplify(dTolerance = 1000) %>% sf::st_union()
 # NZ_buffer30 <- NZ_coast %>% sf::st_buffer(30 * 1000) %>% sf::st_union()
 
-# We project the in-built test maps
-NZ_coast_Pac <- sf::st_transform(NZ_coast, crs=crs_Pacific)
-NZ_buffer_Pac <- sf::st_transform(NZ_buffer30, crs=crs_Pacific)
-
+# The in-built test maps are already in crs_Pacific
 # All that remains is to illustrate the land and buffer
-ggplot(NZ_buffer_Pac) +
+ggplot(NZ_buffer30) +
     geom_sf(colour = NA, fill = "grey75")  +
-      geom_sf(data = NZ_coast_Pac, fill = "grey90", colour = NA)+
+      geom_sf(data = NZ_coast, fill = "grey90", colour = NA)+
     theme_minimal()
 
 # a quicker way to do all of this is to use map_routes, with no routes
-# this also saves the projection step
 map_routes(NZ_coast, fat_map = NZ_buffer30, crs = crs_Pacific)
 
 ```
@@ -191,19 +187,19 @@ It can take a very long time to construct a global grid. For our much-reduced ex
 
 Normally the grid is too large to plot helpfully, but in this very limited set, it can be visualised.
 
-```{r construct grid}
-target_km=150
+```{r construct_grid}
+target_km <- 150
 system.time(
-p_grid <- make_route_grid(NZ_buffer_Pac,"NZ lat-long at 150km",
+p_grid <- make_route_grid(NZ_buffer30, "NZ lat-long at 150km",
                              target_km = target_km, classify = TRUE,
                          lat_min = -49, lat_max = -32, 
                          long_min = 162, long_max = 182)
 )
 
 # whether this map is useful depends on the target_km v the overall size of the map
-ggplot(NZ_buffer_Pac) +
+ggplot(NZ_buffer30) +
     geom_sf(colour = NA, fill = "grey75")  +
-      geom_sf(data = NZ_coast_Pac, fill = "grey90", colour = NA) +
+      geom_sf(data = NZ_coast, fill = "grey90", colour = NA) +
   geom_sf(data = p_grid@lattice,
           aes(geometry=geometry), colour="lightblue", size = 0.2) +
 
@@ -219,7 +215,7 @@ The result is a little coarse, because we have used a coarse grid. `himach` simp
 
 You can control the amount of reporting during the creation of routes with the `quiet` option, cumulatively you get: 0) nothing, 1) route & legs, 2) major stages (envelope, phases, shortcuts) 3) use of cache, route stages & some timings. 
 
-```{r a simple route}
+```{r simple_route}
 options("quiet" = 4) #for some output
 # from Auckland to Christchurch
 ap2 <- make_AP2("NZAA","NZCH",airports)
@@ -230,7 +226,7 @@ hm_clean_cache()
 
 routes <- find_route(aircraft[4,], 
                      ap2,
-                     fat_map = NZ_buffer_Pac, 
+                     fat_map = NZ_buffer30, 
                      route_grid = p_grid, 
                      ap_loc = airports)
 
@@ -240,14 +236,14 @@ In fact, normally you'll want to run a selection of routes in one batch. While `
 
 There is a progress bar, though this interacts with the progress messaging and the remaining time estimate tends to be too high because calculation speeds up as the cache fills up.
 
-```{r find multiple routes}
+```{r find_multiple_routes}
 options("quiet" = 2) # anything more than 1 is messy, because of the progress bar
 ap2 <- matrix(c("NZAA","NZCH","NZAA","NZDN","NZGS","NZCH"), 
               ncol = 2, byrow = TRUE)
 ac <- aircraft[c(1,4), ]$id
 
 routes <- find_routes(ac, ap2, aircraft, airports,
-                      fat_map = NZ_buffer_Pac, 
+                      fat_map = NZ_buffer30, 
                      route_grid = p_grid,
                      refuel = refuel_ap)
 
@@ -256,12 +252,12 @@ routes <- find_routes(ac, ap2, aircraft, airports,
 
 Once you have some routes, you will probably want (a) a summary of the routes created (b) a map. There are functions for both of these.
 
-```{r Route Summary and Map}
+```{r route_summary_and_map}
 # create route summary
 rtes <- summarise_routes(routes, airports)
 
 # draw a basic map
-map_routes(NZ_coast_Pac, routes, crs = crs_Pacific, fat_map = NZ_buffer_Pac)
+map_routes(NZ_coast, routes, crs = crs_Pacific, fat_map = NZ_buffer30)
 
 ```
 

@@ -1,7 +1,7 @@
 Type: Package
 Package: himach
 Title: High Mach finds routes for supersonic aircraft 
-Version: 0.0.2-9011
+Version: 0.0.2-9012
 Authors@R: 
     c(person(given = "David",
            family = "Marsh",

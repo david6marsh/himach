@@ -10,7 +10,6 @@ airports <- make_airports(crs = crs_Pacific) %>%
   filter(substr(APICAO,1,1)=="N") #just around New Zealand
 refuel_ap <- airports %>%
   filter(APICAO=="NZWN")
-NZ_buffer <- sf::st_transform(himach::NZ_buffer30, crs=crs_Pacific)
 
 aps <- rbind(make_AP2("NZAA","NZCH",airports), make_AP2("NZAA","NZDN",airports),
              make_AP2("NZAA","NZQN",airports), make_AP2("NZWN","NZQN",airports),
@@ -21,7 +20,7 @@ NZ_routes <- purrr::reduce(lapply(
   1:nrow(aps),
   function(x) find_route(ac[4,],
                         aps[x,],
-                        NZ_buffer,
+                        NZ_buffer30,
                         refuel = refuel_ap, refuel_topN = 1,
                         refuel_only_if = TRUE,
                         route_grid = NZ_grid,
