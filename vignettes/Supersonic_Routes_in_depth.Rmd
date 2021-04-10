@@ -184,7 +184,7 @@ In fact, the problem of finding too many apparently over-ocean routes is broader
 
 An example of this is in the same place. Some maps omit small islands (well, larger ones like Killniq down to tiny ones like Goodwin Island) at the mouth of the Hudson Strait. This affects the apparent width of the opening. Given the islands, and a 50km buffer, the Strait is _not_ open as the next example shows.
 
-(This uses a non-CRAN, but public package of hi-resolution maps. If you don't want to load it, just note the results in the figure.)
+This uses a non-CRAN, but public package of hi-resolution maps, `rnaturalearthhires`. If you don't want to load this package, just note the results shown in the figure.
 
 ```{r Island Example, fig.width=7, eval = FALSE}
 sf::sf_use_s2(TRUE)

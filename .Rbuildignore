@@ -10,3 +10,5 @@
 ^ignore/2103_dateline_test\.RData$
 ^codecov\.yml$
 ^\.travis\.yml$
+^cran-comments\.md$
+
