@@ -15,10 +15,12 @@
 #' New Zealand polygons with 30km land buffer
 #'
 #' A dataset containing sf::MULTIPOLYGONS for New Zealand. Uses simplified
-#' version of Stats NZ data, at 1km resolution \code{NZ_coast}, with added 30km
+#' version of Stats NZ data, at 1km resolution, as in \code{link{NZ_coast}}, with added 30km
 #' buffer to all coasts.
 #'
 #' @format MULTIPOLYGON in original coordinates EPSG 2193
+#'
+#' @seealso \code{link{NZ_coast}}
 #'
 #' @source
 #'   \url{https://datafinder.stats.govt.nz/layer/104266-territorial-authority-2020-clipped-generalised//}
@@ -32,6 +34,8 @@
 #' deviation in routes, when used as an 'avoid' dataset.
 #'
 #' @format MULTIPOLYGON in original coordinates EPSG 2193
+#'
+#' @seealso \code{link{NZ_coast}}
 #'
 #' @source
 #' \url{https://datafinder.stats.govt.nz/layer/104266-territorial-authority-2020-clipped-generalised//}
@@ -62,7 +66,7 @@
 #' crs_Atlantic is "+proj=robin +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84
 #' +datum=WGS84 +units=m +no_defs"
 #'
-#' @seealso \code{\link{crs_Pacific}}
+#' @seealso \code{\link{crs_Pacific}}, \code{\link{crs_N}}, \code{\link{crs_S}}
 #'
 #' @format CRS
 #'
@@ -77,7 +81,7 @@
 #'
 #' @format CRS
 #'
-#' @seealso \code{\link{crs_Atlantic}}
+#' @seealso \code{\link{crs_Atlantic}}, \code{\link{crs_N}}, \code{\link{crs_S}}
 #'
 "crs_Pacific"
 
@@ -87,7 +91,7 @@
 #' WGS 84 / Arctic Polar Stereographic. Used in analysis, but
 #' not recommended for plots.
 #'
-#' crs_N <- 3995
+#' crs_N is EPSG3995
 #'
 #' @seealso \code{\link{crs_Atlantic}}, \code{\link{crs_Pacific}},
 #'  \code{\link{crs_longlat}}, \code{\link{crs_S}}
@@ -102,7 +106,7 @@
 #' WGS 84 / Antarctic Polar Stereographic. Used in analysis, but
 #' not recommended for plots.
 #'
-#' crs_N <- 3031
+#' crs_N is EPSG 3031
 #'
 #' @seealso \code{\link{crs_Atlantic}}, \code{\link{crs_Pacific}},
 #'  \code{\link{crs_longlat}}, \code{\link{crs_N}}

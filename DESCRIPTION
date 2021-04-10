@@ -1,7 +1,7 @@
 Type: Package
 Package: himach
-Title: Find best route for supersonic aircraft 
-Version: 0.0.2-9010
+Title: High Mach finds routes for supersonic aircraft 
+Version: 0.0.2-9011
 Authors@R: 
     c(person(given = "David",
            family = "Marsh",
@@ -10,7 +10,7 @@ Authors@R:
     person(family = "EUROCONTROL",
     role = c("fnd", "cph")))
 Description: For supersonic aircraft, flying subsonic over land,
-    find the best route between airports. Allow for coastal buffer and
+    'High Mach' finds the best route between airports. Allows for coastal buffer and
     potentially closed regions. Uses minimal model of aircraft
     performance: focus is on time saved versus subsonic flight, rather
     than vertical flight profile. For modelling and forecasting, not for planning your

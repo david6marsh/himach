@@ -148,13 +148,13 @@ emptyRoute <- function(ac, ap2, fat_map,
 #'
 #' This function finds is a wrapper for the single-case function
 #' \code{find_route}. It takes (text) lists of aircraft and airport codes,
-#' combines them, then repeatedly finds routes for these. A 'route' is made up
+#' combines them, then finds routes for all of these. A 'route' is made up
 #' of one or two 'legs' (airport to airport without intermediate stop).
 #'
 #' For more details see \code{\link{find_route}}
 #'
 #'
-#' @param ac_ids A vector of aircraft IDs, as column 'id' from
+#' @param ac_ids A vector of aircraft IDs, as in column 'id' from
 #'   \code{\link{make_aircraft}}
 #' @param ap2_ids A 2-column matrix or dataframe of airport pair text IDs
 #' @param aircraft Specification of the aircraft, see
@@ -236,7 +236,8 @@ find_routes <- function(ac_ids, ap2_ids, aircraft, airports, ...){
 #'   chooses the quickest one (or \code{refuel_topN}).
 #'
 #'   Circuitous refuelling is avoided, tested against total distance <
-#'   \code{max_circuity} * great circle distance.
+#'   \code{max_circuity} * great circle distance. This is separate to the limits
+#'   placed on circuity of individual legs in \code{\link{find_leg}}.
 #'
 #'   If no refuel option is found, a message is displayed. The route with `NA`
 #'   for `time_h` is returned.
@@ -250,8 +251,8 @@ find_routes <- function(ac_ids, ap2_ids, aircraft, airports, ...){
 #' @param avoid \code{sf::MULTIPOLYGON} map of areas not to fly over
 #' @param route_grid \code{GridLat} routing grid as from
 #'   \code{\link{make_route_grid}}
-#' @param cf_subsonic Further aircraft to use as comparator, default NA. [not
-#'   recommended]
+#' @param cf_subsonic Further aircraft to use as comparator, default NA. (use is
+#'   not recommended)
 #' @param refuel Airports available for refuelling, dataframe with \code{APICAO,
 #'   long, lat}
 #' @param refuel_h Duration of refuelling stop, in hours
@@ -477,7 +478,7 @@ find_route <- function(ac, ap2, fat_map, avoid=NA, route_grid, cf_subsonic=NA,
 
 #cached SID-STAR
 findToCToD <- function(ap, route_grid, fat_map, ac,
-                       ad_dist, ad_nearest){
+                       ad_dist_m, ad_nearest){
   #the original findToCToD accepted multiline ap & route_grid - for ease of caching no longer true
   stopifnot(nrow(ap)==1 & nrow(ac)==1)
 
@@ -491,14 +492,14 @@ findToCToD <- function(ap, route_grid, fat_map, ac,
     attr(.hm_cache$star_cache,"map") <- route_grid@name
     attr(.hm_cache$star_cache,"aircraftSet") <- attr(ac,"aircraftSet")}
 
-  #cache the SID-STAR with data name which is the ACID, ap, ad_nearest & ad_dist.
-  cache_as <- paste(ac$id, ap$APICAO, ad_nearest, ad_dist, sep="-")
+  #cache the SID-STAR with data name which is the ACID, ap, ad_nearest & ad_dist_m.
+  cache_as <- paste(ac$id, ap$APICAO, ad_nearest, ad_dist_m, sep="-")
 
   #if this query has not already been cached, calculate its value
   if (!exists(cache_as, envir=.hm_cache$star_cache, inherits=F)) {
     if (getOption("quiet", default=0)>2) message("  TOC/TOD not cached: calculating...")
     assign(cache_as, findToCToD_really(ap, route_grid, fat_map, ac,
-                                       ad_dist, ad_nearest), .hm_cache$star_cache)
+                                       ad_dist_m, ad_nearest), .hm_cache$star_cache)
   }
   #return value
   get(cache_as, .hm_cache$star_cache)
@@ -506,7 +507,7 @@ findToCToD <- function(ap, route_grid, fat_map, ac,
 
 #link airport to top of climb and descent
 findToCToD_really <- function(ap, route_grid, fat_map, ac,
-                              ad_dist, ad_nearest){
+                              ad_dist_m, ad_nearest){
   #for a each point in ap - which is the airport list with locs
   #find where the airport connects to the 'cruise' grid points
   #not super accurate - because use st_distance rathe than distGeo
@@ -528,7 +529,7 @@ findToCToD_really <- function(ap, route_grid, fat_map, ac,
     group_by(.data$from) %>%
     mutate(to = as.character(route_grid@points$id),
            dist_m = units::drop_units(.data$dist_m),
-           near_m = abs(.data$dist_m - ad_dist)) %>% #compare to target distance
+           near_m = abs(.data$dist_m - ad_dist_m)) %>% #compare to target distance
     arrange(.data$near_m) %>%
     select(-.data$near_m) %>%
     #take the top n, with 8 should be near the points of the compass
@@ -823,7 +824,7 @@ pathToGC <- function(path, route_grid,
 #'
 #' It assumes that the routing grid, \code{route_grid}, has already been classified as
 #' land or sea using the map \code{fat_map}. The map is further used when
-#' converting the grid-based route to one of great circles segments.
+#' converting the grid-based route to one of great-circle segments.
 #'
 #' In fact \code{find_leg} finds up to 4 versions of the path:
 #' \enumerate{
@@ -835,8 +836,10 @@ pathToGC <- function(path, route_grid,
 #'     Dijkstra results, which are _not_ shortest great circle.
 #' }
 #'
-#' Legs are automatically saved in \code{route_cache} and retrieved from here if available
-#' rather than re-calculated. See vignette TBD for cache management.
+#' Legs are automatically saved in \code{route_cache} and retrieved from here if
+#' available rather than re-calculated. See
+#' \href{../doc/AdvancedRouting.html#cache}{vignette on caching} for cache
+#' management.
 #
 #'
 #' @param ac,ap2,route_grid,fat_map,ap_loc,avoid See \code{\link{find_route}}
@@ -844,11 +847,13 @@ pathToGC <- function(path, route_grid,
 #'     otherwise routes of excess range can be found.
 #' @param best_by_time If TRUE (default) then the quickest route is found,
 #'     else the shortest distance.
-#' @param grace_km Default NA. Otherwise, if great circle distance is with 3% of aircraft
-#'     range, then add this amount to the envelope.
+#' @param grace_km Default NA. Otherwise, if great circle distance is within
+#'   3pct of aircraft range, then add \code{grace_km}km to the range.
 #' @param shortcuts If TRUE (default) then path will be checked for great circle shortcuts.
-#' @param ad_dist The length of arrival/departure links, in m. (Default 100,000=100km)
+#' @param ad_dist_m The length of arrival/departure links, in m. (Default 100,000=100km)
 #' @param ad_nearest The number of arrival/departure links to create (Default 12)
+#' @param max_leg_circuity The maximum detour over great circle distance that
+#'   can be flown to find a quick over-sea route. Default 1.4.
 #' @param ... Other parameters, passed to \code{\link{make_route_envelope}}
 #'
 #'
@@ -866,14 +871,12 @@ pathToGC <- function(path, route_grid,
 #' airports <- make_airports(crs = crs_Pacific) %>%
 #'     filter(substr(APICAO, 1, 1) == "N") #just around New Zealand
 #'
-#' NZ_buffer <- sf::st_transform(NZ_buffer30, crs=crs_Pacific)
-#'
 #' options("quiet" = 4) #for heavy reporting
 #' # from Auckland to Christchurch
 #' ap2 <- make_AP2("NZAA","NZCH",airports)
 #' routes <- find_leg(aircraft[4,],
 #'                     ap2,
-#'                     fat_map = NZ_buffer,
+#'                     fat_map = NZ_buffer30,
 #'                     route_grid = NZ_grid,
 #'                     ap_loc = airports)
 #'
@@ -882,8 +885,8 @@ find_leg <- function(ac, ap2, route_grid, fat_map, ap_loc,
                     avoid=NA, enforce_range=TRUE,
                     best_by_time=TRUE, grace_km=NA,
                     shortcuts=TRUE,
-                    ad_dist = 100 * 1000,
-                    ad_nearest = 12,
+                    ad_dist_m = 100 * 1000,
+                    ad_nearest = 12, max_leg_circuity = 1.4,
                     ...){
   stopifnot(is.data.frame(ac)) #should be a single-row dataframe
   if (any(is.na(ac))) stop("Aircraft invalid (check selected row).") #should without NAs
@@ -901,14 +904,14 @@ find_leg <- function(ac, ap2, route_grid, fat_map, ap_loc,
     #note we use a different separator here, but not < > which file systems might reject
     cache_as <- paste(ac$id, ap2$ADEP, ap2$ADES, attr(avoid,"avoid"),
                       enforce_range, best_by_time, grace_km, shortcuts,
-                      ad_dist/1000, ad_nearest, sep="_")
+                      ad_dist_m/1000, ad_nearest, sep="_")
   }
   else {
     #cache the route with data name which is the ACID and AP2
     cache_as <- paste(ac$id, min(ap2$ADEP, ap2$ADES), max(ap2$ADEP, ap2$ADES),
                       attr(avoid,"avoid"), enforce_range,
                       best_by_time, grace_km, shortcuts,
-                      ad_dist/1000, ad_nearest, sep="-")
+                      ad_dist_m/1000, ad_nearest, sep="-")
   }
 
   #if this query has not already been cached, calculate its value
@@ -916,7 +919,7 @@ find_leg <- function(ac, ap2, route_grid, fat_map, ap_loc,
     if (getOption("quiet", default=0)>2) message("  Not cached: calculating...")
     r <- find_leg_really(ac, ap2, route_grid, fat_map, ap_loc, avoid,
                                 enforce_range, best_by_time, grace_km,
-                                shortcuts, ad_dist, ad_nearest, ...)
+                                shortcuts, ad_dist_m, ad_nearest, max_leg_circuity, ...)
     if (is.na(r[1,1]))(return(r)) #quick end without caching if it's an empty route.
     assign(cache_as, r, .hm_cache$route_cache)
   }
@@ -937,7 +940,7 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
                             best_by_time=TRUE,
                             grace_km=NA,
                             shortcuts=TRUE,
-                            ad_dist, ad_nearest, max_leg_circuity = 1.4,
+                            ad_dist_m, ad_nearest, max_leg_circuity,
                             ...){
   #start with a grid, find the routes for this aircraft
   #ap2 is a row of a dataframe with at least AP2 from_long, from_lat, to_long, to_lat
@@ -1026,9 +1029,9 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
   ades <- ap_loc[ap_loc$APICAO == ap2$ADES, ]
   arrDep <-
     bind_rows(findToCToD(adep, route_grid, fat_map,
-                         ac, ad_dist, ad_nearest),
+                         ac, ad_dist_m, ad_nearest),
               findToCToD(ades, route_grid, fat_map,
-                         ac, ad_dist, ad_nearest))
+                         ac, ad_dist_m, ad_nearest))
 
   #check if need to avoid areas
   if (is.list(avoid)){

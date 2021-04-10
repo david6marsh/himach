@@ -6,8 +6,8 @@
 #' Empties the cache.
 #'
 #' @seealso For more details see the cache section in the vignette:
-#'   \code{vignette("AdvancedRouting", package = "himach")}. or
-#'   \href{../doc/AdvancedRouting.html#cache}{Vignette on caching}
+#'   \code{vignette("Supersonic_Routes_in_depth", package = "himach")}. or
+#'   \href{../doc/Supersonic_Routes_in_depth.html#cache}{Vignette on caching}
 #'
 #' @param cache Which caches to clear. Default is both \code{c("route",
 #'   "star")}.
@@ -45,8 +45,10 @@ hm_clean_cache <- function(cache = c("route", "star")){
 #'   "aircraftSet")} will be added to the filename.
 #' @param path By default \code{"data/"}, where the file will be saved.
 #'
-#' @seealso #' For more details see the cache section in the vignette:
-#'   \code{vignette("AdvancedRouting", package = "himach")}
+#' @seealso For more details see the cache section in the vignette:
+#'   \code{vignette("Supersonic_Routes_in_depth", package = "himach")}. or
+#'   \href{../doc/Supersonic_Routes_in_depth.html#cache}{Vignette on caching}
+#'
 #'
 #' @return Invisible true
 #' @export
@@ -76,6 +78,10 @@ hm_save_cache <- function(id, grid, aircraft, path = "data/"){
 #' This silently overwrites any existing values in the cache.
 #'
 #' @param file Including the path.
+#'
+#' @seealso For more details see the cache section in the vignette:
+#'   \code{vignette("Supersonic_Routes_in_depth", package = "himach")}. or
+#'   \href{../doc/Supersonic_Routes_in_depth.html#cache}{Vignette on caching}
 #'
 #' @return Invisible true
 #' @export
