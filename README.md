@@ -3,6 +3,7 @@
 <!-- badges: start -->
 [![Lifecycle: maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://www.tidyverse.org/lifecycle/#maturing)
 [![Codecov test coverage](https://codecov.io/gh/david6marsh/himach/branch/main/graph/badge.svg)](https://codecov.io/gh/david6marsh/himach?branch=main)
+[![Travis build status](https://travis-ci.com/david6marsh/himach.svg?branch=main)](https://travis-ci.com/david6marsh/himach)
 <!-- badges: end -->
 
 The goal of himach ("high Mach") is to support modelling and analysis of the market for supersonic aircraft by generating good routes for aircraft which can fly supersonic over the ocean, but only subsonic over land. 
