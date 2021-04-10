@@ -12,20 +12,16 @@ It is not an operational tool. Please don't fly these routes, which do not allow
 
 ## Installation
 
-You can install the released version of `himach` from [CRAN](https://CRAN.R-project.org) with:
+You can install the current version of `himach` from github with:
 
 ``` r
-install.packages("himach")
+install.packages("devtools")
+devtools::install_github("david6marsh/github")
 ```
 
 For the vignette and testing, this package uses a map of New Zealand map based on Stats NZ's data which are licensed by Stats NZ for re-use under the Creative Commons Attribution 4.0 International licence.
 
 ## Example
 
-This is a basic example which shows you how to solve a common problem:
-
-``` r
-library(himach)
-## basic example code
-```
+See the vignettes for a worked example.
 

@@ -16,6 +16,8 @@ Description: For supersonic aircraft, flying subsonic over land,
     than vertical flight profile. For modelling and forecasting, not for planning your
     flight!
 License: MIT + file LICENSE
+URL: https://github.com/david6marsh/himach
+BugReports: https://github.com/david6marsh/himach/issues
 Depends: 
     R (>= 3.5.0)
 Imports:
