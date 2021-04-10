@@ -7,6 +7,4 @@
 
 * First version using the `s2` capabilities of the `sf` package. This gives more robust plotting, and a number of internal speed improvements.
 
-# himach 0.0.0.9008
 
-* Added a `NEWS.md` file to track changes to the package.
