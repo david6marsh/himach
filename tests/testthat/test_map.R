@@ -66,10 +66,13 @@ test_that("can make range envelope", {
   airports <- make_airports(crs = crs_Atlantic, warn = FALSE)
   aircraft <- make_aircraft(warn = FALSE)
   # test only a sample of points
+  # wkt seems to be machine-dependent so test fails on windows
+  # so strip out the values only
   expect_known_value(himach:::make_range_envelope(aircraft[1, ],
                                                 "LFPG",
                                                 airports,
-                                                envelope_points = 20)[c(1, 5, 10, 15), ],
+                                                envelope_points = 20) %>%
+                       unlist(),
                      "known/LFPG_envelope_20")
 
 })

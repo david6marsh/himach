@@ -39,16 +39,15 @@ test_that("find_leg catches input error",{
   # need to load some of the built-in data
   aircraft <- make_aircraft(warn = FALSE)
   # airports <- make_airports()
-  NZ_buffer_Pac <- sf::st_transform(NZ_buffer30, crs=crs_Pacific)
   airports <- make_airports(crs = crs_Pacific)
   options("quiet" = old_quiet)
   # for visual check:
-  # ggplot(NZ_buffer_Pac) + geom_sf() + geom_sf(data = routes$gc)
+  # ggplot(NZ_buffer30) + geom_sf() + geom_sf(data = routes$gc)
 
   # fail nicely with bad aircraft index
   expect_error(find_leg(aircraft[400,],
                         make_AP2("NZAA","NZCH",airports),
-                        fat_map = NZ_buffer_Pac,
+                        fat_map = NZ_buffer30,
                         route_grid = NZ_grid,
                         ap_loc = airports),
                  "Aircraft invalid")
@@ -61,7 +60,6 @@ test_that("find_route works with subsonic option",{
   hm_clean_cache() #start without cache
   # need to load some of the built-in data
   aircraft <- make_aircraft(warn = FALSE)
-  NZ_buffer_Pac <- sf::st_transform(NZ_buffer30, crs=crs_Pacific)
   airports <- make_airports(crs = crs_Pacific)
 
   # test with parallel subsonic aircraft
@@ -69,14 +67,18 @@ test_that("find_route works with subsonic option",{
   invisible(capture.output(
     routes <- find_route(aircraft[1, ],
                        make_AP2("NZGS", "NZDN", airports),
-                       fat_map = NZ_buffer_Pac,
+                       fat_map = NZ_buffer30,
                        route_grid = NZ_grid,
                        ap_loc = airports,
                        cf_subsonic = aircraft[3, ]) %>%
-    select(-timestamp)
+    select(-timestamp) %>%
+      slice(c(1, 3, 8)) %>%  # for a small sample
+      # wkt is machine-dependent so just extract length/area
+      mutate(across(c(gc, crow), st_length)) %>%
+      mutate(envelope = st_area(envelope))
   ))
   # test a couple of rows
-  expect_known_value(routes[c(3, 10), ], "known/test_route_subsonic_NZGS_NZDN")
+  expect_known_value(routes, "known/test_route_subsonic_NZGS_NZDN")
 
   # and test saving of cache
   tmp_dir <- tempdir()
@@ -99,7 +101,6 @@ test_that("Find multiple routes for multiple aircraft",{
   airports <- make_airports(crs = crs_Pacific)
   refuel_ap <- airports %>%
     filter(APICAO == "NZWN")
-  NZ_buffer_Pac <- sf::st_transform(NZ_buffer30, crs=crs_Pacific)
 
   ap2 <- as.data.frame(matrix(c("NZAA","NZCH","NZAA","NZDN"),
                               ncol = 2, byrow = TRUE), stringsAsFactors = FALSE)
@@ -107,31 +108,39 @@ test_that("Find multiple routes for multiple aircraft",{
 
   invisible(capture.output(
     routes <- find_routes(ac, ap2, aircraft, airports,
-                        fat_map = NZ_buffer_Pac,
+                        fat_map = NZ_buffer30,
                         route_grid = NZ_grid,
                         refuel = refuel_ap) %>%
-    select(-timestamp)
+    select(-timestamp) %>%
+      slice(c(4, 7, 25)) %>%  # for a small sample
+      # wkt is machine-dependent so just extract length/area
+      mutate(across(c(gc, crow), st_length)) %>%
+      mutate(envelope = st_area(envelope))
   ))
   # just test a sample
-  expect_known_value(routes[c(3, 7, 20), ], "known/test_multiroute")
+  expect_known_value(routes, "known/test_multiroute")
 
   # and again with a no-fly zone - and just one AP2
   invisible(capture.output(
     routes <- find_routes(ac, ap2[1, ], aircraft, airports,
-                          fat_map = NZ_buffer_Pac,
+                          fat_map = NZ_buffer30,
                           route_grid = NZ_grid,
                           refuel = refuel_ap,
                           avoid = NZ_Buller_buffer40) %>%
-      select(-timestamp)
+      select(-timestamp) %>%
+      slice(c(2, 5, 12)) %>%  # for a small sample
+      # wkt is machine-dependent so just extract length/area
+      mutate(across(c(gc, crow), st_length)) %>%
+      mutate(envelope = st_area(envelope))
   ))
   # check one row from each route
-  expect_known_value(routes[c(2, 9, 12), ], "known/test_multiroute_nofly")
+  expect_known_value(routes, "known/test_multiroute_nofly")
 
   # check for faulty airports
   ap2 <- as.data.frame(matrix(c("ZZZZ", "NZAA", "NZCH", "NZAA"),
                               ncol = 2, byrow = TRUE), stringsAsFactors = FALSE)
   expect_error(find_routes(ac, ap2, aircraft, airports,
-                             fat_map = NZ_buffer_Pac,
+                             fat_map = NZ_buffer30,
                              route_grid = NZ_grid),
                "unknown")
 

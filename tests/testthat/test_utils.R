@@ -24,15 +24,20 @@ test_that("Aircraft data loads", {
 })
 
 test_that("Default airport data loads", {
-  expect_message(z <- make_airports())
-  expect_known_value(z %>% filter(APICAO == "EGLL"), "known/default_airport_EGLL")
+  # strip wkt using st_coordinates
+  expect_message(z <- make_airports() %>%
+                   filter(APICAO == "EGLL") %>%
+                   mutate(ap_locs = sf::st_coordinates(ap_locs)))
+  expect_known_value(z, "known/default_airport_EGLL")
 })
 
 test_that("Airport data loads", {
   # normal functioning
   airports <- data.frame(APICAO = c("TEST", "test2"), lat = c(10, 5),
-                         long = c(10, -5), stringsAsFactors = FALSE)
-  expect_known_value(make_airports(airports[1, ]), "known/TEST_airport")
+                         long = c(10, -5), stringsAsFactors = FALSE) %>%
+    make_airports() %>%
+    mutate(ap_locs = sf::st_coordinates(ap_locs))
+  expect_known_value(airports, "known/TEST_airport")
 
   # with missing variable
   airports_miss <- data.frame(APICAO = "TEST", lat = 10, stringsAsFactors = FALSE)

@@ -142,7 +142,7 @@ map_routes(NZ_coast, fat_map = NZ_buffer30, crs = crs_Pacific)
 
 On the scale of this example, the resolution of the map is good. If you are doing global analysis, then you will need two things: a detailed map on which to base the coastal buffer (eg `rnaturalearthhires::countries10`); and then a simplified version, because otherwise plotting results will take a long time.
 
-The version in comments in the chunk above uses the basic `sf` functionality to simplify and buffer. For reasons that we go into [in another vignette](Supersonic_Routing_in_depth.html#bufferaccuracy), it's probably better to use `s2` for adding a buffer. That gives something like the following code (none of which is used further in this vignette).
+The version in comments in the chunk above uses the basic `sf` functionality to simplify and buffer. For reasons that we go into [in another vignette](Supersonic_Routes_in_depth.html#bufferaccuracy), it's probably better to use `s2` for adding a buffer. That gives something like the following code (none of which is used further in this vignette).
 
 ```{r mapswiths2}
 # you really want to use rnaturalearthhires::countries10
