@@ -37,7 +37,7 @@ hm_clean_cache <- function(cache = c("route", "star")){
 #' needed to generate the routes).
 #'
 #'
-#' @param id Identifying text, see above. Redcommended to use a version number
+#' @param id Identifying text, see above. Recommended to use a version number
 #'   or date.
 #' @param grid Your route grid dataset. The \code{grid@name} will be added to
 #'   the filename.

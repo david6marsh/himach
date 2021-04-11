@@ -109,7 +109,7 @@ Next you need a set of shapefiles covering your area of interest (usually worldw
 Finer resolution is better, because small islands can become larger obstacles. After a no-fly coastal buffer, say around 30km wide, is applied, even a 1km wide island is an obstacle 61km wide. There are some useful starter maps in `rnaturalearth` (use the `countries` versions), but you need to decide what is good enough for your purposes. Two tests:
 
 * If you have a 30km buffer do you have aircraft passing between Crete and mainland Greece without slowing down? Then you're missing the island of Antikythera, famous for its ancient, analogue computer. 
-* With a 50km buffer, do you have routes passing supersonically between Taiwan and the Phillipines? Then you are missing either Y'Ami or Xiao-lan Yu, which are just 98km apart.
+* With a 50km buffer, do you have routes passing supersonically between Taiwan and the Philippines? Then you are missing either Y'Ami or Xiao-lan Yu, which are just 98km apart.
 
 Licensing and your intended use may influence which maps are available to you. We have used data from Eurostat in the past (at 1:1M scale, [Eurostat country shape files](https://ec.europa.eu/eurostat/web/gisco/geodata/reference-data/administrative-units-statistical-units/countries)). For the purpose of rapid testing and this vignette, we use a map which is provided by [Stats NZ](https://www.stats.govt.nz/information-releases/geographic-boundary-data-annual-release-as-at-1-january-2020) and licensed by Stats NZ for re-use under the Creative Commons Attribution 4.0 International licence. 
 
