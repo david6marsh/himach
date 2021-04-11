@@ -8,7 +8,7 @@
   assign("star_cache", new.env(parent=parent.env(environment())), .hm_cache)
   attr(.hm_cache$star_cache,"map") <- "" # no map name yet
 
-   requireNamespace("s2", quietly = TRUE)
+  requireNamespace("s2", quietly = TRUE)
   sf::sf_use_s2(TRUE) # is this rude - changing a state silently?
 
 }

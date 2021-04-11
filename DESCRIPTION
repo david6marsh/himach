@@ -1,7 +1,7 @@
 Type: Package
 Package: himach
 Title: High Mach Finds Routes for Supersonic Aircraft 
-Version: 0.0.2-9013
+Version: 0.0.2-9014
 Authors@R: 
     c(person(given = "David",
            family = "Marsh",
@@ -24,6 +24,7 @@ Imports:
     cppRouting,
     dplyr (>= 1.0.0),
     ggplot2,
+    s2,
     sf (>= 0.9-7),
     tidyr
 Suggests: 
@@ -37,7 +38,6 @@ Suggests:
     progress,
     rmarkdown,
     rnaturalearthdata,
-    s2,
     scales,
     sp,
     stringr,
