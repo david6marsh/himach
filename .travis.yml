@@ -2,3 +2,18 @@
 
 language: R
 cache: packages
+
+r_binary_packages:
+ - units
+ - ggplot2
+ - dplyr
+ - tidyr
+ - knitr
+ - purrr
+ - rmarkdown
+ - scales
+ - stringr
+ - data.table
+
+
+
