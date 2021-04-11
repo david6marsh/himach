@@ -9,6 +9,8 @@ The goal of himach ("high Mach") is to support modelling and analysis of the mar
 
 'Good' usually means the fastest, and the key indicator is time advantage over flying in a subsonic aircraft.
 
+![Three example routes, including a refuel stop in Anchorage.](vignettes/three_routes.png)
+
 It is not an operational tool. Please don't fly these routes, which do not allow for wind or other atmospheric conditions, and are based on a very simple model of aircraft performance.
 
 ## Installation

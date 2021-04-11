@@ -1,3 +1,8 @@
+# himach 0.1.0
+
+* First version targeted for CRAN release. 
+* Fixes a number of bugs in the avoid-area functionality. 
+
 # himach 0.0.2
 
 * Major overhaul of the approach to smoothing from a Dijkstra-style route to a great-circle route, to handle the 1% of cases where the old approach didn't work well. 
