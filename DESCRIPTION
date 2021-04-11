@@ -32,7 +32,6 @@ Suggests:
     data.table,
     geosphere,
     knitr,
-    lwgeom,
     methods,
     purrr,
     progress,
