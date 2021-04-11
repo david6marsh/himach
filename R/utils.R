@@ -52,12 +52,11 @@ copy_attr <- function(from, to, atts){
 #' then ">" is the separator, otherwise "<>".
 #' (Unidirectional not currently supported)
 #'
-#' For more details see the help vignette:
-#' \code{vignette("Supersonic Routing", package = "himach")}
+#' For more details see the \href{../doc/Supersonic_Routes.html}{introductory vignette}.
 #'
 #' @param adep,ades Identical-length lists of airport codes
 #' @param ap List of locations of airports, defaults to the output
-#'     of \url{../doc/SupersonicRouting.html}.
+#'     of \code{\link{make_airports}}.
 #'
 #' @return Dataframe with additional variables as described above.
 #'

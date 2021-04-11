@@ -8,7 +8,7 @@
 #' @seealso \code{\link{NZ_buffer30}}
 #'
 #' @source
-#'   \url{https://datafinder.stats.govt.nz/layer/104266-territorial-authority-2020-clipped-generalised//}
+#'   \url{https://datafinder.stats.govt.nz/layer/104266-territorial-authority-2020-clipped-generalised}
 #'
 "NZ_coast"
 
@@ -23,7 +23,7 @@
 #' @seealso \code{link{NZ_coast}}
 #'
 #' @source
-#'   \url{https://datafinder.stats.govt.nz/layer/104266-territorial-authority-2020-clipped-generalised//}
+#'   \url{https://datafinder.stats.govt.nz/layer/104266-territorial-authority-2020-clipped-generalised}
 #'
 "NZ_buffer30"
 
@@ -38,7 +38,7 @@
 #' @seealso \code{link{NZ_coast}}
 #'
 #' @source
-#' \url{https://datafinder.stats.govt.nz/layer/104266-territorial-authority-2020-clipped-generalised//}
+#' \url{https://datafinder.stats.govt.nz/layer/104266-territorial-authority-2020-clipped-generalised}
 #'
 "NZ_Buller_buffer40"
 
