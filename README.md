@@ -1,7 +1,6 @@
 # himach
 
 <!-- badges: start -->
-[![Lifecycle: maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://www.tidyverse.org/lifecycle/#maturing)
 [![Codecov test coverage](https://codecov.io/gh/david6marsh/himach/branch/main/graph/badge.svg)](https://codecov.io/gh/david6marsh/himach?branch=main)
 <!-- badges: end -->
 
@@ -22,7 +21,7 @@ install.packages("devtools")
 devtools::install_github("david6marsh/github")
 ```
 
-For the vignette and testing, this package uses a map of New Zealand map based on Stats NZ's data which are licensed by Stats NZ for re-use under the Creative Commons Attribution 4.0 International licence. 
+For the vignette and testing, this package uses a map of New Zealand map based on Stats NZ's data which are licensed by Stats NZ for re-use under the Creative Commons Attribution 4.0 International licence. Map shown above uses data from www.naturalearthdata.com, from through the `rnaturalearthdata`, and `rnaturalearthhires` packages. 
 
 ## Example
 

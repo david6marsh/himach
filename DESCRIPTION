@@ -26,6 +26,7 @@ Imports:
     ggplot2,
     s2,
     sf (>= 0.9-7),
+    sp,
     tidyr
 Suggests: 
     airportr,
@@ -39,7 +40,6 @@ Suggests:
     rmarkdown,
     rnaturalearthdata,
     scales,
-    sp,
     stringr,
     testthat,
     units,

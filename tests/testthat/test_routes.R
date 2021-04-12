@@ -88,6 +88,7 @@ test_that("find_route works with subsonic option",{
   expect_true(length(.hm_cache) == 2)
   expect_true(length(.hm_cache$route_cache) == 2)
   expect_true(length(.hm_cache$star_cache) == 4)
+  unlink(tmp_dir) # remove the temporary directory
 
   options("quiet" = old_quiet)
 })
