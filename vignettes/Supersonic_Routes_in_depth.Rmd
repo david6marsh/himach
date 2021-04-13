@@ -64,7 +64,7 @@ system.time(
 # test saving of cache to a disposable directory
 tmp_dir <- tempdir()
 # for convenience, hm_save_cache gives the full name, including path
-full_filename <- hm_save_cache("test", NZ_grid, aircraft, path = tmp_dir)
+full_filename <- hm_save_cache("test_v", NZ_grid, aircraft, path = tmp_dir)
 
 #empty cache - just to demonstrate the re-loading
 # this isn't part of your normal workflow!
@@ -81,6 +81,7 @@ system.time(
                        ap_loc = airports)
 )
 
+
 # if you want to see a map
 # map_routes(NZ_coast, routes, crs_Pacific, fat_map = NZ_buffer_Pac)
 ```
@@ -88,6 +89,7 @@ system.time(
 The cache just works invisibly in the background - you will notice it speeds up finding of routes no end: in that example, from 1.5s (user) to 0.04s (user) on my machine. In particular, it helps with refuelling, because the `route_cache` quickly remembers the routes from major hub airports to the main refuelling points, so they don't need to be calculated again.
 
 Incidentally, if you add a new refuelling point, then the cache remains _valid_ because only **legs are cached, not routes**. With a new refuelling point, `find_route` will check both old legs and new (to the new refuelling points), gaining where the legs are cached, before selecting the best combination of legs to make the route.
+
 
 # No-fly zones
 
@@ -211,4 +213,12 @@ Now, in theory, all geometrical operations use spherical geometry, so a coordina
 
 We will remove remaining references to coordinate reference systems during route creation in later versions of `himach`.
 
+
+
+```{r echo = FALSE}
+#for tidiness remove the temp file now 
+# this is only for passing CRAN tests - you don't need to do it.
+unlink(full_filename)
+
+```
 

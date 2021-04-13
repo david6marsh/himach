@@ -82,13 +82,13 @@ test_that("find_route works with subsonic option",{
 
   # and test saving of cache
   tmp_dir <- tempdir()
-  full_filename <- hm_save_cache("test", NZ_grid, aircraft, path = tmp_dir)
+  full_filename <- hm_save_cache("test_that", NZ_grid, aircraft, path = tmp_dir)
   hm_clean_cache() #empty cache
   hm_load_cache(full_filename)
   expect_true(length(.hm_cache) == 2)
   expect_true(length(.hm_cache$route_cache) == 2)
   expect_true(length(.hm_cache$star_cache) == 4)
-  unlink(tmp_dir) # remove the temporary directory
+  unlink(full_filename) # remove the temporary cache file to pass CRAN test
 
   options("quiet" = old_quiet)
 })
