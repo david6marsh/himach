@@ -1,6 +1,7 @@
 # himach
 
 <!-- badges: start -->
+[![CRAN status](https://www.r-pkg.org/badges/version/himach)](https://CRAN.R-project.org/package=himach)
 [![Codecov test coverage](https://codecov.io/gh/david6marsh/himach/branch/main/graph/badge.svg)](https://codecov.io/gh/david6marsh/himach?branch=main)
 <!-- badges: end -->
 
