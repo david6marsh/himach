@@ -15,7 +15,13 @@ It is not an operational tool. Please don't fly these routes, which do not allow
 
 ## Installation
 
-You can install the current version of `himach` from github with:
+You can install the latest CRAN release using:
+
+```r
+install.packages("himach")
+```
+
+You can install the current development version of `himach` from github with:
 
 ``` r
 install.packages("devtools")
