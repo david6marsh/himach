@@ -1,3 +1,5 @@
+# himach 0.1.1
+
 # himach 0.1.0
 
 * First version targeted for CRAN release. 
