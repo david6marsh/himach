@@ -5,6 +5,8 @@ NZ_buffer30 <- hm_get_test("buffer")
 NZ_Buller_buffer40 <- hm_get_test("nofly")
 NZ_grid <- hm_get_test("grid")
 NZ_routes <- hm_get_test("route")
+old_tolerance <- testthat::testthat_tolerance()
+testthat::testthat_tolerance(5e-3) # relatively high tolerance for differences
 
 test_that("Route envelope", {
   ac <- make_aircraft(warn = FALSE)
@@ -153,3 +155,5 @@ test_that("Find multiple routes for multiple aircraft",{
 
   options("quiet" = old_quiet)
 })
+
+testthat::testthat_tolerance(old_tolerance)

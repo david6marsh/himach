@@ -1,6 +1,9 @@
 library(dplyr)
 library(ggplot2)
 
+old_tolerance <- testthat::testthat_tolerance()
+testthat::testthat_tolerance(5e-3) # relatively high tolerance for differences
+
 # Hadley rules out hash as not helpful: https://groups.google.com/forum/#!msg/ggplot2/JEvC86l_otA/i7k0yTDt2_UJ
 # vdiffr says may not be useful for sf objects - which is everything here :-(
 
@@ -69,3 +72,7 @@ test_that("can make range envelope", {
                      "known/LFPG_envelope_20")
 
 })
+
+
+
+testthat::testthat_tolerance(old_tolerance)

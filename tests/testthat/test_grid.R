@@ -1,6 +1,8 @@
 library(sf)
 library(dplyr)
 
+old_tolerance <- testthat::testthat_tolerance()
+testthat::testthat_tolerance(5e-3) # relatively high tolerance for differences
 old_quiet <- getOption("quiet", default=0)
 NZ_buffer30 <- hm_get_test("buffer")
 
@@ -41,3 +43,4 @@ test_that("Grid creation messaging", {
 
 
 options("quiet" = old_quiet)
+testthat::testthat_tolerance(old_tolerance)
