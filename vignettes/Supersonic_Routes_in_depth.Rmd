@@ -30,6 +30,12 @@ library(ggplot2)
 library(sp)
 library(sf)
 
+# and we'll load a full set of test data
+NZ_coast <- hm_get_test("coast")
+NZ_buffer30 <- hm_get_test("buffer")
+NZ_Buller_buffer40 <- hm_get_test("nofly")
+NZ_grid <- hm_get_test("grid")
+NZ_routes <- hm_get_test("route")
 ```
 
 
@@ -48,7 +54,6 @@ hm_clean_cache() #start without cache
 
 # need to load some of the built-in data for this example
 aircraft <- make_aircraft(warn = FALSE)
-NZ_buffer_Pac <- sf::st_transform(NZ_buffer30, crs=crs_Pacific)
 airports <- make_airports(crs = crs_Pacific)
 
 options("quiet"= 2) # for a little reporting
@@ -56,7 +61,7 @@ options("quiet"= 2) # for a little reporting
 system.time(
   routes <- find_route(aircraft[1, ],
                        make_AP2("NZAA", "NZDN", airports),
-                       fat_map = NZ_buffer_Pac,
+                       fat_map = NZ_buffer30,
                        route_grid = NZ_grid,
                        ap_loc = airports)
 )
@@ -76,14 +81,14 @@ hm_load_cache(full_filename)
 system.time(
   routes <- find_route(aircraft[1, ],
                        make_AP2("NZAA", "NZDN", airports),
-                       fat_map = NZ_buffer_Pac,
+                       fat_map = NZ_buffer30,
                        route_grid = NZ_grid,
                        ap_loc = airports)
 )
 
 
 # if you want to see a map
-# map_routes(NZ_coast, routes, crs_Pacific, fat_map = NZ_buffer_Pac)
+# map_routes(NZ_coast, routes, crs_Pacific, fat_map = NZ_buffer30)
 ```
   
 The cache just works invisibly in the background - you will notice it speeds up finding of routes no end: in that example, from 1.5s (user) to 0.04s (user) on my machine. In particular, it helps with refuelling, because the `route_cache` quickly remembers the routes from major hub airports to the main refuelling points, so they don't need to be calculated again.
@@ -112,9 +117,7 @@ In this example, no offence is intended to the citizens of Buller District of Ne
 
 # this uses data as in the previous code chunk
 aircraft <- make_aircraft(warn = FALSE)
-NZ_buffer_Pac <- sf::st_transform(NZ_buffer30, crs=crs_Pacific)
 airports <- make_airports(crs = crs_Pacific)
-
 
 # run the same route, but with the avoid region
 options("quiet"= 2) #just the progress bar
@@ -122,7 +125,7 @@ ac <- aircraft[c(1, 4), ]$id
 routes <- find_routes(ac, 
                       data.frame(ADEP = "NZAA", ADES = "NZDN"),
                       aircraft, airports,
-                      fat_map = NZ_buffer_Pac, 
+                      fat_map = NZ_buffer30, 
                       route_grid = NZ_grid,
                       cf_subsonic = aircraft[3,],
                       avoid = NZ_Buller_buffer40)
@@ -134,11 +137,11 @@ routes <- find_routes(ac,
 rtes <- summarise_routes(routes, airports)
 
 # draw a basic map
-map_routes(NZ_coast, routes, crs_Pacific, fat_map = NZ_buffer_Pac,
+map_routes(NZ_coast, routes, crs_Pacific, fat_map = NZ_buffer30,
           avoid_map = NZ_Buller_buffer40)
 
 map_routes(NZ_coast, routes, show_route = "aircraft",
-           crs = crs_Pacific, fat_map = NZ_buffer_Pac,
+           crs = crs_Pacific, fat_map = NZ_buffer30,
           avoid_map = NZ_Buller_buffer40)
 
 ```
@@ -212,7 +215,6 @@ There are a number of place in the vignettes, eg making an airport dataset, wher
 Now, in theory, all geometrical operations use spherical geometry, so a coordinate reference system should only be needed when you plot a map. At that point, the coordinate reference system is saying how to move from spherical coordinates to a flat projection. Four basic projections are supplied `crs_Atlantic`, `crs_Pacific`, `crs_North` and `crs_South` which you can use in `map_routes` to get the right map for your particular set of routes. You can create others as shown in the vignette.
 
 We will remove remaining references to coordinate reference systems during route creation in later versions of `himach`.
-
 
 
 ```{r echo = FALSE}

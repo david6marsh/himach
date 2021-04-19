@@ -46,7 +46,20 @@ test_that("Airport data loads", {
 
 })
 
+test_that("Reassert does nothing wrong", {
+  # 4 test sets should use crs_Pacific, one crs_longlat
+  expect_identical(sf::st_crs(himach:::NZ_coast),
+                   sf::st_crs(hm_get_test("coast")))
+  expect_identical(sf::st_crs(himach:::NZ_grid@points$xy),
+                   sf::st_crs(hm_get_test("grid")@points$xy))
+  expect_identical(sf::st_crs(himach:::NZ_routes$gc),
+                   sf::st_crs(hm_get_test("route")$gc))
+})
+
 test_that("NZ maps available", {
+  NZ_coast <- hm_get_test("coast")
+  NZ_buffer30 <- hm_get_test("buffer")
+
   expect_true(all(st_is(NZ_coast, c("POLYGON", "MULTIPOLYGON"))))
   expect_true(all(st_is(NZ_buffer30, c("POLYGON", "MULTIPOLYGON"))))
 })

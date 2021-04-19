@@ -6,29 +6,31 @@ library(ggplot2)
 
 # for the moment, limit to testing that the maps return ggplot objects, without fail
 
-test_that("Route mapping", {
-  NZ_thin <- sf::st_transform(NZ_coast, crs=crs_Pacific)
-  airports <- make_airports(crs = crs_Pacific, warn = FALSE)
+NZ_coast <- hm_get_test("coast")
+NZ_buffer30 <- hm_get_test("buffer")
+NZ_routes <- hm_get_test("route")
 
+test_that("Route mapping", {
+  airports <- make_airports(crs = crs_Pacific, warn = FALSE)
   # speed map
-  expect_silent(z <- map_routes(NZ_thin, NZ_routes,
+  expect_silent(z <- map_routes(NZ_coast, NZ_routes,
                                crs = crs_Pacific,
                                show_route="speed"))
   expect_true("ggplot" %in% class(z))
 
   # aircraft map
-  expect_silent(z <- map_routes(NZ_thin, NZ_routes,
+  expect_silent(z <- map_routes(NZ_coast, NZ_routes,
                                  crs = crs_Pacific,
                                  show_route="aircraft"))
   expect_true("ggplot" %in% class(z))
 
    # time advantage - auto calculated
- expect_silent(z <- map_routes(NZ_thin, NZ_routes,
+ expect_silent(z <- map_routes(NZ_coast, NZ_routes,
                                 crs = crs_Pacific))
  expect_true("ggplot" %in% class(z))
 
  # circuity - auto calculated - on crs_Atlantic
- expect_silent(z <- map_routes(NZ_thin, NZ_routes,
+ expect_silent(z <- map_routes(NZ_coast, NZ_routes,
                                 crs = crs_Pacific,
                                 show_route = "circuity"))
  expect_true("ggplot" %in% class(z))
@@ -41,7 +43,7 @@ test_that("Route mapping", {
    filter(!is.na(phase)) %>% # remove non-routes
    left_join(rtes, by = "fullRouteID") %>%
    arrange(advantage_h)
- expect_silent(z <- map_routes(NZ_thin, routes,
+ expect_silent(z <- map_routes(NZ_coast, routes,
                               crs = crs_Pacific,
                               fat_map = NZ_buffer30,
                               ap_loc = airports,
@@ -52,15 +54,6 @@ test_that("Route mapping", {
  expect_true("ggplot" %in% class(z))
 
 })
-
-# test_that("World wrapping", {
-#   world <- sf::st_as_sf(rnaturalearthdata::countries110)
-#
-#   expect_known_hash(st_slice_transform(world,
-#                                         crs_Pacific),
-#                       "62ae830d048da98dc436924c678")
-#
-# })
 
 test_that("can make range envelope", {
   airports <- make_airports(crs = crs_Atlantic, warn = FALSE)

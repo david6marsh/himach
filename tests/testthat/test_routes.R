@@ -1,5 +1,11 @@
 library(dplyr)
 
+NZ_coast <- hm_get_test("coast")
+NZ_buffer30 <- hm_get_test("buffer")
+NZ_Buller_buffer40 <- hm_get_test("nofly")
+NZ_grid <- hm_get_test("grid")
+NZ_routes <- hm_get_test("route")
+
 test_that("Route envelope", {
   ac <- make_aircraft(warn = FALSE)
   ap <- make_airports()

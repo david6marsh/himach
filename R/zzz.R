@@ -11,6 +11,7 @@
   requireNamespace("s2", quietly = TRUE)
   sf::sf_use_s2(TRUE) # is this rude - changing a state silently?
 
+  requireNamespace("data.table", quietly = TRUE)
 }
 
 

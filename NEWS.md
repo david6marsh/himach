@@ -1,5 +1,9 @@
 # himach 0.1.1
 
+* Fixing check errors on other platforms
+  + Errors involving "NULL: PROJ available?" appear linked [to this 'older GDAL' issue](https://github.com/r-spatial/sf/issues/1419) in `sf`. So implemented a work-around in various examples and vignettes.
+  + Use `make_aircraft(warn = FALSE)` in examples & vignettes just to eliminate warnings. Still think this merits a warning in normal use, because the default aircraft are unlikely to be fit for purposes beyond testing.
+
 # himach 0.1.0
 
 * First version targeted for CRAN release. 

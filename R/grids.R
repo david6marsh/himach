@@ -50,7 +50,7 @@ mod_long <- function(x){
 #' @return \code{gridLat} object containing points and lattice.
 #'
 #' @examples
-#' NZ_buffer <- sf::st_transform(NZ_buffer30, crs=crs_Pacific)
+#' NZ_buffer <- hm_get_test("buffer")
 #' system.time(
 #'   p_grid <- make_route_grid(NZ_buffer,"NZ lat-long at 300km",
 #'                            target_km = 300, classify = TRUE,
