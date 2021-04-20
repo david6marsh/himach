@@ -80,7 +80,7 @@ test_that("find_route works with subsonic option",{
                        ap_loc = airports,
                        cf_subsonic = aircraft[3, ]) %>%
     select(-timestamp) %>%
-      slice(c(1, 3, 8)) %>%  # for a small sample
+      filter(to %in% c(1920, 958, 1919)) %>%  # for a small sample
       # wkt is machine-dependent so just extract length/area
       mutate(across(c(gc, crow), st_length)) %>%
       mutate(envelope = st_area(envelope))
@@ -121,7 +121,7 @@ test_that("Find multiple routes for multiple aircraft",{
                         route_grid = NZ_grid,
                         refuel = refuel_ap) %>%
     select(-timestamp) %>%
-      slice(c(4, 7, 25)) %>%  # for a small sample
+      filter(to %in% c(789, 2022) | gcdist_km == 0) %>%  # for a small sample
       # wkt is machine-dependent so just extract length/area
       mutate(across(c(gc, crow), st_length)) %>%
       mutate(envelope = st_area(envelope))
@@ -137,7 +137,7 @@ test_that("Find multiple routes for multiple aircraft",{
                           refuel = refuel_ap,
                           avoid = NZ_Buller_buffer40) %>%
       select(-timestamp) %>%
-      slice(c(2, 5, 12)) %>%  # for a small sample
+      filter(to %in% c(2202, 1171)) %>%  # for a small sample
       # wkt is machine-dependent so just extract length/area
       mutate(across(c(gc, crow), st_length)) %>%
       mutate(envelope = st_area(envelope))

@@ -54,8 +54,9 @@ test_that("Reassert does nothing wrong", {
   # really want to test crs, but wkt is machine dependent
   expect_equal(sf::st_area(himach:::NZ_coast),
                    sf::st_area(hm_get_test("coast")))
-  expect_equal(sf::st_length(himach:::NZ_routes$gc),
-                   sf::st_length(hm_get_test("route")$gc))
+  # test one segment
+  expect_equal(sf::st_length(himach:::NZ_routes$gc[1]),
+                   sf::st_length(hm_get_test("route")$gc[1]))
 })
 
 test_that("NZ maps available", {
