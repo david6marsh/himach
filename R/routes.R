@@ -1330,7 +1330,7 @@ summarise_routes <- function(routes,
     mutate(gcdist_km = make_AP2(substr(first(.data$routeID),1,4),
                                     substr(first(.data$routeID),7,10),
                                     ap_loc)$gcdist_km,
-           M084_h = round(.data$gcdist_km/(0.85 * mach_kph),2) + arrdep_h,
+           M084_h = round(.data$gcdist_km/(0.84 * mach_kph),2) + arrdep_h,
            gcdist_km = round(.data$gcdist_km,1)) %>%
     group_by(.data$timestamp, .data$fullRouteID, .data$routeID, .data$refuel_ap,
              .data$acID, .data$acType, .data$M084_h, .data$gcdist_km) %>%
