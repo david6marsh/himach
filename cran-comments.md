@@ -4,7 +4,8 @@ Patch v0.1.1 addresses a number of CMD Check errors in v0.1.0, largely on older 
 ## Test environments
 
 * local Mac OS X install, R 4.0.2 (23 April)
-* win-builder (old_release, devel)   (23 April, 23 April)
+* win-builder (old_release, devel)   (23 April)
+* rhub windows (old_release, devel)   (23 April)
 * Ubuntu Linux 30.04.1 LTS, R-release, GCC (23 April)
 * Oracle Solaris 10, x86, 32 bit, R-release (solaris-x86-patched), through rhub (20 April)
 
