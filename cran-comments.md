@@ -1,31 +1,16 @@
 ## Re-submission
-Re-submission comments:
-
-* Note: New submission
-   + ok
-* Flavor: r-devel-linux-x86_64-debian-gcc
-Check: for detritus in the temp directory, Result: NOTE
- Found the following files/directories:
-   'RtmpIryMewroute_star_cache_test_NZ_lat-long_at_30km_test_aircraft.rda'
-   'Rtmppsd4Throute_star_cache_test_NZ_lat-long_at_30km_test_aircraft.rda'
-   + Solution: These are cache data saved to the session temp directory. I have added an `unlink` to remove the temporary files explicitly. Plus added Debian Linux, R-devel, GCC to test environments (though yesterday that didn't produce this note).
+Patch v0.1.1 addresses a number of CMD Check errors in v0.1.0, largely on older machines (as of 20/4 on oldrel-macos & patched-solaris). All appear to be linked to a [known issue with `sf`](https://github.com/r-spatial/sf/issues/1419) linked to having older versions of GDAL. Have implemented the work-around suggested there when accessing in-built (test) datasets. This removed those CMD Check errors as far as I could tell, using rhub-check on old releases.
 
 ## Test environments
 
-* local OS X install, R 4.0.2  (Repeated 13 Apr)
-* win-builder (release & devel)   (Repeated 13 Apr)
-* Ubuntu Linux 20.04.1 LTS, R-release, GCC through rhub  (Repeated 12 Apr)
-* Debian Linux, R-devel, GCC, through rhub (Repeated 13 April)
+* local Mac OS X install, R 4.0.2 (23 April)
+* win-builder (old_release, devel)   (23 April, 23 April)
+* Ubuntu Linux 30.04.1 LTS, R-release, GCC (23 April)
+* Oracle Solaris 10, x86, 32 bit, R-release (solaris-x86-patched), through rhub (20 April)
 
 ## R CMD check results
-There were no ERRORs or WARNINGs.
+I get ERRORs on Solaris, because the package 'lwgeom' is unavailable (and is a dependency for 'sf' which is a dependency for this package 'himach'). So this is a system, not package error, in my view.
 
-There was 1 NOTE both on Windows & Linux:
-
-* checking CRAN incoming feasibility ... NOTE
-  Maintainer: ‘David Marsh <david.marsh@eurocontrol.int>’
-  
-  New submission
-That is unavoidably true.
+On other platforms there were no ERRORs, WARNINGs or NOTEs.
 
 
