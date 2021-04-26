@@ -2,7 +2,7 @@
 #
 # Functions for plotting nice maps of routes
 
-utils::globalVariables(c("crs_Atlantic"))
+# utils::globalVariables(c("crs_Atlantic"))
 
 #' Version of \code{st_transform} with view window to avoid dateline
 #'
@@ -43,7 +43,7 @@ utils::globalVariables(c("crs_Atlantic"))
 #' #   ggplot2::geom_sf()
 #'
 #' @export
-st_window <- function(m, crs = crs_Atlantic, longit_margin = 0.1){
+st_window <- function(m, crs = himach::crs_Atlantic, longit_margin = 0.1){
   # 'dateline' of the crs
   longit <- mod_long(long_cent(crs) + 180)
   long1 <- mod_long(longit + longit_margin)
@@ -168,7 +168,8 @@ make_range_envelope <- function(ac, ap, ap_locs = make_airports(),
 #'
 #' @export
 map_routes <- function(
-  thin_map, routes=NA, crs=crs_Atlantic, show_route="time",
+  thin_map, routes=NA, crs=himach::crs_Atlantic,
+  show_route="time",
   fat_map=NA, avoid_map=NA,
   ap_loc=NA, ap_col="darkblue", ap_size=0.4,
   crow=FALSE, crow_col="grey70", crow_size=0.2,
@@ -183,9 +184,6 @@ map_routes <- function(
   warn = FALSE
 ){
   (stopifnot(is.na(show_route) || show_route %in% c("speed","aircraft","time", "circuity")))
-
-  #only support crs_Atlantic for the moment
-  # stopifnot(st_crs(crs) == st_crs(crs_Atlantic))
 
   # remove the non-routes (have time = NA)
   # these are where refuelling was needed

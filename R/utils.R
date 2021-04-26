@@ -2,7 +2,7 @@
 # Private helper functions for 2speed package
 # that do not fit into the routes, grids or maps collections
 
-utils::globalVariables(c("mach_kph", "crs_Pacific"))
+# utils::globalVariables(c("mach_kph", "crs_Pacific", "crs_longlat"))
 
 # helper to put European names first - assumes 4-letter ICAO code
 isEur <- function(x) substr(x,1,1) %in% c("E","L")
@@ -156,7 +156,7 @@ prj <- function(x, crs) {
 #' @importFrom dplyr %>%
 #'
 #' @export
-make_aircraft <- function(ac = NA, sound_kph = mach_kph, warn = TRUE){
+make_aircraft <- function(ac = NA, sound_kph = himach::mach_kph, warn = TRUE){
   if (!is.data.frame(ac)) {
     if (warn) warning("Using default aircraft file.")
     file <- system.file("extdata", "test_aircraft.csv", package = "himach", mustWork = TRUE)
@@ -255,7 +255,7 @@ make_airports <- function(ap = NA, crs = 4326, warn = TRUE){
     # 4326 is a lat-long format, for input, then transform to required crs
     dplyr::mutate(ap_locs = st_transform(
       st_cast(st_sfc(
-        st_multipoint(matrix(c(.data$long, .data$lat),ncol=2)), crs = crs_longlat),
+        st_multipoint(matrix(c(.data$long, .data$lat),ncol=2)), crs = himach::crs_longlat),
         'POINT'), crs = crs))
 }
 
@@ -278,7 +278,7 @@ st_gcIntermediate <- function(crs, ...){
   #not vector-clever for n, which is (single) integer
   #starts with 4326 - any old lat long and then transform to the required crs
   st_transform(
-    st_sfc(st_linestring(geosphere::gcIntermediate(...)),crs=4326),
+    st_sfc(st_linestring(geosphere::gcIntermediate(...)), crs=4326),
     crs)
 }
 
@@ -293,7 +293,7 @@ withProgress <- function(pb, f, ...){
 # normally this behaviour creates warnings so circumvent
 # but the warnings are there for a reason
 # so beware of the original crs changing!
-reassert_crs <- function(x, crs = crs_Pacific){
+reassert_crs <- function(x, crs = himach::crs_Pacific){
   suppressWarnings(x <- sf::st_set_crs(x, crs))
   return(x)
 }
