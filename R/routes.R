@@ -645,10 +645,6 @@ pathToGC <- function(path, route_grid,
           phaseID = paste0(cumsum(.data$phaseChange),".")) %>%
         select(-.data$phaseChange)
     }
-    # debug find NA phase
-    if (any(is.na(p$phase))){
-      message("missing phase")
-    }
 
     if(getOption("quiet", default=0)>1) message(" Calculated phase changes")
     fat_map_s2 <- st_as_s2(fat_map) # do this conversion only once
