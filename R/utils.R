@@ -353,3 +353,13 @@ hm_get_test <- function(item = c("coast", "buffer", "nofly", "grid", "route")){
   }
   return(z)
 }
+
+
+#' @importFrom lwgeom lwgeom_extSoftVersion
+use_lwgeom <- function(){
+  # just here to insist on importing lwgeom
+  #only needed to stop CRAN CMD Check error on an
+  # old solaris machine
+  lwgeom_extSoftVersion()
+
+}
