@@ -6,7 +6,6 @@ NZ_buffer30 <- hm_get_test("buffer")
 NZ_Buller_buffer40 <- hm_get_test("nofly")
 NZ_grid <- hm_get_test("grid")
 NZ_routes <- hm_get_test("route")
-old_tolerance <- testthat::testthat_tolerance(5e-3) # relatively high tolerance for differences
 
 # quick summary for test purposes
 summarise_routes_for_test <- function(r){
@@ -97,7 +96,8 @@ test_that("find_route works with subsonic option",{
        summarise_routes_for_test()
   ))
   # test a couple of rows
-  expect_known_value(routes, "known/test_route_subsonic_NZGS_NZDN")
+  expect_known_value(routes, "known/test_route_subsonic_NZGS_NZDN",
+                     tolerance = 0.05)
 
   # and test saving of cache
   tmp_dir <- tempdir()
@@ -134,7 +134,8 @@ test_that("Find multiple routes for multiple aircraft",{
       summarise_routes_for_test()
   ))
   # just test a sample
-  expect_known_value(routes, "known/test_multiroute")
+  expect_known_value(routes, "known/test_multiroute",
+                     tolerance = 0.05)
 
   # and again with a no-fly zone - and just one AP2
   invisible(capture.output(
@@ -146,7 +147,8 @@ test_that("Find multiple routes for multiple aircraft",{
       summarise_routes_for_test()
   ))
   # check one row from each route
-  expect_known_value(routes, "known/test_multiroute_nofly")
+  expect_known_value(routes, "known/test_multiroute_nofly",
+                     tolerance = 0.05)
 
   # check for faulty airports
   ap2 <- as.data.frame(matrix(c("ZZZZ", "NZAA", "NZCH", "NZAA"),
@@ -158,5 +160,3 @@ test_that("Find multiple routes for multiple aircraft",{
 
   options("quiet" = old_quiet)
 })
-
-testthat::testthat_tolerance(old_tolerance)
