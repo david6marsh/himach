@@ -12,6 +12,7 @@ testthat::testthat_tolerance(5e-3) # relatively high tolerance for differences
 NZ_coast <- hm_get_test("coast")
 NZ_buffer30 <- hm_get_test("buffer")
 NZ_routes <- hm_get_test("route")
+NZ_Buller <- hm_get_test("nofly")
 
 test_that("Route mapping", {
   airports <- make_airports(crs = crs_Pacific, warn = FALSE)
@@ -28,8 +29,10 @@ test_that("Route mapping", {
   expect_true("ggplot" %in% class(z))
 
    # time advantage - auto calculated
+  # add a no-fly zone to test those lines - even if routes ignore it
  expect_silent(z <- map_routes(NZ_coast, NZ_routes,
-                                crs = crs_Pacific))
+                                crs = crs_Pacific,
+                               avoid_map = NZ_Buller))
  expect_true("ggplot" %in% class(z))
 
  # circuity - auto calculated - on crs_Atlantic
