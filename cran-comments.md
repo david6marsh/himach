@@ -7,7 +7,7 @@ One other code change addresses an issue when using the functions without loadin
 
 * local Mac OS X install, R 4.0.2 (29 April)
 * win-builder (devel)   (29 April)
-* WIndows R-oldrel (rhub - 29 April)
+* Windows R-oldrel (rhub - 29 April)
 * Ubuntu Linux 30.04.1 LTS, R-release, GCC (29 April)
 * Oracle Solaris 10, x86, 32 bit, R-release (solaris-x86-patched), through rhub (29 April)
 
