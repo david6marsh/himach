@@ -24,6 +24,7 @@ Imports:
     cppRouting,
     data.table,
     dplyr (>= 1.0.0),
+    geosphere,
     ggplot2,
     lwgeom,
     s2,
@@ -33,7 +34,6 @@ Imports:
 Suggests: 
     airportr,
     cowplot,
-    geosphere,
     knitr,
     methods,
     purrr,

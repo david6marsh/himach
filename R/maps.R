@@ -74,6 +74,9 @@ plot_map <- function(msf,
 
 # achievable range from a point
 # not used for route finding
+#' @import sf
+#' @importFrom geosphere geodesic
+#' @importFrom sp CRS
 make_range_envelope <- function(ac, ap, ap_locs = make_airports(),
                           envelope_points=70){
   #range envelope shows how far from an airport you can go  with a given range
@@ -94,14 +97,14 @@ make_range_envelope <- function(ac, ap, ap_locs = make_airports(),
   geod <- geosphere::geodesic(geo_c, theta, dist)
 
   # convert to simple feature
-  pg <- st_multipoint(geod[,1:2]) %>%
-    st_sfc(crs=crs_longlat) %>%
-    st_cast('LINESTRING') %>%
-    st_cast('POLYGON') %>%
-    st_transform(cen_prj) %>%
+  pg <- sf::st_multipoint(geod[ ,1:2]) %>%
+    sf::st_sfc(crs = crs_longlat) %>%
+    sf::st_cast('LINESTRING') %>%
+    sf::st_cast('POLYGON') %>%
+    sf::st_transform(cen_prj) %>%
     # occasionally fails as self-intersection when later st_intersection
     # so this should solve that
-    st_make_valid()
+    sf::st_make_valid()
 }
 
 
