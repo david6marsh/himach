@@ -25,6 +25,7 @@ Imports:
     data.table,
     dplyr (>= 1.0.0),
     ggplot2,
+    lwgeom,
     s2,
     sf (>= 0.9-7),
     sp,
