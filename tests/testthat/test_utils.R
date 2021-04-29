@@ -55,6 +55,7 @@ test_that("Reassert does nothing wrong", {
   expect_equal(sf::st_area(himach:::NZ_coast),
                    sf::st_area(hm_get_test("coast")))
   # test one segment
+  skip_on_cran()
   expect_equal(sf::st_length(himach:::NZ_routes$gc[1]),
                    sf::st_length(hm_get_test("route")$gc[1]))
 })
