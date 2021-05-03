@@ -236,7 +236,7 @@ make_aircraft <- function(ac = NA, sound_kph = himach::mach_kph, warn = TRUE){
 #' @importFrom dplyr %>%
 #'
 #' @export
-make_airports <- function(ap = NA, crs = 4326, warn = TRUE){
+make_airports <- function(ap = NA, crs = himach::crs_longlat, warn = TRUE){
   if (!is.data.frame(ap)) {
     if (warn) message("Using default airport data: airportr::airport.")
     ap <- airportr::airports %>%
