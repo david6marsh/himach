@@ -209,7 +209,7 @@ find_routes <- function(ac_ids, ap2_ids, aircraft, airports, ...){
                                    return(r)
                                  }
   ),
-  rbind)
+  bind_rows)
   return(routes)
 }
 
