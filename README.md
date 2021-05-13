@@ -40,7 +40,7 @@ with:
 
 ``` r
 install.packages("devtools")
-devtools::install_github("david6marsh/github")
+devtools::install_github("david6marsh/himach")
 ```
 
 For the vignette and testing, this package uses a map of New Zealand map
