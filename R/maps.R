@@ -107,6 +107,13 @@ make_range_envelope <- function(ac, ap, ap_locs = make_airports(),
     sf::st_make_valid()
 }
 
+# simplify a map
+thin <- function(m, tol_km = 4){
+  m  %>%
+    st_as_s2() %>%
+    s2::s2_simplify(tolerance = tol_km * 1000) %>%
+    st_as_sfc()
+}
 
 #' Map a set of routes
 #'
@@ -150,6 +157,8 @@ make_range_envelope <- function(ac, ap, ap_locs = make_airports(),
 #' @param bound,bound_margin_km If bound=TRUE (default) crop to bounding
 #'   box of the \code{routes}, with additional \code{bound_margin_km} in km
 #'   (default 200)
+#' @param simplify_km Simplify the two maps to this scale before
+#'   plotting (default 10).
 #' @param land_f,buffer_f,avoid_f fill colours for thin, fat and no-fly
 #'   maps, default grey 90, 70 and 80, respectively
 #' @param l_alpha,l_size line (route) settings for alpha (transparency)
@@ -159,7 +168,16 @@ make_range_envelope <- function(ac, ap, ap_locs = make_airports(),
 #' @param title,subtitle Passed to ggplot.
 #' @param warn if TRUE show some warnings (when defaults loaded) (default FALSE)
 #'
-#' @return Dataframe with details of the leg
+#' @return A \code{ggplot}.
+#'
+#' @details
+#'
+#' The time to compute the map may not be very different with \code{simplify_km}
+#' varying between 2km and 20km, but the time to plot on the screen, or
+#' \code{ggsave} to a file, is longer than the compute time. It is this latter
+#' time that's reduced by simplifying the maps. For single, or short routes, you
+#' can probably see the difference between 2km and 10km, so it's your choice to
+#' prefer speed or beauty.
 #'
 #' @import sf
 #' @import dplyr
@@ -178,6 +196,7 @@ map_routes <- function(
   crow=FALSE, crow_col="grey70", crow_size=0.2,
   route_envelope=FALSE,
   bound=TRUE, bound_margin_km=200,
+  simplify_km = 10,
   land_f="grey90", buffer_f="grey60", avoid_f="grey80",
   l_alpha=0.8, l_size=0.5,
   e_alpha=0.4, e_size=0.6, e_col="grey70",
@@ -203,11 +222,11 @@ map_routes <- function(
 
   #layer 1 (one or two base maps)
   if (is.na(fat_map)) {
-    m <- plot_map(thin_map, c_border=NA, c_land=land_f)
+    m <- plot_map(thin(thin_map, simplify_km), c_border=NA, c_land=land_f)
   } else {
-    m <- plot_map(st_window(fat_map, crs),
+    m <- plot_map(st_window(thin(fat_map, simplify_km), crs),
                   c_border=NA, c_land=buffer_f) +
-      geom_sf(data=thin_map, fill=land_f, colour=NA)
+      geom_sf(data=thin(thin_map, simplify_km), fill=land_f, colour=NA)
   }
 
   #layer 2 (no fly-zone)

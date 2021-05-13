@@ -88,7 +88,7 @@ system.time(
 
 
 # if you want to see a map
-# map_routes(NZ_coast, routes, crs_Pacific, fat_map = NZ_buffer30)
+# map_routes(NZ_coast, routes, crs_Pacific, fat_map = NZ_buffer30, simplify_km = 2)
 ```
   
 The cache just works invisibly in the background - you will notice it speeds up finding of routes no end: in that example, from 1.5s (user) to 0.04s (user) on my machine. In particular, it helps with refuelling, because the `route_cache` quickly remembers the routes from major hub airports to the main refuelling points, so they don't need to be calculated again.
@@ -138,11 +138,13 @@ rtes <- summarise_routes(routes, airports)
 
 # draw a basic map
 map_routes(NZ_coast, routes, crs_Pacific, fat_map = NZ_buffer30,
-          avoid_map = NZ_Buller_buffer40)
+          avoid_map = NZ_Buller_buffer40,
+          simplify_km = 2)
 
 map_routes(NZ_coast, routes, show_route = "aircraft",
            crs = crs_Pacific, fat_map = NZ_buffer30,
-          avoid_map = NZ_Buller_buffer40)
+          avoid_map = NZ_Buller_buffer40,
+          simplify_km = 2)
 
 ```
 
