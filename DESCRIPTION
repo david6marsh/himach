@@ -12,7 +12,7 @@ Authors@R:
 Description: For supersonic aircraft, flying subsonic over land,
     High Mach finds the best route between airports. Allows for coastal buffer and
     potentially closed regions. Uses a minimal model of aircraft
-    performance: focus is on time saved versus subsonic flight, rather
+    performance: the focus is on time saved versus subsonic flight, rather
     than on vertical flight profile. For modelling and forecasting, not for planning your
     flight!
 License: MIT + file LICENSE
