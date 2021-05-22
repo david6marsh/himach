@@ -183,7 +183,7 @@ make_aircraft <- function(ac = NA, sound_kph = himach::mach_kph, warn = TRUE){
            over_land_kph = .data$over_land_M*sound_kph,
            trans_kph = (.data$over_sea_kph + .data$over_land_kph)/2,
            #transition penalty is time to change from over_sea to over_land speed (or v.v)
-           trans_h = (.data$over_sea_M - .data$over_land_M)/(.data$accel_Mpm * 60))
+           trans_h = (.data$over_sea_M - .data$over_land_M)^2/(2 * .data$accel_Mpm * .data$over_sea_M * 60))
 
   if (is.null(attr(ac, "aircraftSet"))) {
     attr(ac_full, "aircraftSet") <- "Dummy aircraft"
