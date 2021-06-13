@@ -1,3 +1,7 @@
+# himach 0.2.1
+
+* Patch so that tests work ok with `sf` v1.0+.
+
 # himach 0.2.0
 
 * More precise estimate of time penalty for acceleration from subsonic to supersonic cruise (or v.v.). Perhaps 1% difference in timings as a result.
