@@ -4,7 +4,9 @@ test_that("onLoad works", {
   requireNamespace("s2", quietly = TRUE)
   old_s2 <- sf::sf_use_s2()
   sf::sf_use_s2(FALSE)
-  expect_silent(himach:::.onLoad())
+  # not interested in whether sf provides a message
+  invisible(capture.output(himach:::.onLoad()))
+  # we're only need to know that now using s2
   expect_true(sf::sf_use_s2())
   sf::sf_use_s2(old_s2)
 })
