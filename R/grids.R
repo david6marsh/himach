@@ -9,6 +9,34 @@ mod_long <- function(x){
   (x + 180) %% 360 - 180
 }
 
+# convert 4 values from each line of df into a s2_line
+# we work via sf because for some reason the s2 version was much slower.
+rowwise_add_s2line <- function(df,
+                          start_long = .data$from_long,
+                          start_lat = .data$from_lat,
+                          end_long = .data$to_long,
+                          end_lat = .data$to_lat) {
+  y <- df %>%
+    # {{ start_long }} selects the column referred to by the value of start_long (without quotes)
+    select(
+      {{ start_long }},
+      {{ end_long }},
+      {{ start_lat }},
+      {{ end_lat }}
+    ) %>%
+    # make a list of lists, each of 4 numbers
+    purrr::transpose() %>%
+    # turn each list into a matrix
+    purrr::map(~ matrix(purrr::flatten_dbl(.), nrow = 2)) %>%
+    # feed that into st_linestring
+    purrr::map(st_linestring) %>%
+    st_sfc(crs = crs_longlat) %>%
+    st_as_s2()
+
+    df <- df %>%
+      mutate(geometry = y)
+}
+
 #' Make lat-long grid for route finding
 #'
 #' \code{make_route_grid} creates, and optionally classifies, a lat-long route grid
@@ -176,10 +204,7 @@ make_route_grid <- function(fat_map, name,
                                    format = "[:bar] :percent :eta")
   g@lattice <- ll_lattice %>%
     # add geometry
-   rowwise() %>%
-    mutate(geometry = s2::s2_make_line(c(.data$from_long, .data$to_long),
-                                       c(.data$from_lat, .data$to_lat))) %>%
-    ungroup() %>%
+    rowwise_add_s2line() %>%
     mutate(dist_km = s2::s2_length(.data$geometry)/1000) %>%
     mutate(geometry = sf::st_as_sfc(.data$geometry),
            geometry = sf::st_transform(.data$geometry, crs = st_crs(fat_map))) %>%
