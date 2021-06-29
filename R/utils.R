@@ -97,7 +97,7 @@ make_AP2 <- function(adep, ades, ap=make_airports()){
 # projection function - for more readable code in full_map
 # in utils because used both in maps and elsewhere
 # crs=54030 Robinson works well, but avoid cropping - a classic
-# for the Pacific crs=CRS("+proj=robin +lon_0=150 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
+# for the Pacific crs=st_crs("+proj=robin +lon_0=150 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
 prj <- function(x, crs) {
   st_transform(x, crs = crs, quiet=FALSE)
 }

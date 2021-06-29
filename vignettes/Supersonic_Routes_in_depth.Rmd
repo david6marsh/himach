@@ -27,7 +27,6 @@ knitr::opts_chunk$set(
 library(himach)
 library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
 library(ggplot2)
-library(sp)
 library(sf)
 
 # and we'll load a full set of test data

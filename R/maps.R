@@ -76,7 +76,6 @@ plot_map <- function(msf,
 # not used for route finding
 #' @import sf
 #' @importFrom geosphere geodesic
-#' @importFrom sp CRS
 make_range_envelope <- function(ac, ap, ap_locs = make_airports(),
                           envelope_points=70){
   #range envelope shows how far from an airport you can go  with a given range
@@ -87,8 +86,8 @@ make_range_envelope <- function(ac, ap, ap_locs = make_airports(),
   # centre of range
   geo_c <- c(ap_loc$long, ap_loc$lat)
 
-  # use CRS centred on cetnre of route envelopes
-  cen_prj <- sp::CRS(paste0("+proj=laea +lat_0=", round(geo_c[2],1),
+  # use CRS centred on centre of route envelopes
+  cen_prj <- sf::st_crs(paste0("+proj=laea +lat_0=", round(geo_c[2],1),
                             " +lon_0=", round(geo_c[1],1),
                             " +x_0=4321000 +y_0=3210000 +ellps=GRS80 +datum=WGS84 +units=m +no_defs"))
   dist <- ac$range_km * 1000

@@ -30,7 +30,6 @@ Imports:
     purrr,
     s2,
     sf (>= 0.9-7),
-    sp,
     tidyr
 Suggests: 
     airportr,

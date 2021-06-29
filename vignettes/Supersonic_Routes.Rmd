@@ -118,7 +118,7 @@ In fact, we need two files: one is the basic outline of the land, largely used f
 Since the shape file is large, we provide a simplified outline `NZ_coast` and also the buffer `NZ_buffer30` within `himach`. These are in the original projection used by Stats NZ. For global work, it's strongly recommended to use one of the following:
 
 * `crs_Atlantic`: "Robinson", a mid 20C classic view, with Atlantic centre
-* `crs_Pacific`: A Pacific-centred variant on this with `crs=CRS("+proj=robin +lon_0=180 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")`.
+* `crs_Pacific`: A Pacific-centred variant on this with `crs=sf::st_CRS("+proj=robin +lon_0=180 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")`.
 
 We leave this transformation step in the process to emphasise the need to think about which projection to use.
 
