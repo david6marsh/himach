@@ -22,8 +22,14 @@
 #'
 hm_clean_cache <- function(cache = c("route", "star")){
   stopifnot(length(intersect(c("route", "star"), cache))>0)
-  if ("route" %in% cache) rm(list = ls(.hm_cache$route_cache), pos=.hm_cache$route_cache)
-  if ("star" %in% cache) rm(list = ls(.hm_cache$star_cache), pos=.hm_cache$star_cache)
+  if ("route" %in% cache) {
+    rm(list = ls(.hm_cache$route_cache), pos=.hm_cache$route_cache)
+    attr(.hm_cache$route_cache,"map") <- ""
+  }
+  if ("star" %in% cache) {
+    rm(list = ls(.hm_cache$star_cache), pos=.hm_cache$star_cache)
+    attr(.hm_cache$star_cache,"map") <- ""
+  }
   invisible(TRUE)
 }
 

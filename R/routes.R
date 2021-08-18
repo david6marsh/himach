@@ -487,10 +487,13 @@ findToCToD <- function(ap, route_grid, fat_map, ac,
   #if cache doesn't exist, create it as a child of Global (so persists outside this function!)
   if ((attr(.hm_cache$star_cache,"map") != route_grid@name) ||
       (attr(.hm_cache$star_cache,"aircraftSet") != attr(ac,"aircraftSet"))) {
-    if (getOption("quiet", default=0)>0) message("Map or aircraft have changed, so clearing star cache.")
+    # if map = "" then already clean, so no need for message
+    if (getOption("quiet", default=0) > 0 &
+        attr(.hm_cache$star_cache,"map") != "") message("Map or aircraft have changed, so clearing star cache.")
     hm_clean_cache("star")
     attr(.hm_cache$star_cache,"map") <- route_grid@name
-    attr(.hm_cache$star_cache,"aircraftSet") <- attr(ac,"aircraftSet")}
+    attr(.hm_cache$star_cache,"aircraftSet") <- attr(ac,"aircraftSet")
+    }
 
   #cache the SID-STAR with data name which is the ACID, ap, ad_nearest & ad_dist_m.
   cache_as <- paste(ac$id, ap$APICAO, ad_nearest, ad_dist_m, sep="-")
@@ -893,9 +896,12 @@ find_leg <- function(ac, ap2, route_grid, fat_map, ap_loc,
   #can save and load the cache, with loadRDS readRDS
   #if cache doesn't match create it as a child of Global (so persists outside this function!)
   if ((attr(.hm_cache$route_cache,"map") != route_grid@name)) {
-    if (getOption("quiet", default=0)>0) message("Map used by grid has changed, so clearing route cache.")
+    # if map = "" then already empty so no need for message
+    if (getOption("quiet", default=0) > 0 &
+        attr(.hm_cache$route_cache,"map") != "") message("Map used by grid has changed, so clearing route cache.")
     hm_clean_cache("route") # empty cache
-    attr(.hm_cache$route_cache,"map") <- route_grid@name}
+    attr(.hm_cache$route_cache,"map") <- route_grid@name
+    }
 
   if (unidirectional) {
     #note we use a different separator here, but not < > which file systems might reject
