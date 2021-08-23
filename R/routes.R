@@ -1329,8 +1329,8 @@ summarise_routes <- function(routes,
   route_summary <- routes %>%
     group_by(.data$routeID) %>%
     rename(segdist_km = .data$gcdist_km) %>%
-    mutate(gcdist_km = make_AP2(substr(first(.data$routeID),1,4),
-                                    substr(first(.data$routeID),7,10),
+    mutate(gcdist_km = make_AP2(stringr::str_split(first(.data$routeID), stringr::boundary("word"))[[1]][1],
+                                stringr::str_split(first(.data$routeID), stringr::boundary("word"))[[1]][2],
                                     ap_loc)$gcdist_km,
            M084_h = round(.data$gcdist_km/(0.84 * himach::mach_kph),2) + arrdep_h,
            gcdist_km = round(.data$gcdist_km,1)) %>%
