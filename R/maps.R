@@ -195,7 +195,7 @@ map_routes <- function(
   crow=FALSE, crow_col="grey70", crow_size=0.2,
   route_envelope=FALSE,
   bound=TRUE, bound_margin_km=200,
-  simplify_km = 10,
+  simplify_km = 8,
   land_f="grey90", buffer_f="grey60", avoid_f="grey80",
   l_alpha=0.8, l_size=0.5,
   e_alpha=0.4, e_size=0.6, e_col="grey70",
