@@ -367,6 +367,7 @@ find_route <- function(ac, ap2, fat_map, avoid=NA, route_grid, cf_subsonic=NA,
       filter((.data$n_under_circ<2)|(.data$circuity < max_circuity))
 
     if (nrow(r_ap3) < 1) {
+      message(" ") #line break for formatting when the progress bar is being shown.
       message("No refuel options for ", ap2$AP2)
     } else {
       #simplify to distinct AP2 (there may be some duplicates, eg Heathrow-Gander appearing for -SFO & -LAX)
