@@ -29,7 +29,7 @@ Imports:
     lwgeom,
     purrr,
     s2,
-    sf (>= 0.9-7),
+    sf (>= 1.0),
     tidyr
 Suggests: 
     airportr,
