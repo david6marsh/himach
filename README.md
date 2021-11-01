@@ -4,13 +4,10 @@
 # `himach`
 
 <!-- badges: start -->
-
 [![CRAN
 status](https://www.r-pkg.org/badges/version/himach)](https://CRAN.R-project.org/package=himach)
-[![Codecov test
-coverage](https://codecov.io/gh/david6marsh/himach/branch/main/graph/badge.svg)](https://codecov.io/gh/david6marsh/himach?branch=main)
 <!-- badges: end -->
-
+# 
 The goal of `himach` (“high Mach”) is to support modelling and analysis
 of the market for supersonic aircraft by generating good routes for
 aircraft which can fly supersonic over the ocean, but only subsonic over
