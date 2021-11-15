@@ -1,5 +1,6 @@
 # himach (development version)
 
+* Fixed crash when routing over very short hops (say for re-positioning).
 * (development) Bug fixes: map leakage solved, summarise_routes now works with 3-letter airport codes as well as 4.
 * Removed use of Travis for code coverage.
 

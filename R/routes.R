@@ -999,6 +999,8 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
 
     # v.v. if gcdist is small, reduce the range using max_leg_circuity
     ac$range_km <- min(ac$range_km, gcdist * max_leg_circuity)
+    # if range_km is now small relative to ad_dist, boost it to give room for ad
+    ac$range_km <- max(ac$range_km, 5 * ad_dist_m/1000)
     if (enforce_range) {
       #find route Envelope
       envelope <-  make_route_envelope(ac, ap2, ...) %>%
