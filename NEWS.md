@@ -1,4 +1,4 @@
-# himach (development version)
+# himach 0.2.2
 
 * Fixed crash when routing over very short hops (say for re-positioning).
 * (development) Bug fixes: map leakage solved, summarise_routes now works with 3-letter airport codes as well as 4.
