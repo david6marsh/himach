@@ -43,6 +43,9 @@ jobs:
         with:
           extra-packages: rcmdcheck, sessioninfo
 
+      - if: runner.os == 'macOS'
+          run: brew install --cask xquartz
+
       - uses: r-lib/actions/check-r-package@v1
 
       - name: Show testthat output
