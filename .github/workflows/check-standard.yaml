@@ -19,10 +19,10 @@ jobs:
       matrix:
         config:
           - {os: macOS-latest,   r: 'release'}
-          # - {os: windows-latest, r: 'release'}
-          # - {os: ubuntu-latest,   r: 'devel', http-user-agent: 'release'}
-          # - {os: ubuntu-latest,   r: 'release'}
-          # - {os: ubuntu-latest,   r: 'oldrel-1'}
+          - {os: windows-latest, r: 'release'}
+          - {os: ubuntu-latest,   r: 'devel', http-user-agent: 'release'}
+          - {os: ubuntu-latest,   r: 'release'}
+          - {os: ubuntu-latest,   r: 'oldrel-1'}
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
@@ -43,18 +43,4 @@ jobs:
         with:
           extra-packages: rcmdcheck
 
-       - uses: r-lib/actions/check-r-package@v1
-        with:
-          build_args: '"--no-build-vignettes"'
-
-      - name: Show testthat output
-        if: always()
-        run: find check -name 'testthat.Rout*' -exec cat '{}' \; || true
-        shell: bash
-
-      - name: Upload check results
-        if: failure()
-        uses: actions/upload-artifact@main
-        with:
-          name: ${{ runner.os }}-r${{ matrix.config.r }}-results
-          path: check
+      - uses: r-lib/actions/check-r-package@v1
