@@ -44,8 +44,8 @@ jobs:
           extra-packages: rcmdcheck
 
       - name: Check
-         # env:
-           # _R_CHECK_CRAN_INCOMING_: false
+         env:
+         _R_CHECK_CRAN_INCOMING_: false
          run: |
            options(crayon.enabled = TRUE)
            rcmdcheck::rcmdcheck(args = c("--no-manual", "--as-cran"),
