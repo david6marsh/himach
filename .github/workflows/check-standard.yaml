@@ -45,4 +45,7 @@ jobs:
 
       - uses: r-lib/actions/check-r-package@v1
         with:
-          build_args: '"--no-build-vignettes"'
+        #default args plus ignore vignettes
+          args: '"--no-manual", "--as-cran", "--ignore-vignettes"'
+        # ignore vignettes on build, too
+          build_args: '"--no-build-vignettes", "--no-manual"'
