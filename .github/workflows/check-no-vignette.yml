@@ -43,10 +43,9 @@ jobs:
         with:
           extra-packages: rcmdcheck
 
-      - name: Check
-         run: options(crayon.enabled = TRUE)
-           rcmdcheck::rcmdcheck(args = c("--no-manual", "--as-cran"), build_args = c("--no-build-vignettes"), error_on = "warning", check_dir = "check")
-         shell: Rscript {0}
+       - uses: r-lib/actions/check-r-package@v1
+        with:
+          build_args: '"--no-build-vignettes"'
 
       - name: Show testthat output
         if: always()
