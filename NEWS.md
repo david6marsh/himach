@@ -1,3 +1,5 @@
+# himach (development version)
+
 # himach 0.2.2
 
 * Fixed crash when routing over very short hops (say for re-positioning flights).
