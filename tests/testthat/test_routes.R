@@ -10,7 +10,18 @@ NZ_routes <- hm_get_test("route")
 # redefine crs_Pacific
 #same as Robinson, but centred on long +180
 crs_Pacific <- sf::st_crs("+proj=robin +lon_0=180 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
-
+#ignore the warnings, I know this is just overwriting not transforming
+# these are here to avoid problems in CMD CHECK with old GDAL
+suppressWarnings( {
+  st_crs(NZ_coast) <- crs_Pacific
+  st_crs(NZ_buffer30) <- crs_Pacific
+  st_crs(NZ_routes) <- crs_Pacific
+  st_crs(NZ_routes$crow) <- crs_Pacific
+  st_crs(NZ_routes$envelope) <- crs_Pacific
+  st_sfc(NZ_grid@points$xy) <- crs_Pacific
+  st_sfc(NZ_grid@lattice$geometry) <- crs_Pacific
+  st_crs(NZ_Buller_buffer40) <- crs_Pacific
+})
 
 # quick summary for test purposes
 summarise_routes_for_test <- function(r){
