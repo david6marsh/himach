@@ -236,7 +236,7 @@ make_aircraft <- function(ac = NA, sound_kph = himach::mach_kph, warn = TRUE){
 #' @importFrom dplyr %>%
 #'
 #' @export
-make_airports <- function(ap = NA, crs = himach::crs_longlat, warn = TRUE){
+make_airports <- function(ap = NA, crs = st_crs(4326), warn = TRUE){
   if (!is.data.frame(ap)) {
     if (warn) message("Using default airport data: airportr::airport.")
     ap <- airportr::airports %>%
@@ -255,7 +255,7 @@ make_airports <- function(ap = NA, crs = himach::crs_longlat, warn = TRUE){
     # 4326 is a lat-long format, for input, then transform to required crs
     dplyr::mutate(ap_locs = st_transform(
       st_cast(st_sfc(
-        st_multipoint(matrix(c(.data$long, .data$lat),ncol=2)), crs = himach::crs_longlat),
+        st_multipoint(matrix(c(.data$long, .data$lat),ncol=2)), crs = st_crs(4326)),
         'POINT'), crs = crs))
 }
 
