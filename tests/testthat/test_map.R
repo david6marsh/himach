@@ -10,6 +10,12 @@ NZ_coast <- hm_get_test("coast")
 NZ_buffer30 <- hm_get_test("buffer")
 NZ_routes <- hm_get_test("route")
 NZ_Buller <- hm_get_test("nofly")
+# given some solaris CMD Check errors (old GDAl?)
+# redefine crs_Pacific and crs_Atlantic
+#same as Robinson, but centred on long +180
+crs_longlat <- sf::st_crs(4326)
+crs_Pacific <- sf::st_crs("+proj=robin +lon_0=180 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
+crs_Atlantic <- sf::st_crs("+proj=robin +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
 
 test_that("Route mapping", {
   airports <- make_airports(crs = crs_Pacific, warn = FALSE)

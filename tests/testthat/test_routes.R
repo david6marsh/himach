@@ -6,6 +6,12 @@ NZ_buffer30 <- hm_get_test("buffer")
 NZ_Buller_buffer40 <- hm_get_test("nofly")
 NZ_grid <- hm_get_test("grid")
 NZ_routes <- hm_get_test("route")
+# given some solaris CMD Check errors (old GDAl?)
+# redefine crs_Pacific
+#same as Robinson, but centred on long +180
+crs_longlat <- sf::st_crs(4326)
+crs_Pacific <- sf::st_crs("+proj=robin +lon_0=180 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
+
 
 # quick summary for test purposes
 summarise_routes_for_test <- function(r){

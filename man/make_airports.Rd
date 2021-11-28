@@ -4,7 +4,7 @@
 \alias{make_airports}
 \title{Make or load airport data}
 \usage{
-make_airports(ap = NA, crs = himach::crs_longlat, warn = TRUE)
+make_airports(ap = NA, crs = 4326, warn = TRUE)
 }
 \arguments{
 \item{ap}{Dataframe containing the minimum fields, or NA (default)}

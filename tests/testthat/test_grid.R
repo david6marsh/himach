@@ -2,6 +2,12 @@ library(sf)
 library(dplyr)
 
 old_quiet <- getOption("quiet", default=0)
+# given some solaris CMD Check errors (old GDAl?)
+# redefine crs_Pacific
+#same as Robinson, but centred on long +180
+crs_longlat <- sf::st_crs(4326)
+crs_Pacific <- sf::st_crs("+proj=robin +lon_0=180 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
+
 NZ_buffer30 <- hm_get_test("buffer")
 # if testing on old GDAL the crs might be unrecognised
 # so reset it just in case, following  https://stackoverflow.com/questions/61286108

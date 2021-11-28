@@ -79,6 +79,8 @@ management.
 \examples{
 # need to load some of the built-in data
 aircraft <- make_aircraft(warn = FALSE)
+crs_Pacific = sf::st_crs("+proj=robin +lon_0=180 +x_0=0 +y_0=0
+ +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
 airports <- make_airports(crs = crs_Pacific)
 # get test datasets
 NZ_buffer30 <- hm_get_test("buffer")
