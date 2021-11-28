@@ -865,7 +865,8 @@ pathToGC <- function(path, route_grid,
 #' @import tidyr
 #'
 #' @examples
-#' # need to load some of the built-in data
+#' # need to load some of the built-in data (not run)
+#' \dontrun{
 #' aircraft <- make_aircraft(warn = FALSE)
 #' airports <- make_airports(crs = crs_Pacific)
 #' # get test datasets
@@ -880,7 +881,7 @@ pathToGC <- function(path, route_grid,
 #'                     fat_map = NZ_buffer30,
 #'                     route_grid = NZ_grid,
 #'                     ap_loc = airports)
-#'
+#' }
 #' @export
 find_leg <- function(ac, ap2, route_grid, fat_map, ap_loc,
                     avoid=NA, enforce_range=TRUE,
