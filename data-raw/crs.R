@@ -2,7 +2,7 @@
 
 # (default) crs that uses lat and long
 # useful for converting matrices of long-lat to spatial
-crs_longlat <- sf::st_crs(4326)
+crs_longlat <- 4326
 
 #two map projections
 #54030 is not in the rgdal::make_EPSG() database, so define Robinson
