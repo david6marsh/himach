@@ -278,7 +278,7 @@ st_gcIntermediate <- function(crs, ...){
   #not vector-clever for n, which is (single) integer
   #starts with 4326 - any old lat long and then transform to the required crs
   st_transform(
-    st_sfc(st_linestring(geosphere::gcIntermediate(...)), crs=4326),
+    st_sfc(st_linestring(geosphere::gcIntermediate(...)), crs=crs_longlat),
     crs)
 }
 

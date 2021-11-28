@@ -30,7 +30,7 @@ rowwise_add_s2line <- function(df,
     purrr::map(~ matrix(purrr::flatten_dbl(.), nrow = 2)) %>%
     # feed that into st_linestring
     purrr::map(st_linestring) %>%
-    st_sfc(crs = crs_longlat) %>%
+    st_sfc(crs = 4326) %>%
     st_as_s2()
 
     df <- df %>%
