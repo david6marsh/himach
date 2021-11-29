@@ -15,16 +15,7 @@ NZ_Buller <- hm_get_test("nofly")
 #same as Robinson, but centred on long +180
 crs_Pacific <- sf::st_crs("+proj=robin +lon_0=180 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
 crs_Atlantic <- sf::st_crs("+proj=robin +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
-#ignore the warnings, I know this is just overwriting not transforming
-# these are here to avoid problems in CMD CHECK with old GDAL
-suppressWarnings( {
-  st_crs(NZ_coast) <- crs_Pacific
-  st_crs(NZ_buffer30) <- crs_Pacific
-  st_crs(NZ_routes) <- crs_Pacific
-  st_crs(NZ_routes$crow) <- crs_Pacific
-  st_crs(NZ_routes$envelope) <- crs_Pacific
-  st_crs(NZ_Buller) <- crs_Pacific
-})
+
 
 test_that("Route mapping", {
   airports <- make_airports(crs = crs_Pacific, warn = FALSE)
