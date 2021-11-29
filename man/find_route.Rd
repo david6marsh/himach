@@ -95,10 +95,10 @@ used when converting the grid-based route to one of great circles segments.
 \examples{
 # need to load some of the built-in data
 aircraft <- make_aircraft(warn = FALSE)
-airports <- make_airports(crs = crs_Pacific)
 # get test datasets
 NZ_buffer30 <- hm_get_test("buffer")
 NZ_grid <- hm_get_test("grid")
+airports <- make_airports(crs = sf::st_crs(NZ_buffer30))
 
 options("quiet" = 4) #for heavy reporting
 # from Auckland to Christchurch

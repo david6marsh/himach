@@ -97,9 +97,9 @@ make_range_envelope <- function(ac, ap, ap_locs = make_airports(),
 
   # convert to simple feature
   pg <- sf::st_multipoint(geod[ ,1:2]) %>%
-    sf::st_sfc(crs = crs_longlat) %>%
     sf::st_cast('LINESTRING') %>%
     sf::st_cast('POLYGON') %>%
+    sf::st_sfc(crs = 4326) %>%
     sf::st_transform(cen_prj) %>%
     # occasionally fails as self-intersection when later st_intersection
     # so this should solve that

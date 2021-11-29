@@ -282,7 +282,7 @@ find_routes <- function(ac_ids, ap2_ids, aircraft, airports, ...){
 #' # get test datasets
 #' NZ_buffer30 <- hm_get_test("buffer")
 #' NZ_grid <- hm_get_test("grid")
-#' airports <- make_airports(crs = st_crs(NZ_buffer30))
+#' airports <- make_airports(crs = sf::st_crs(NZ_buffer30))
 #'
 #' options("quiet" = 4) #for heavy reporting
 #' # from Auckland to Christchurch

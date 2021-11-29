@@ -18,8 +18,8 @@ suppressWarnings( {
   st_crs(NZ_routes) <- crs_Pacific
   st_crs(NZ_routes$crow) <- crs_Pacific
   st_crs(NZ_routes$envelope) <- crs_Pacific
-  st_sfc(NZ_grid@points$xy) <- crs_Pacific
-  st_sfc(NZ_grid@lattice$geometry) <- crs_Pacific
+  st_crs(NZ_grid@points$xy) <- crs_Pacific
+  st_crs(NZ_grid@lattice$geometry) <- crs_Pacific
   st_crs(NZ_Buller_buffer40) <- crs_Pacific
 })
 

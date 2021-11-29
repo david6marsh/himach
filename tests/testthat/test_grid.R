@@ -8,9 +8,6 @@ old_quiet <- getOption("quiet", default=0)
 crs_Pacific <- sf::st_crs("+proj=robin +lon_0=180 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
 
 NZ_buffer30 <- hm_get_test("buffer")
-# if testing on old GDAL the crs might be unrecognised
-# so reset it just in case, following  https://stackoverflow.com/questions/61286108
-st_crs(NZ_buffer30) <- crs_Pacific
 
 test_that("Using s2", {
   expect_true(sf_use_s2())
