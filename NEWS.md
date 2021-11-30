@@ -1,4 +1,4 @@
-# himach (development version)
+# himach 0.2.3
 
 # himach 0.2.2
 
