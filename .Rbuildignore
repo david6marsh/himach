@@ -11,6 +11,7 @@
 ^cran-comments\.md$
 ^README.Rmd$
 ^\.DS_Store$
+^\.RData$
 
 
 ^CRAN-RELEASE$
