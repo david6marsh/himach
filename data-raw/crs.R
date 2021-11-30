@@ -6,18 +6,18 @@ crs_longlat <- 4326
 
 #two map projections
 #54030 is not in the rgdal::make_EPSG() database, so define Robinson
-crs_Atlantic <- sf::st_crs("+proj=robin +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
+crs_Atlantic <- "+proj=robin +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
 #same as Robinson, but centred on long +180
-crs_Pacific <- sf::st_crs("+proj=robin +lon_0=180 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
+crs_Pacific <- "+proj=robin +lon_0=180 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
 #same as Robinson, but centred on long +120
-crs_120E <- sf::st_crs("+proj=robin +lon_0=120 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
+crs_120E <- "+proj=robin +lon_0=120 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
 
 # polar options
 # WGS 84 / Arctic Polar Stereographic
 # this is inconsistent with the others, but st_crs(3995) has a non-ascii character which CRAN does not like
 crs_N <- 3995
 #WGS 84 / Antarctic Polar Stereographic
-crs_S <- sf::st_crs(3031)
+crs_S <- 3031
 
 usethis::use_data(crs_longlat,
                   crs_Atlantic, crs_Pacific,

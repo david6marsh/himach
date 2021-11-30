@@ -2,7 +2,7 @@
 # Private helper functions for 2speed package
 # that do not fit into the routes, grids or maps collections
 
-# utils::globalVariables(c("mach_kph", "crs_Pacific", "crs_longlat"))
+utils::globalVariables(c("crs_Pacific", "crs_longlat"))
 
 # helper to put European names first - assumes 4-letter ICAO code
 isEur <- function(x) substr(x,1,1) %in% c("E","L")
@@ -294,7 +294,7 @@ withProgress <- function(pb, f, ...){
 # normally this behaviour creates warnings so circumvent
 # but the warnings are there for a reason
 # so beware of the original crs changing!
-reassert_crs <- function(x, crs){
+reassert_crs <- function(x, crs = crs_Pacific){
   suppressWarnings(x <- sf::st_set_crs(x, crs))
   return(x)
 }
@@ -338,21 +338,18 @@ reassert_crs <- function(x, crs){
 hm_get_test <- function(item = c("coast", "buffer", "nofly", "grid", "route")){
   stopifnot(item %in% c("coast", "buffer", "nofly", "grid", "route"))
   item <- substr(item, 1, 1)
-  # also in case older GDALs struggle with the stored version
-  crs_Pacific <- sf::st_crs("+proj=robin +lon_0=180 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
-  # these three are already crs_Pacific
-  if (item == "c")  z <- reassert_crs(NZ_coast, crs_Pacific)
-  if (item == "b")  z <- reassert_crs(NZ_buffer30, crs_Pacific)
-  if (item == "n")  z <- reassert_crs(NZ_Buller_buffer40, crs_Pacific)
+  if (item == "c")  z <- reassert_crs(NZ_coast)
+  if (item == "b")  z <- reassert_crs(NZ_buffer30)
+  if (item == "n")  z <- reassert_crs(NZ_Buller_buffer40)
   if (item == "g") {
     z <- NZ_grid
-    z@points$xy <- reassert_crs(z@points$xy, crs_Pacific)
-    z@lattice$geometry <- reassert_crs(z@lattice$geometry, crs_Pacific)
+    z@points$xy <- reassert_crs(z@points$xy)
+    z@lattice$geometry <- reassert_crs(z@lattice$geometry)
   }
   if (item == "r"){
     z <- NZ_routes %>%
       mutate(across(c(.data$gc, .data$crow, .data$envelope),
-                    reassert_crs, 4326))
+                    reassert_crs, crs_longlat))
   }
   return(z)
 }
