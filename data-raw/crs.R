@@ -2,7 +2,7 @@
 
 # (default) crs that uses lat and long
 # useful for converting matrices of long-lat to spatial
-crs_longlat <- 4326
+crs_longlat <- "EPSG:4326"
 
 #two map projections
 #54030 is not in the rgdal::make_EPSG() database, so define Robinson
@@ -15,9 +15,9 @@ crs_120E <- "+proj=robin +lon_0=120 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +uni
 # polar options
 # WGS 84 / Arctic Polar Stereographic
 # this is inconsistent with the others, but st_crs(3995) has a non-ascii character which CRAN does not like
-crs_N <- 3995
+crs_N <- "EPSG:3995"
 #WGS 84 / Antarctic Polar Stereographic
-crs_S <- 3031
+crs_S <- "EPSG:3031"
 
 usethis::use_data(crs_longlat,
                   crs_Atlantic, crs_Pacific,

@@ -2,7 +2,7 @@
 #
 # grid-related functions
 
-utils::globalVariables(c("."))
+utils::globalVariables(c(".", "crs_longlat"))
 
 # round longitude back to -180 <= x < 180
 mod_long <- function(x){
@@ -135,7 +135,7 @@ make_route_grid <- function(fat_map, name,
     # handle the 'overflow longitude' - slightly over the dateline
     mutate(long = mod_long(.data$long)) %>%
     mutate(xy = st_cast(st_transform(st_sfc(st_multipoint(matrix(c(.data$long, .data$lat), ncol=2)),
-                                            crs=4326),
+                                            crs= crs_longlat),
                                      crs=st_crs(fat_map)),'POINT'))
   if (getOption("quiet", default=0)>0) message("Made the grid:", round(Sys.time() - tstart, 1))
 

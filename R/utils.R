@@ -236,7 +236,7 @@ make_aircraft <- function(ac = NA, sound_kph = himach::mach_kph, warn = TRUE){
 #' @importFrom dplyr %>%
 #'
 #' @export
-make_airports <- function(ap = NA, crs = 4326, warn = TRUE){
+make_airports <- function(ap = NA, crs = crs_longlat, warn = TRUE){
   if (!is.data.frame(ap)) {
     if (warn) message("Using default airport data: airportr::airport.")
     ap <- airportr::airports %>%
@@ -250,12 +250,14 @@ make_airports <- function(ap = NA, crs = 4326, warn = TRUE){
   if (length(miss_vbls) > 0) stop("Airport definition is missing: ",
                                   paste(miss_vbls, collapse = " "))
 
+ # check for old GDAL-solaris problem with CRS
+  if (is.na(crs)) stop("Destination crs is not defined: ", crs)
   ap %>%
     #convert to map feature
     # 4326 is a lat-long format, for input, then transform to required crs
     dplyr::mutate(ap_locs = st_transform(
       st_cast(st_sfc(
-        st_multipoint(matrix(c(.data$long, .data$lat),ncol=2)), crs = 4326),
+        st_multipoint(matrix(c(.data$long, .data$lat),ncol=2)), crs = crs_longlat),
         'POINT'), crs = crs))
 }
 
