@@ -2,7 +2,7 @@
 #
 # Functions for plotting nice maps of routes
 
-# utils::globalVariables(c("crs_Atlantic"))
+utils::globalVariables(c("crs_longlat"))
 
 #' Version of \code{st_transform} with view window to avoid dateline
 #'
@@ -99,7 +99,7 @@ make_range_envelope <- function(ac, ap, ap_locs = make_airports(),
   pg <- sf::st_multipoint(geod[ ,1:2]) %>%
     sf::st_cast('LINESTRING') %>%
     sf::st_cast('POLYGON') %>%
-    sf::st_sfc(crs = 4326) %>%
+    sf::st_sfc(crs = crs_longlat) %>%
     sf::st_transform(cen_prj) %>%
     # occasionally fails as self-intersection when later st_intersection
     # so this should solve that
