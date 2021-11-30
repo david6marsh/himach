@@ -1,5 +1,7 @@
 # himach 0.2.3
 
+* Fixes for solaris running old GDAL: switch to storing crs_Atlantic etc as strings.
+
 # himach 0.2.2
 
 * Fixed crash when routing over very short hops (say for re-positioning flights).
