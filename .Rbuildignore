@@ -10,6 +10,8 @@
 ^ignore/2103_dateline_test\.RData$
 ^cran-comments\.md$
 ^README.Rmd$
+^\.DS_Store$
+
 
 ^CRAN-RELEASE$
 ^\.github$
