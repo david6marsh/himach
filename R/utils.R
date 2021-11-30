@@ -277,9 +277,10 @@ ren_subst <- function(ds,
 st_gcIntermediate <- function(crs, ...){
   #not vector-clever for n, which is (single) integer
   #starts with 4326 - any old lat long and then transform to the required crs
-  st_transform(
-    st_sfc(st_linestring(geosphere::gcIntermediate(...)), crs=crs_longlat),
-    crs)
+  geosphere::gcIntermediate(...) %>%
+    st_linestring() %>%
+    st_sfc(crs = 4326) %>%
+    st_transform(crs)
 }
 
 
@@ -351,7 +352,7 @@ hm_get_test <- function(item = c("coast", "buffer", "nofly", "grid", "route")){
   if (item == "r"){
     z <- NZ_routes %>%
       mutate(across(c(.data$gc, .data$crow, .data$envelope),
-                    reassert_crs, crs_longlat))
+                    reassert_crs, 4326))
   }
   return(z)
 }
