@@ -4,6 +4,13 @@
 
 utils::globalVariables(c("crs_Pacific", "crs_longlat"))
 
+# extra questions for releasing the package
+release_questions <- function() {
+  c(
+    "Have you done check_rhub(platforms = c('solaris-x86-patched'), interactive = FALSE)"
+  )
+}
+
 # helper to put European names first - assumes 4-letter ICAO code
 isEur <- function(x) substr(x,1,1) %in% c("E","L")
 
