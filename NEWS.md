@@ -1,3 +1,5 @@
+# himach (development version)
+
 # himach 0.2.3
 
 * Fixes for solaris running old GDAL: switch to storing crs_Atlantic etc as strings.
