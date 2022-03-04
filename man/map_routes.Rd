@@ -24,6 +24,8 @@ map_routes(
   land_f = "grey90",
   buffer_f = "grey60",
   avoid_f = "grey80",
+  avoid_c = "grey95",
+  avoid_s = 0.3,
   l_alpha = 0.8,
   l_size = 0.5,
   e_alpha = 0.4,
@@ -76,6 +78,9 @@ plotting (default 10).}
 
 \item{land_f, buffer_f, avoid_f}{fill colours for thin, fat and no-fly
 maps, default grey 90, 70 and 80, respectively}
+
+\item{avoid_c, avoid_s}{boundary colour and size for avoid areas,
+default grey 95 and 0.3, respectively}
 
 \item{l_alpha, l_size}{line (route) settings for alpha (transparency)
 and width, defaults 0.6 and 0.4.}

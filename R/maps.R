@@ -160,6 +160,8 @@ thin <- function(m, tol_km = 4){
 #'   plotting (default 10).
 #' @param land_f,buffer_f,avoid_f fill colours for thin, fat and no-fly
 #'   maps, default grey 90, 70 and 80, respectively
+#' @param avoid_c,avoid_s boundary colour and size for avoid areas,
+#'   default grey 95 and 0.3, respectively
 #' @param l_alpha,l_size line (route) settings for alpha (transparency)
 #'   and width, defaults 0.6 and 0.4.
 #' @param scale_direction Passed to scale_colour_viridis, either -1 (default) or
@@ -196,7 +198,8 @@ map_routes <- function(
   route_envelope=FALSE,
   bound=TRUE, bound_margin_km=200,
   simplify_km = 8,
-  land_f="grey90", buffer_f="grey60", avoid_f="grey80",
+  land_f="grey90", buffer_f="grey60",
+  avoid_f="grey80", avoid_c = "grey95",  avoid_s = 0.3,
   l_alpha=0.8, l_size=0.5,
   e_alpha=0.4, e_size=0.6, e_col="grey70",
   refuel_airports=ap_loc, rap_col="red", rap_size=0.4,
@@ -232,7 +235,7 @@ map_routes <- function(
   if (is.list(avoid_map)){
     m <- m +
       geom_sf(data = st_window(avoid_map, crs),
-              colour=avoid_f, fill=avoid_f)
+              colour=avoid_c, fill=avoid_f, size = avoid_s)
   }
 
   # 3: prelim: check if summarise_routes has been run
