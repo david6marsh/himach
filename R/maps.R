@@ -160,6 +160,8 @@ thin <- function(m, tol_km = 4){
 #'   plotting (default 10).
 #' @param land_f,buffer_f,avoid_f fill colours for thin, fat and no-fly
 #'   maps, default grey 90, 70 and 80, respectively
+#' @param land_c,land_s boundary colour and size for land areas (countries),
+#'   default grey 85 and 0.2, respectively (use NA to turn off)
 #' @param avoid_c,avoid_s boundary colour and size for avoid areas,
 #'   default grey 95 and 0.3, respectively
 #' @param l_alpha,l_size line (route) settings for alpha (transparency)
@@ -199,7 +201,8 @@ map_routes <- function(
   bound=TRUE, bound_margin_km=200,
   simplify_km = 8,
   land_f="grey90", buffer_f="grey60",
-  avoid_f="grey80", avoid_c = "grey95",  avoid_s = 0.3,
+  land_c="grey85", land_s=0.2,
+  avoid_f="grey80", avoid_c="grey95", avoid_s=0.3,
   l_alpha=0.8, l_size=0.5,
   e_alpha=0.4, e_size=0.6, e_col="grey70",
   refuel_airports=ap_loc, rap_col="red", rap_size=0.4,
@@ -220,15 +223,17 @@ map_routes <- function(
   }
 
   #thin map is the one without buffer
-  thin_map <- st_window(thin_map, crs) #force CRS and cut to view window
+  # thin_map <- st_window(thin_map, crs) #force CRS and cut to view window
 
   #layer 1 (one or two base maps)
   if (is.na(fat_map)) {
-    m <- plot_map(thin(thin_map, simplify_km), c_border=NA, c_land=land_f)
+    m <- plot_map(thin_map %>% thin(simplify_km) %>% st_window(crs),
+                  c_border=land_c, c_land=land_f, w_border = land_s)
   } else {
-    m <- plot_map(st_window(thin(fat_map, simplify_km), crs),
+    m <- plot_map(fat_map %>% thin(simplify_km) %>% st_window(crs),
                   c_border=NA, c_land=buffer_f) +
-      geom_sf(data=thin(thin_map, simplify_km), fill=land_f, colour=NA)
+      geom_sf(data=thin(thin_map, simplify_km), fill=land_f,
+              colour=land_c, size = land_s)
   }
 
   #layer 2 (no fly-zone)

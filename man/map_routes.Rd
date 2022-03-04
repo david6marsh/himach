@@ -23,6 +23,8 @@ map_routes(
   simplify_km = 8,
   land_f = "grey90",
   buffer_f = "grey60",
+  land_c = "grey85",
+  land_s = 0.2,
   avoid_f = "grey80",
   avoid_c = "grey95",
   avoid_s = 0.3,
@@ -78,6 +80,9 @@ plotting (default 10).}
 
 \item{land_f, buffer_f, avoid_f}{fill colours for thin, fat and no-fly
 maps, default grey 90, 70 and 80, respectively}
+
+\item{land_c, land_s}{boundary colour and size for land areas (countries),
+default grey 85 and 0.2, respectively (use NA to turn off)}
 
 \item{avoid_c, avoid_s}{boundary colour and size for avoid areas,
 default grey 95 and 0.3, respectively}
