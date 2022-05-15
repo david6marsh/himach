@@ -232,7 +232,7 @@ map_routes <- function(
   } else {
     m <- plot_map(fat_map %>% thin(simplify_km) %>% st_window(crs),
                   c_border=NA, c_land=buffer_f) +
-      geom_sf(data=thin(thin_map, simplify_km), fill=land_f,
+      geom_sf(data=thin_map %>% thin(simplify_km) %>% st_window(crs), fill=land_f,
               colour=land_c, size = land_s)
   }
 
