@@ -207,7 +207,8 @@ thin <- function(m, tol_km = 4){
 #' @export
 map_routes <- function(
     thin_map, routes=NA, crs=himach::crs_Atlantic,
-    show_route="time",
+    show_route = c("speed", "aircraft","time",
+                   "circuity", "acceleration", "traffic"),
     fat_map=NA, avoid_map=NA,
     ap_loc=NA, ap_col="darkblue", ap_size=0.4,
     forecast=NA, fc_var = NA_character_, fc_text = NA_character_,
@@ -226,8 +227,8 @@ map_routes <- function(
     warn = FALSE,
     ...
 ){
-  (stopifnot(is.na(show_route) || show_route %in% c("speed", "aircraft","time",
-                                                    "circuity", "accel", "traffic")))
+  # use tidyverse approach https://design.tidyverse.org/def-enum.html
+  show_route <- match.arg(show_route)
 
   # remove the non-routes (have time = NA)
   # these are where refuelling was needed
