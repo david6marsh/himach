@@ -8,7 +8,7 @@ map_routes(
   thin_map,
   routes = NA,
   crs = himach::crs_Atlantic,
-  show_route = "time",
+  show_route = c("speed", "aircraft", "time", "circuity", "acceleration", "traffic"),
   fat_map = NA,
   avoid_map = NA,
   ap_loc = NA,
