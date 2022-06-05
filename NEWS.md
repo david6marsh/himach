@@ -1,4 +1,7 @@
-# himach (development version)
+# himach 0.3.0
+
+* New graphics options: in map_routes colour lines by a flight frequency variable or by number of accelerations to supersonic; now can also plot a simple speed/distance/time/altitude profile with profile_routes.
+* Bug fixes: Map 'leakage' at dateline, and make_AP2 copes with vectors of airport pairs correctly now.
 
 # himach 0.2.3
 
