@@ -96,8 +96,10 @@ make_AP2 <- function(adep, ades, ap=make_airports()){
                 dplyr::rename(ADES=.data$APICAO, to_long=.data$long, to_lat=.data$lat),
               by="ADES") %>%
     dplyr::mutate(AP2 = paste_ADEPADES(.data$ADEP, .data$ADES, unidirectional),
-                  gcdist_km = geosphere::distGeo(c(.data$from_long, .data$from_lat),
-                                                     c(.data$to_long, .data$to_lat))/1000)
+                  gcdist_km = geosphere::distGeo(
+                    matrix(c(.data$from_long, .data$from_lat), ncol= 2),
+                    matrix(c(.data$to_long, .data$to_lat), ncol = 2)
+                  )/1000)
 }
 
 

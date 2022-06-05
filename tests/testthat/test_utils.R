@@ -1,3 +1,5 @@
+library(dplyr)
+library(sf)
 
 test_that("Default aircraft data loads", {
   expect_warning(make_aircraft())
@@ -77,6 +79,8 @@ test_that("can make AP2",{
   #check sort order
   expect_equal(z$AP2, "EDDF<>BIKF")
   expect_error(make_AP2("EGLL","ZZZZ", aps), "unknown")
+  #check vector capability
+  expect_equal(nrow(make_AP2(c("KJFK", "KLAX"), c("EGLL", "LFPG"), aps)), 2)
 })
 
 test_that("can copy attributes", {
