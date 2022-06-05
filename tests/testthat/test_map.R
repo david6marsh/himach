@@ -84,6 +84,24 @@ test_that("Route mapping", {
                                 airports %>% filter(APICAO=="NZWN")))
 })
 
+test_that("can plot flight profile", {
+  expect_silent(z <- profile_routes(NZ_routes |> filter(.data$routeID == "NZAA<>NZCH")))
+  expect_true("list" %in% class(z)) # returns a list
+  expect_true("ggplot" %in% class(z[[1]][[1]])) # buried in the cowplot
+  # and other parameter options - long
+  expect_silent(z <- profile_routes(NZ_routes |> filter(.data$routeID == "NZAA<>NZQN"),
+                                    yvar = "long"))
+  expect_true("ggplot" %in% class(z[[1]][[1]])) # buried in the cowplot
+  # and other parameter options - hours (explicit)
+  expect_silent(z <- profile_routes(NZ_routes |> filter(.data$routeID == "NZAA<>NZQN"),
+                                    yvar = "hour"))
+  expect_true("ggplot" %in% class(z[[1]][[1]])) # buried in the cowplot
+  # if too many routes
+  expect_warning(z <- profile_routes(NZ_routes,
+                                     yvar = "hour", n_max = 3))
+  expect_true("ggplot" %in% class(z[[1]][[1]])) # buried in the cowplot
+})
+
 test_that("can make range envelope", {
   airports <- make_airports(crs = crs_Atlantic, warn = FALSE)
   aircraft <- make_aircraft(warn = FALSE)

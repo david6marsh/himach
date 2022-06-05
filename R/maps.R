@@ -3,6 +3,7 @@
 # Functions for plotting nice maps of routes
 
 utils::globalVariables(c("crs_longlat"))
+utils::globalVariables(c("mach_kph"))
 
 #' Version of \code{st_transform} with view window to avoid dateline
 #'
@@ -448,17 +449,24 @@ long_cent <- function(m){
 #' @param n_max maximum number of routes to plot (default 2)
 #'
 #' @return A list of named list pairs of plots, which can be displayed using eg \code{result[1]}.
-#' @export
+#'
+#' @import ggplot2
+#' @import dplyr
 #'
 #' @examples
+#' # not run ---
+#' # plot_list <- profile_routes(routes, n_max = 3)
+#' # plot_list # to display them all
+#'
+#' @export
 profile_routes <- function(routes, yvar = c("hours", "longitude"),
                            ap_loc = make_airports(warn = FALSE), n_max = 2){
   yvar <- match.arg(yvar) # check the yvar argument
-  xtitle <- ifelse(yvar=="hours",
+  xtitle <- ifelse(yvar == "hours",
                    "Elapsed time (hours)",
                    "Longitude (degrees)")
   routes <- routes %>%
-    filter(!is.na(time_h))
+    filter(!is.na(.data$time_h))
   # check reasonable number of plots
   route_id <- unique(routes$routeID)
   if (length(route_id) == 0) stop("No flyable routes to profile.")
@@ -468,51 +476,51 @@ profile_routes <- function(routes, yvar = c("hours", "longitude"),
   }
 
   rr <- routes |>
-    filter(!is.na(time_h) & routeID %in% route_id) |>
-    group_by(timestamp) |>
+    filter(!is.na(.data$time_h) & .data$routeID %in% route_id) |>
+    group_by(.data$timestamp) |>
     # get airport labels - this seems ridiculous
-    filter(!is.na(time_h)) |>
-    left_join(ap_loc |> select(-ap_locs), by = c("from_long"="long", "from_lat"="lat")) |>
-    rename(ap1_name = APICAO) |>
-    left_join(ap_loc |> select(-ap_locs), by = c("to_long"="long", "to_lat"="lat")) |>
-    rename(ap2_name = APICAO) |>
-    mutate(lab = coalesce(ap1_name, ap2_name)) |>
-    select(-ap1_name, -ap2_name) |>
+    filter(!is.na(.data$time_h)) |>
+    left_join(ap_loc |> select(-.data$ap_locs), by = c("from_long"="long", "from_lat"="lat")) |>
+    rename(ap1_name = .data$APICAO) |>
+    left_join(ap_loc |> select(-.data$ap_locs), by = c("to_long"="long", "to_lat"="lat")) |>
+    rename(ap2_name = .data$APICAO) |>
+    mutate(lab = coalesce(.data$ap1_name, .data$ap2_name)) |>
+    select(-.data$ap1_name, -.data$ap2_name) |>
     mutate(lab = case_when(
-      row_number() == 1 ~ lab,
-      lag(lab) == lab ~ "",
-      is.na(lab) ~ "",
-      TRUE ~ lab)) |>
+      row_number() == 1 ~ .data$lab,
+      lag(.data$lab) == .data$lab ~ "",
+      is.na(.data$lab) ~ "",
+      TRUE ~ .data$lab)) |>
     # calculate plot points
-    mutate(speed_M = speed_kph/mach_kph,
-           elapsed_h = cumsum(time_h),
+    mutate(speed_M = .data$speed_kph/mach_kph,
+           elapsed_h = cumsum(.data$time_h),
            yvar = yvar,
            xvalue = if_else(yvar=="hours",
-                            coalesce(lag(elapsed_h),0),
-                            from_long),
+                            coalesce(lag(.data$elapsed_h),0),
+                            .data$from_long),
            xvalue2 = if_else(yvar=="hours",
-                             elapsed_h,
-                             to_long),
-           cum_dist_km = cumsum(gcdist_km),
-           prev_dist = coalesce(lag(cum_dist_km),0))
+                             .data$elapsed_h,
+                             .data$to_long),
+           cum_dist_km = cumsum(.data$gcdist_km),
+           prev_dist = coalesce(lag(.data$cum_dist_km),0))
 
   lapply(route_id, function(rte){
-    rr1 <- rr |> filter(routeID == rte)
+    rr1 <- rr |> filter(.data$routeID == rte)
     # make label
     ap_pair <- stringr::str_c(rr1$lab[1], "<>", rr1$lab[nrow(rr1)])
     #distance v time
-    (dvt <- ggplot(rr1, aes(x=xvalue, xend=xvalue2,
-                            y=prev_dist, yend=cum_dist_km, colour=acID)) +
+    (dvt <- ggplot(rr1, aes(x=.data$xvalue, xend=.data$xvalue2,
+                            y=.data$prev_dist, yend=.data$cum_dist_km, colour=.data$acID)) +
         geom_segment(size=1) +
         labs(x=xtitle, y="Flown distance (km)",
              colour="Aircraft") +
         theme_minimal() + theme(legend.position="top"))
     #speed v time
-    (svt <- ggplot(rr1, aes(x=xvalue, xend=xvalue2,
-                            y=speed_M, yend=speed_M, colour=acID)) +
+    (svt <- ggplot(rr1, aes(x=.data$xvalue, xend=.data$xvalue2,
+                            y=.data$speed_M, yend=.data$speed_M, colour=.data$acID)) +
         geom_hline(yintercept = 1.0, colour="grey70") + #supersonic boundary
         geom_segment(size=1) +
-        geom_text(aes(x=xvalue, y=0, label=lab)) +
+        geom_text(aes(x=.data$xvalue, y=0, label=.data$lab)) +
         labs(y="Ave. speed (Mach)", x = NULL,
              colour="Aircraft",
              subtitle = stringr::str_c(ap_pair, " Performance v. Time"),
@@ -520,11 +528,11 @@ profile_routes <- function(routes, yvar = c("hours", "longitude"),
         scale_y_continuous(limits=c(0,NA)) + #include 0
         theme_minimal() + guides(colour="none"))
     #speed v distance
-    (svd <- ggplot(rr1, aes(y=speed_M, yend=speed_M,
-                            x=prev_dist, xend=cum_dist_km, colour=acID)) +
+    (svd <- ggplot(rr1, aes(y=.data$speed_M, yend=.data$speed_M,
+                            x=.data$prev_dist, xend=.data$cum_dist_km, colour=.data$acID)) +
         geom_hline(yintercept = 1.0, colour="grey70") + #supersonic boundary
         geom_segment(size=1) +
-        geom_text(aes(x=prev_dist, y=0, label=lab)) +
+        geom_text(aes(x=.data$prev_dist, y=0, label=.data$lab)) +
         labs(y="Ave. speed (Mach)", x = NULL,
              colour="Aircraft",
              subtitle = stringr::str_c(ap_pair, " Performance v. Distance Flown"),
