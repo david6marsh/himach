@@ -8,7 +8,7 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
-## Introduction
+# Introduction
 
 [Supersonic Routes](Supersonic_Routes.html) provides a quick end-to-end introduction to using the `himach` package and is the place to start. This vignette provides advice on more advanced use, explaining details that the introduction skates over.
 
@@ -38,7 +38,7 @@ NZ_routes <- hm_get_test("route")
 ```
 
 
-## Cache {#cache}
+# Cache {#cache}
 
 `himach` uses caching to speed things up. Legs are cached in `route_cache` and arrival-departure links to airports are cached in `star_cache` (STAR is short for standard arrival route, its counterpart being SID the standard instrument departure).
 
@@ -94,6 +94,40 @@ The cache just works invisibly in the background - you will notice it speeds up 
 
 Incidentally, if you add a new refuelling point, then the cache remains _valid_ because only **legs are cached, not routes**. With a new refuelling point, `find_route` will check both old legs and new (to the new refuelling points), gaining where the legs are cached, before selecting the best combination of legs to make the route.
 
+## Cache Housekeeping (advanced)
+
+There may be times when you have built a large cache, of several thousand routes for a handful of aircraft. If you want to make a change to the performance of one aircraft, say, you either need to `hm_clean_cache()` and start everything again, or do a bit of housekeeping. The same is true if an airport location needs correcting: ideally we delete all references to just that airport.
+
+If you're not comfortable housekeeping, then just let `himach` run overnight to redo the whole thing. 
+
+Housekeeping involves loading the cache manually, with `load`. It contains two environments `route_cache` and `star_cache` (segments to and from airports). The items in the cache are named with strings which capture a number of run parameters, including the aircraft ID. So we identify items for deletion, and `rm` them. Then save the cache manually with `save`.
+
+```{r cache housekeeping}
+# for this example, add a second route to the cache
+routes <- find_route(aircraft[2, ],
+                       make_AP2("NZAA", "NZDN", airports),
+                       fat_map = NZ_buffer30,
+                       route_grid = NZ_grid,
+                       ap_loc = airports)
+# save the cache, which has NZAA-NZDN for 2 aircraft now
+hm_save_cache("test_v", NZ_grid, aircraft, path = tmp_dir)
+
+#now do housekeeping
+load(full_filename) # filename from the previous chunk
+ls(route_cache) # show the contents, just for information
+# we want to delete instances of aircraft with ID that includes 'M22'
+z <- ls(route_cache, pattern="M22") |> as.list()
+length(route_cache) # before deletion
+do.call(rm, z, envir = route_cache) # delete the M22 items
+length(route_cache) #after deletion, 1 less
+# then repeat for star_cache
+z <- ls(star_cache, pattern="M22") |> as.list()
+length(star_cache)
+do.call(rm, z, envir = star_cache)
+length(star_cache)
+# then save the result (you might want to change the filename, or backup the old cache beforehand)
+save("route_cache", "star_cache", file = full_filename)
+```
 
 # No-fly zones
 
