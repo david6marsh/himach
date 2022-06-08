@@ -7,6 +7,10 @@ Authors@R:
            family = "Marsh",
            role = c("aut", "cre"),
            email = "david.marsh@eurocontrol.int"),
+    person(given = "Enrico",
+           family = "Spinielli",
+           role = c("ctb"),
+           email = "enrico.spinielli@eurocontrol.int"),
     person(family = "EUROCONTROL",
     role = c("fnd", "cph")))
 Description: For supersonic aircraft, flying subsonic over land,
