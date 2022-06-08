@@ -502,7 +502,14 @@ profile_routes <- function(routes, yvar = c("hours", "longitude"),
                              .data$elapsed_h,
                              .data$to_long),
            cum_dist_km = cumsum(.data$gcdist_km),
-           prev_dist = coalesce(lag(.data$cum_dist_km),0))
+           prev_dist = coalesce(lag(.data$cum_dist_km),0)) |>
+    # label position varies
+    mutate(lab_h = case_when(
+      row_number() == 1 ~ .data$xvalue,
+      TRUE ~ .data$xvalue2),
+      lab_d = case_when(
+        row_number() == 1 ~ .data$xvalue,
+        TRUE ~ .data$cum_dist_km))
 
   lapply(route_id, function(rte){
     rr1 <- rr |> filter(.data$routeID == rte)
@@ -520,7 +527,7 @@ profile_routes <- function(routes, yvar = c("hours", "longitude"),
                             y=.data$speed_M, yend=.data$speed_M, colour=.data$acID)) +
         geom_hline(yintercept = 1.0, colour="grey70") + #supersonic boundary
         geom_segment(size=1) +
-        geom_text(aes(x=.data$xvalue, y=0, label=.data$lab)) +
+        geom_text(aes(x=.data$lab_h, y=0, label=.data$lab)) +
         labs(y="Ave. speed (Mach)", x = NULL,
              colour="Aircraft",
              subtitle = stringr::str_c(ap_pair, " Performance v. Time"),
@@ -532,7 +539,7 @@ profile_routes <- function(routes, yvar = c("hours", "longitude"),
                             x=.data$prev_dist, xend=.data$cum_dist_km, colour=.data$acID)) +
         geom_hline(yintercept = 1.0, colour="grey70") + #supersonic boundary
         geom_segment(size=1) +
-        geom_text(aes(x=.data$prev_dist, y=0, label=.data$lab)) +
+        geom_text(aes(x=.data$lab_d, y=0, label=.data$lab)) +
         labs(y="Ave. speed (Mach)", x = NULL,
              colour="Aircraft",
              subtitle = stringr::str_c(ap_pair, " Performance v. Distance Flown"),
