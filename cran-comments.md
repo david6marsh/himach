@@ -10,6 +10,7 @@ There are no downstream dependencies listed on CRAN.
 
 ## Test environments
 
-* macOS-latest, windows-latest, ubuntu-latest (devel, release & oldrel-1) on Github
-
-
+ * windows-x86_64-release. rhub. OK
+ * macos-highsierra-release-cran. rhub. OK
+ * ubuntu-gcc-release. rhub. OK
+ 
