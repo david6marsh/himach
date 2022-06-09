@@ -572,7 +572,7 @@ pathToGC <- function(path, route_grid,
   stopifnot(class(route_grid)=="GridLat")
   stopifnot(length(path)==1)
 
-  if(class(path)=="list") path=unlist(path)
+  if(inherits(path, "list")) path=unlist(path)
   #need to strip off the airports
   n <- length(path)
   sid <- path[1:2]
