@@ -6,7 +6,7 @@ Authors@R:
     c(person(given = "David",
            family = "Marsh",
            role = c("aut", "cre"),
-           email = "david.marsh@eurocontrol.int"),
+           email = "david6marsh@gmail.com"),
     person(given = "Enrico",
            family = "Spinielli",
            role = c("ctb"),
