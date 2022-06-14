@@ -1,3 +1,5 @@
+# himach (development version)
+
 # himach 0.3.0
 
 * New graphics options: in `map_routes` colour lines by a flight frequency variable or by number of accelerations to supersonic; now can also plot a simple speed/distance/time/altitude profile with `profile_routes`.
