@@ -50,8 +50,9 @@ st_window <- function(m, crs = himach::crs_Atlantic, longit_margin = 0.1){
   long1 <- mod_long(longit + longit_margin)
   long2 <- mod_long(longit - longit_margin)
   #make window: oriented = TRUE because otherwise so big, s2 assumes inverse
-  window <- s2::s2_make_polygon(c(rep(long1, 3), rep(long2, 3)),
-                                c(90, 0, -90, -90, 0, 90),
+  window <- s2::s2_make_polygon(c(rep(long1, 181),
+                                  rep(long2, 181)),
+                                c(seq.int(90, -90, -1),  seq.int(-90, 90, 1)),
                                 oriented = TRUE)
   m %>%
     sf::st_as_s2() %>%
