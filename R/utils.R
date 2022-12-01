@@ -88,12 +88,12 @@ make_AP2 <- function(adep, ades, ap=make_airports()){
 
   data.frame(ADEP=adep, ADES=ades, stringsAsFactors = FALSE) %>%
     left_join(ap %>%
-                dplyr::select(.data$APICAO, .data$long, .data$lat) %>%
-                dplyr::rename(ADEP=.data$APICAO, from_long=.data$long, from_lat=.data$lat),
+                dplyr::select("APICAO", "long", "lat") %>%
+                dplyr::rename(ADEP="APICAO", from_long="long", from_lat="lat"),
               by="ADEP") %>%
     left_join(ap %>%
-                dplyr::select(.data$APICAO, .data$long, .data$lat) %>%
-                dplyr::rename(ADES=.data$APICAO, to_long=.data$long, to_lat=.data$lat),
+                dplyr::select("APICAO", "long", "lat") %>%
+                dplyr::rename(ADES="APICAO", to_long="long", to_lat="lat"),
               by="ADES") %>%
     dplyr::mutate(AP2 = paste_ADEPADES(.data$ADEP, .data$ADES, unidirectional),
                   gcdist_km = geosphere::distGeo(
@@ -250,8 +250,8 @@ make_airports <- function(ap = NA, crs = crs_longlat, warn = TRUE){
     if (warn) message("Using default airport data: airportr::airport.")
     ap <- airportr::airports %>%
       dplyr::filter(.data$Type == "airport") %>%
-      dplyr::select(.data$ICAO, .data$Latitude, .data$Longitude) %>%
-      dplyr::rename(APICAO = .data$ICAO, lat = .data$Latitude, long = .data$Longitude)
+      dplyr::select("ICAO", "Latitude", "Longitude") %>%
+      dplyr::rename(APICAO = "ICAO", lat = "Latitude", long = "Longitude")
   }
 
   req_vbls <- c("APICAO", "long", "lat")
@@ -359,7 +359,7 @@ hm_get_test <- function(item = c("coast", "buffer", "nofly", "grid", "route")){
   }
   if (item == "r"){
     z <- NZ_routes %>%
-      mutate(across(c(.data$gc, .data$crow, .data$envelope),
+      mutate(across(c("gc", "crow", "envelope"),
                     reassert_crs, crs_longlat))
   }
   return(z)

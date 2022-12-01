@@ -12,10 +12,10 @@ mod_long <- function(x){
 # convert 4 values from each line of df into a s2_line
 # we work via sf because for some reason the s2 version was much slower.
 rowwise_add_s2line <- function(df,
-                          start_long = .data$from_long,
-                          start_lat = .data$from_lat,
-                          end_long = .data$to_long,
-                          end_lat = .data$to_lat) {
+                          start_long = "from_long",
+                          start_lat = "from_lat",
+                          end_long = "to_long",
+                          end_lat = "to_lat") {
   y <- df %>%
     # {{ start_long }} selects the column referred to by the value of start_long (without quotes)
     select(
@@ -126,12 +126,12 @@ make_route_grid <- function(fat_map, name,
     mutate(next_long_step = lead(.data$long_step),
            #need these to handle the date line later
            next_last_long = lead(.data$last_long)) %>%
-    tidyr::unnest(c(.data$long)) %>%
+    tidyr::unnest(c("long")) %>%
     mutate(id = row_number())
 
   #create the grid from this
   g@points <- ll_grid_seed %>%
-    select(.data$id, .data$long, .data$lat) %>%
+    select("id", "long", "lat") %>%
     # handle the 'overflow longitude' - slightly over the dateline
     mutate(long = mod_long(.data$long)) %>%
     mutate(xy = st_cast(st_transform(st_sfc(st_multipoint(matrix(c(.data$long, .data$lat), ncol=2)),
@@ -175,7 +175,7 @@ make_route_grid <- function(fat_map, name,
                                       unlist(nlong_cands)[unlist(lc_sel)[3]]),lat_dec)),
                long_wrap = list(c(.data$last_long, rep.int(next_last_long, n_cand)))) %>%
         select(-nlong_cands, -lc_diff, -lc_sel)  %>%
-        tidyr::unnest(c(.data$to_lat, .data$to_long, long_wrap)) %>%
+        tidyr::unnest(c("to_lat", "to_long", "long_wrap")) %>%
         filter(!is.na(.data$to_long)) %>% #possible cases
         ungroup() %>%
         filter(.data$to_lat>= lat_min & .data$to_lat<=lat_max) %>%
@@ -188,14 +188,14 @@ make_route_grid <- function(fat_map, name,
                  TRUE ~ .data$to_long
                )) %>%
         #tidy up
-        rename(from_long=.data$long, from_lat=.data$lat, from=.data$id) %>%
+        rename(from_long="long", from_lat="lat", from="id") %>%
         # select(from, from_long, from_lat, to_long, to_lat) %>%
         #get the to id
-        left_join(ll_grid_seed %>% select(.data$id, .data$long, .data$lat) %>% rename(to=.data$id),
+        left_join(ll_grid_seed %>% select("id", "long", "lat") %>% rename(to="id"),
                   by=c("to_long"="long", "to_lat"="lat"))
     ) %>%
     purrr::map_dfr(~ as.data.frame(.)) %>%
-    select(-.data$grp)
+    select(-"grp")
   if (getOption("quiet",default=0)>0) message("") #new line
 
 
@@ -208,7 +208,7 @@ make_route_grid <- function(fat_map, name,
     mutate(dist_km = s2::s2_length(.data$geometry)/1000) %>%
     mutate(geometry = sf::st_as_sfc(.data$geometry),
            geometry = sf::st_transform(.data$geometry, crs = st_crs(fat_map))) %>%
-    select(.data$from, .data$to, .data$geometry, .data$dist_km, .data$wrap)
+    select("from", "to", "geometry", "dist_km", "wrap")
   message("")
   if (getOption("quiet", default=0)>0) message("Added geo & distance to the lattice:",round(Sys.time() - tstart,1))
 
@@ -219,7 +219,7 @@ make_route_grid <- function(fat_map, name,
     if (getOption("quiet",default=0)>0) message("Classified as land:", round(Sys.time() - tstart,1))
     id_land <- g@points %>%
       as.data.frame() %>%
-      select(.data$id, .data$land)
+      select("id", "land")
   }
 
   #classify the lines in the lattice by their intersection
@@ -241,7 +241,7 @@ make_route_grid <- function(fat_map, name,
     if (getOption("quiet",default=0)>0) message("Calculated all phases:",round(Sys.time() - tstart,1))
     g@lattice<- g@lattice %>%
       mutate(phase = z$phase) %>%
-      select(-.data$Xland)
+      select(-"Xland")
   }
 
   if (getOption("quiet", default=0)>0) message("Converting points and lattice to data table.")

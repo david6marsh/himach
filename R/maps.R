@@ -67,7 +67,7 @@ plot_map <- function(msf,
                      c_border = "grey70",
                      w_border = 0.1){
   ggplot2::ggplot(msf) +
-    ggplot2::geom_sf(size = w_border, colour = c_border, fill = c_land) +
+    ggplot2::geom_sf(linewidth = w_border, colour = c_border, fill = c_land) +
     # coord_sf() + #not needed for already-projected feature sets
     ggplot2::theme_minimal()
 }
@@ -252,14 +252,14 @@ map_routes <- function(
     m <- plot_map(fat_map %>% thin(simplify_km) %>% st_window(crs),
                   c_border=NA, c_land=buffer_f) +
       geom_sf(data=thin_map %>% thin(simplify_km) %>% st_window(crs), fill=land_f,
-              colour=land_c, size = land_s)
+              colour=land_c, linewidth = land_s)
   }
 
   #layer 2 (no fly-zone)
   if (is.list(avoid_map)){
     m <- m +
       geom_sf(data = st_window(avoid_map, crs),
-              colour=avoid_c, fill=avoid_f, size = avoid_s)
+              colour=avoid_c, fill=avoid_f, linewidth = avoid_s)
   }
 
   # 3: prelim: check if summarise_routes has been run
@@ -278,7 +278,7 @@ map_routes <- function(
       }
       rtes <- summarise_routes(routes, airports) %>%
         st_set_geometry(NULL) %>% # for left_join, must _not_ be sf
-        select(.data$fullRouteID, .data$advantage_h, .data$circuity)
+        select("fullRouteID", "advantage_h", "circuity")
 
       routes <- routes %>%
         left_join(rtes, by = "fullRouteID") %>%
@@ -294,14 +294,14 @@ map_routes <- function(
         geom_sf(data = routes,
                 aes(colour = .data$advantage_h),
                 fill="white",
-                size=l_size, lineend="round", alpha=l_alpha) +
+                linewidth=l_size, lineend="round", alpha=l_alpha) +
         scale_colour_viridis_c(direction = scale_direction, ...)
     }
     if (show_route=="circuity"){
       m <- m +  labs(colour = "Circuity\n(best=0)") +
         geom_sf(data = routes,
                 aes(colour = .data$circuity), fill = "white",
-                size=l_size, lineend="round", alpha=l_alpha) +
+                linewidth=l_size, lineend="round", alpha=l_alpha) +
         scale_colour_viridis_c(direction = scale_direction,
                                labels = scales::percent, ...)
     }
@@ -309,14 +309,14 @@ map_routes <- function(
       m <- m +  labs(colour = "Average speed on segment (kph)") +
         geom_sf(data = routes,
                 aes(colour = .data$speed_kph),
-                size=l_size, lineend="round", alpha=l_alpha) +
+                linewidth=l_size, lineend="round", alpha=l_alpha) +
         scale_colour_viridis_c(direction = scale_direction, ...)
     }
     if (show_route == "aircraft"){
       m <- m +  labs(colour = "Aircraft") +
         geom_sf(data = routes,
                 aes(colour = .data$acID),
-                size=l_size, lineend="round", alpha=l_alpha,
+                linewidth=l_size, lineend="round", alpha=l_alpha,
                 show.legend = "line")+
         scale_colour_viridis_d(direction = scale_direction, ...)
     }
@@ -324,7 +324,7 @@ map_routes <- function(
       m <- m +  labs(colour = "Number of accelerations\nto supersonic") +
         geom_sf(data = routes,
                 aes(colour = factor(.data$n_accel)),
-                size=l_size, lineend="round", alpha=l_alpha,
+                linewidth=l_size, lineend="round", alpha=l_alpha,
                 show.legend = "line") +
         scale_colour_viridis_d(direction = scale_direction, ...)
     }
@@ -338,10 +338,10 @@ map_routes <- function(
       }
       fc <- forecast %>%
         ungroup() %>%
-        select(.data$fullRouteID, .data$acID, .data[[fc_var]])
+        select("fullRouteID", "acID", {{ fc_var }})
       # check if routes missing for the forecast
       route_miss <- fc %>%
-        anti_join(routes %>% st_drop_geometry() %>% select(.data$fullRouteID, .data$acID),
+        anti_join(routes %>% st_drop_geometry() %>% select("fullRouteID", "acID"),
                   by = c("fullRouteID", "acID"))
       if (nrow(route_miss) > 0) {
         warning(nrow(route_miss), " forecast rows do not have routes available.", call. = FALSE)
@@ -351,7 +351,7 @@ map_routes <- function(
                   inner_join(fc, by = c("fullRouteID", "acID")) %>%
                   arrange(.data[[fc_var]]), # plot in increasing order
                 aes(colour = .data[[fc_var]]),
-                size=l_size, lineend="round", alpha=l_alpha) +
+                linewidth=l_size, lineend="round", alpha=l_alpha) +
         scale_colour_viridis_b(direction = scale_direction, ...)
     }
   }
@@ -361,7 +361,7 @@ map_routes <- function(
   if (crow){
     m <- m +
       geom_sf(data = st_window(routes$crow, crs),
-              colour=crow_col, size = crow_size)
+              colour=crow_col, linewidth = crow_size)
   }
 
   #layer 5: range envelope
@@ -370,7 +370,7 @@ map_routes <- function(
       geom_sf(data = st_window(st_cast(routes$envelope, 'MULTILINESTRING'),
                                crs),
               fill = NA,
-              colour = e_col, alpha = e_alpha, size = e_size)
+              colour = e_col, alpha = e_alpha, linewidth = e_size)
   }
 
   #layer 6: airports
@@ -480,12 +480,12 @@ profile_routes <- function(routes, yvar = c("hours", "longitude"),
     group_by(.data$timestamp) |>
     # get airport labels - this seems ridiculous
     filter(!is.na(.data$time_h)) |>
-    left_join(ap_loc |> select(-.data$ap_locs), by = c("from_long"="long", "from_lat"="lat")) |>
-    rename(ap1_name = .data$APICAO) |>
-    left_join(ap_loc |> select(-.data$ap_locs), by = c("to_long"="long", "to_lat"="lat")) |>
-    rename(ap2_name = .data$APICAO) |>
+    left_join(ap_loc |> select(-"ap_locs"), by = c("from_long"="long", "from_lat"="lat")) |>
+    rename(ap1_name = "APICAO") |>
+    left_join(ap_loc |> select(-"ap_locs"), by = c("to_long"="long", "to_lat"="lat")) |>
+    rename(ap2_name = "APICAO") |>
     mutate(lab = coalesce(.data$ap1_name, .data$ap2_name)) |>
-    select(-.data$ap1_name, -.data$ap2_name) |>
+    select(-"ap1_name", -"ap2_name") |>
     mutate(lab = case_when(
       row_number() == 1 ~ .data$lab,
       lag(.data$lab) == .data$lab ~ "",
@@ -518,7 +518,7 @@ profile_routes <- function(routes, yvar = c("hours", "longitude"),
     #distance v time
     (dvt <- ggplot(rr1, aes(x=.data$xvalue, xend=.data$xvalue2,
                             y=.data$prev_dist, yend=.data$cum_dist_km, colour=.data$acID)) +
-        geom_segment(size=1) +
+        geom_segment(linewidth=1) +
         labs(x=xtitle, y="Flown distance (km)",
              colour="Aircraft") +
         theme_minimal() + theme(legend.position="top"))
@@ -526,7 +526,7 @@ profile_routes <- function(routes, yvar = c("hours", "longitude"),
     (svt <- ggplot(rr1, aes(x=.data$xvalue, xend=.data$xvalue2,
                             y=.data$speed_M, yend=.data$speed_M, colour=.data$acID)) +
         geom_hline(yintercept = 1.0, colour="grey70") + #supersonic boundary
-        geom_segment(size=1) +
+        geom_segment(linewidth=1) +
         geom_text(aes(x=.data$lab_h, y=0, label=.data$lab)) +
         labs(y="Ave. speed (Mach)", x = NULL,
              colour="Aircraft",
@@ -538,7 +538,7 @@ profile_routes <- function(routes, yvar = c("hours", "longitude"),
     (svd <- ggplot(rr1, aes(y=.data$speed_M, yend=.data$speed_M,
                             x=.data$prev_dist, xend=.data$cum_dist_km, colour=.data$acID)) +
         geom_hline(yintercept = 1.0, colour="grey70") + #supersonic boundary
-        geom_segment(size=1) +
+        geom_segment(linewidth=1) +
         geom_text(aes(x=.data$lab_d, y=0, label=.data$lab)) +
         labs(y="Ave. speed (Mach)", x = NULL,
              colour="Aircraft",

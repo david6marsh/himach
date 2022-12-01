@@ -69,7 +69,7 @@ findGC <- function(subp, withMap_s2, avoidMap_s2, max_depth = 250){
       (first(subp$phase) != "sea" & is.na(useMap)) |
       nrow(subp) <= 2 |
       deep_sea){
-    if (nrow(subp)==1 | deep_sea) subp %>% select(.data$phase, .data$phaseID, .data$id)
+    if (nrow(subp)==1 | deep_sea) subp %>% select("phase", "phaseID", "id")
     else {
       subp %>% summarise(phase = first(.data$phase),
                          phaseID = first(.data$phaseID),
@@ -83,7 +83,7 @@ findGC <- function(subp, withMap_s2, avoidMap_s2, max_depth = 250){
                                   c(first(subp$lat), last(subp$lat)))
     sea_only <- ! s2::s2_intersects(test_line, useMap)
     if (sea_only) {
-      if (nrow(subp)==1) subp %>% select(.data$phase, .data$phaseID, .data$id)
+      if (nrow(subp)==1) subp %>% select("phase", "phaseID", "id")
       else {
         subp %>% summarise(phase = first(.data$phase),
                            phaseID = first(.data$phaseID),
@@ -318,7 +318,7 @@ find_route <- function(ac, ap2, fat_map, avoid=NA, route_grid, cf_subsonic=NA,
   #note ap2$routeID is in a specific order, but ADEP/ADES might not reflect that
   #switch if necessary
   ap2 <- ap2 %>%
-    select(.data$AP2, .data$ADEP, .data$ADES, ends_with("_long"), ends_with("_lat"), .data$gcdist_km) %>%
+    select("AP2", "ADEP", "ADES", ends_with("_long"), ends_with("_lat"), "gcdist_km") %>%
     mutate(ADEP= stringr::str_split(.data$AP2,"(<>)|(>)|(<)", simplify=TRUE)[1],
            ADES= stringr::str_split(.data$AP2,"(<>)|(>)|(<)", simplify=TRUE)[2])
   sep <- stringr::str_remove_all(ap2$AP2,paste0("(", ap2$ADEP,")|(", ap2$ADES,")")) #get separator "<>",">"
@@ -350,8 +350,8 @@ find_route <- function(ac, ap2, fat_map, avoid=NA, route_grid, cf_subsonic=NA,
     #find triples: AREF in range of ADEP and ADES
     r_ap3 <- ap2 %>%
       tidyr::crossing(refuel %>%
-                 select(.data$APICAO, .data$long, .data$lat) %>%
-                 rename(AREF=.data$APICAO, ref_long=.data$long, ref_lat=.data$lat)) %>%
+                 select("APICAO", "long", "lat") %>%
+                 rename(AREF="APICAO", ref_long="long", ref_lat="lat")) %>%
       rowwise() %>%
       mutate(dep_ref_km = geosphere::distGeo(c(.data$from_long, .data$from_lat),
                                   c(.data$ref_long, .data$ref_lat))/1000,
@@ -372,11 +372,11 @@ find_route <- function(ac, ap2, fat_map, avoid=NA, route_grid, cf_subsonic=NA,
     } else {
       #simplify to distinct AP2 (there may be some duplicates, eg Heathrow-Gander appearing for -SFO & -LAX)
       r_ap2 <- r_ap3 %>%
-        select(.data$ADEP, .data$AREF, .data$from_long, .data$from_lat, .data$ref_long, .data$ref_lat) %>%
-        rename(ADES=.data$AREF, to_long=.data$ref_long, to_lat=.data$ref_lat) %>%
+        select("ADEP", "AREF", "from_long", "from_lat", "ref_long", "ref_lat") %>%
+        rename(ADES="AREF", to_long="ref_long", to_lat="ref_lat") %>%
         rbind(r_ap3 %>%
-                select(.data$AREF, .data$ADES, .data$ref_long, .data$ref_lat, .data$to_long, .data$to_lat) %>%
-                rename(ADEP=.data$AREF, from_long=.data$ref_long, from_lat=.data$ref_lat)) %>%
+                select("AREF", "ADES", "ref_long", "ref_lat", "to_long", "to_lat") %>%
+                rename(ADEP="AREF", from_long="ref_long", from_lat="ref_lat")) %>%
         distinct() %>%
         rowwise() %>%
         mutate(gcdist_km = geosphere::distGeo(c(.data$from_long, .data$from_lat),
@@ -411,7 +411,7 @@ find_route <- function(ac, ap2, fat_map, avoid=NA, route_grid, cf_subsonic=NA,
                   dist_km = sum(.data$gcdist_km)) %>%
         filter(!is.na(time_h)) %>%  #drop any failed direct route
         top_n(-refuel_topN, time_h) %>%
-        pull(.data$fullRouteID)
+        pull("fullRouteID")
 
       #now re-order to get the sequence right (only really imporatnt for speed profile)
       best_refuel_options <-  refuel_options %>%
@@ -435,7 +435,7 @@ find_route <- function(ac, ap2, fat_map, avoid=NA, route_grid, cf_subsonic=NA,
                from_long = if_else(.data$reverse, .data$to_long, .data$from_long),
                to_long = if_else(.data$reverse, .data$temp, .data$to_long)) %>%
         arrange(.data$fullRouteID, .data$leg_id, order) %>%
-        select(-.data$grid_s, -.data$grid_e, -.data$reverse, -.data$temp) #drop order later
+        select(-"grid_s", -"grid_e", -"reverse", -"temp") #drop order later
 
       #base the refuel legs on the last row of the first leg - for lat long, etc
       refuel_legs <- best_refuel_options %>%
@@ -466,7 +466,7 @@ find_route <- function(ac, ap2, fat_map, avoid=NA, route_grid, cf_subsonic=NA,
                                                                       stringr::coll("."),
                                                                       simplify=TRUE)[,2]),
           timestamp = first(.data$timestamp)) %>%
-        select(-.data$phaseChange, -order)
+        select(-"phaseChange", -order)
 
       routes <- rbind.data.frame(routes, sel_routes)
     }
@@ -529,32 +529,32 @@ findToCToD_really <- function(ap, route_grid, fat_map, ac,
   colnames(y)<- ap$APICAO
   w <- data.frame(y) %>%
     gather("AP","dist_m") %>%
-    rename(from = .data$AP) %>% #we use the AP ICAO code as the node ID
+    rename(from = "AP") %>% #we use the AP ICAO code as the node ID
     group_by(.data$from) %>%
     mutate(to = as.character(route_grid@points$id),
            dist_m = units::drop_units(.data$dist_m),
            near_m = abs(.data$dist_m - ad_dist_m)) %>% #compare to target distance
     arrange(.data$near_m) %>%
-    select(-.data$near_m) %>%
+    select(-"near_m") %>%
     #take the top n, with 8 should be near the points of the compass
     slice(1:ad_nearest) %>%
     #add time (cost) for each aircraft
     ungroup() %>%
-    crossing(ac %>% select(.data$id, .data$arrdep_kph)) %>%
+    crossing(ac %>% select("id", "arrdep_kph")) %>%
     mutate(cost = (.data$dist_m/1000)/.data$arrdep_kph) %>%
     #add the long lats
     left_join(ap %>%
                 data.frame() %>%
-                select(.data$APICAO, .data$lat, .data$long),
+                select("APICAO", "lat", "long"),
               by=c("from"="APICAO")) %>%
     data.table::as.data.table() %>%
     left_join(route_grid@points %>%
-                select(.data$id, .data$long, .data$lat, .data$land) %>%
+                select("id", "long", "lat", "land") %>%
                 mutate(id = as.character(.data$id)),
               by = c("to"="id"), suffix=c("_ap", "_grid")) %>%
     #if no transition leg, then take the acceleration subsonic cruise-supersonic penalty here
     mutate(cost = .data$cost + ifelse(.data$land, 0, ac$trans_h)) %>%
-    select(-.data$land) %>%
+    select(-"land") %>%
     as.data.frame()
 
 }
@@ -585,15 +585,15 @@ pathToGC <- function(path, route_grid,
                     w_id = 0, from=sid[1], to = sid[2],
                     steps = 1, stringsAsFactors = FALSE) %>%
     #add distance and time for the departure
-    left_join(arrDep %>% select(-id, -.data$arrdep_kph),
+    left_join(arrDep %>% select(-id, -"arrdep_kph"),
               by=c("from","to") ) %>%
     #flip the types back to match gcid
     mutate(gcdist_km = .data$dist_m/1000,
            from = 0, to = as.numeric(.data$to)) %>%
-    rename(from_long = .data$long_ap, from_lat = .data$lat_ap,
-           to_long = .data$long_grid, to_lat = .data$lat_grid,
-           time_h = .data$cost) %>%
-    select(-.data$dist_m)
+    rename(from_long = "long_ap", from_lat = "lat_ap",
+           to_long = "long_grid", to_lat = "lat_grid",
+           time_h = "cost") %>%
+    select(-"dist_m")
 
   #create line for arrival, using 0 as id for airport
   #the phaseID here will need updating if n>3
@@ -602,15 +602,15 @@ pathToGC <- function(path, route_grid,
                     w_id = as.numeric(star[1]), from=star[1], to = star[2],
                     steps = 1, stringsAsFactors = FALSE) %>%
     #add distance and time for the departure
-    left_join(arrDep %>% select(-id, -.data$arrdep_kph),
+    left_join(arrDep %>% select(-id, -"arrdep_kph"),
               by=c("from"="to","to"="from")) %>%
     #flip the types back to match gcid
     mutate(gcdist_km = .data$dist_m/1000,
            from = as.numeric(.data$from), to = 0) %>%
-    rename(from_long = .data$long_ap, from_lat = .data$lat_ap,
-           to_long = .data$long_grid, to_lat = .data$lat_grid,
-           time_h = .data$cost) %>%
-    select(-.data$dist_m)
+    rename(from_long = "long_ap", from_lat = "lat_ap",
+           to_long = "long_grid", to_lat = "lat_grid",
+           time_h = "cost") %>%
+    select(-"dist_m")
 
   if (n==3) {
     #unusual sid-star case 3 is the minimum possible
@@ -630,7 +630,7 @@ pathToGC <- function(path, route_grid,
                 by=c("from"="to","to"="from")) %>%
       as.data.frame() %>%
       mutate(phase=coalesce(.data$phase.x, .data$phase.y)) %>%
-      select(-.data$phase.x, -.data$phase.y)
+      select(-"phase.x", -"phase.y")
 
     if (ac$over_sea_M == ac$over_land_M | !byTime) {
       #if this is a subsonic aircraft - or distance only, then land/sea/transition phases are the same - land
@@ -647,7 +647,7 @@ pathToGC <- function(path, route_grid,
           phase != lag(phase) ~ 1L,
           TRUE ~ 0L),
           phaseID = paste0(cumsum(.data$phaseChange),".")) %>%
-        select(-.data$phaseChange)
+        select(-"phaseChange")
     }
 
     if(getOption("quiet", default=0)>1) message(" Calculated phase changes")
@@ -664,7 +664,7 @@ pathToGC <- function(path, route_grid,
       group_by(.data$phaseID, .data$from, .data$to) %>%
       mutate(id = c(first(.data$from), first(.data$to))) %>%
       group_by(.data$phaseID) %>%
-      select(-.data$from, -.data$to) %>%
+      select(-"from", -"to") %>%
       distinct() %>%
       #need the long lat too
       left_join(route_grid@points[ , c("id", "long", "lat")],
@@ -688,7 +688,7 @@ pathToGC <- function(path, route_grid,
       #after a single hop line you can start too late, so correct any gaps
       mutate(from = .data$id,
              to = coalesce(lead(.data$id), last(p$id))) %>%
-      rename(w_id = .data$id) %>%
+      rename(w_id = "id") %>%
       filter(! .data$from == .data$to) # not sure why it occasionally churns these out
 
 
@@ -700,10 +700,10 @@ pathToGC <- function(path, route_grid,
       #add back the geo data
       left_join(route_grid@points[ , c("id", "long", "lat")],
                 by = c("from"="id")) %>%
-      rename(from_long = .data$long, from_lat = .data$lat) %>%
+      rename(from_long = "long", from_lat = "lat") %>%
       left_join(route_grid@points[ , c("id", "long", "lat")],
                 by = c("to"="id")) %>%
-      rename(to_long = .data$long, to_lat = .data$lat) %>%
+      rename(to_long = "long", to_lat = "lat") %>%
       as.data.frame()
 
     #re-assert order
@@ -807,7 +807,7 @@ pathToGC <- function(path, route_grid,
                                   p2=c(.data$to_long, .data$to_lat),
                                   n=.data$steps-1, addStartEnd=TRUE,
                                   crs = crs_longlat)) %>%
-    select(-.data$steps) %>%
+    select(-"steps") %>%
     ungroup()
 }
 
@@ -1021,8 +1021,8 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
         data.table::as.data.table()
       # 'crop' using ids - much faster than geo-intersection
       route_grid@lattice <- route_grid@lattice %>%
-        inner_join(route_grid@points %>% select(.data$id), by=c("from"="id")) %>%
-        inner_join(route_grid@points %>% select(.data$id), by=c("to"="id")) %>%
+        inner_join(route_grid@points %>% select("id"), by=c("from"="id")) %>%
+        inner_join(route_grid@points %>% select("id"), by=c("to"="id")) %>%
         data.table::as.data.table()
       # crop map to envelope, too
       fat_map <- st_intersection(fat_map, envelope)
@@ -1082,13 +1082,13 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
 
   #add aircraft specific costs
   costed_lattice <- costLattice(route_grid, ac = ac) %>%
-    select(.data$from, .data$to, .data$cost, .data$dist_km) %>%
+    select("from", "to", "cost", "dist_km") %>%
     #add on the arrival dep - indices are now strings
-    mutate_at(vars(.data$from, .data$to), ~as.character(.)) %>%
+    mutate(across(c("from", "to"), ~as.character(.))) %>%
     data.table::as.data.table() %>% # seem to be limits to complexity of pipe for dtplyr
     bind_rows(arrDep %>%
                 mutate(dist_km = .data$dist_m/1000) %>%
-                select(.data$from, .data$to, .data$cost, .data$dist_km)) %>%
+                select("from", "to", "cost", "dist_km")) %>%
     data.table::as.data.table()
 
   if (!best_by_time) {costed_lattice <- costed_lattice %>%
@@ -1098,7 +1098,7 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
   if (getOption("quiet", default=0)>2) message("  Got costed lattice: ",round(Sys.time() - tstart,1))
 
 
-  gr <- makegraph(costed_lattice %>% select(.data$from, .data$to, .data$cost),
+  gr <- makegraph(costed_lattice %>% select("from", "to", "cost"),
                   directed = FALSE)
   #with update to cppRouting v2.0 this stopped working
   # gr <- cpp_simplify(gr, iterate=TRUE)$graph #simplify the data
@@ -1268,7 +1268,7 @@ smoothSpeed <- function(r, ac){
   r <- smooth1(-1, r, ac)
 
 
-  return(r %>% select(-.data$penalty))
+  return(r %>% select(-"penalty"))
 }
 
 
@@ -1332,7 +1332,7 @@ summarise_routes <- function(routes,
   #include 30 mins for arr/dep - based on 777ER examples
   route_summary <- routes %>%
     group_by(.data$routeID) %>%
-    rename(segdist_km = .data$gcdist_km) %>%
+    rename(segdist_km = "gcdist_km") %>%
     mutate(gcdist_km = make_AP2(stringr::str_split(first(.data$routeID), stringr::boundary("word"))[[1]][1],
                                 stringr::str_split(first(.data$routeID), stringr::boundary("word"))[[1]][2],
                                     ap_loc)$gcdist_km,
