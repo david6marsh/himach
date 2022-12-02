@@ -1,6 +1,3 @@
-library(dplyr)
-library(ggplot2)
-
 # Hadley rules out hash as not helpful: https://groups.google.com/forum/#!msg/ggplot2/JEvC86l_otA/i7k0yTDt2_UJ
 # vdiffr says may not be useful for sf objects - which is everything here :-(
 
@@ -108,12 +105,12 @@ test_that("can make range envelope", {
   # test only a sample of points
   # wkt seems to be machine-dependent so test fails on windows
   # so strip out the values only
-  expect_known_value(himach:::make_range_envelope(aircraft[1, ],
+  expect_snapshot_value(himach:::make_range_envelope(aircraft[1, ],
                                                 "LFPG",
                                                 airports,
-                                                envelope_points = 20) %>%
+                                                envelope_points = 20) |>
                        unlist(),
-                     "known/LFPG_envelope_20",
+                     style = "serialize",
                      tolerance = 0.05)
 
 })

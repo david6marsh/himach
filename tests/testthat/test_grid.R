@@ -1,5 +1,3 @@
-library(sf)
-library(dplyr)
 
 old_quiet <- getOption("quiet", default=0)
 # given some solaris CMD Check errors (old GDAl?)
@@ -24,24 +22,24 @@ test_that("Grid creation", {
 
     expect_equal(rg@name, "NZ lat-long at 500km")
 
-  expect_known_value(subset(rg@points, select = -xy),
-                      "known/NZ_500km_grid_points")
+  expect_snapshot_value(subset(rg@points, select = -xy), style = "serialize")
 
-  expect_known_value(subset(rg@lattice, select = -geometry),
-                     "known/NZ_500km_grid_lattice")
+  expect_snapshot_value(subset(rg@lattice, select = -geometry), style = "serialize")
 
 })
 
+# in testthat v3, drop the checking of this messaging, which is hardly critical if the results are ok
 test_that("Grid creation messaging", {
 
   options("quiet" = 1)
   # check messaging comes on - all the messages contain one of these words
-  expect_message(make_route_grid(NZ_buffer30, "NZ lat-long at 300km",
-                                      target_km = 300, classify = TRUE,
-                                      lat_min = -49, lat_max = -32,
-                                      long_min = 162, long_max = 182),
-                 "(lattice)|(Classified)|(Calculated)")
-
+  suppressMessages(
+    expect_message(make_route_grid(NZ_buffer30, "NZ lat-long at 300km",
+                                   target_km = 300, classify = TRUE,
+                                   lat_min = -49, lat_max = -32,
+                                   long_min = 162, long_max = 182),
+                   "(lattice)|(Classified)|(Calculated)")
+  )
 })
 
 

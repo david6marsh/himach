@@ -45,7 +45,7 @@ Suggests:
     rnaturalearthdata,
     scales,
     stringr,
-    testthat,
+    testthat (>= 3.0),
     units,
     utils,
     viridis,
@@ -56,4 +56,5 @@ VignetteBuilder:
 Encoding: UTF-8
 LazyData: true
 Language: en-GB
+Config/testthat/edition: 3
 RoxygenNote: 7.2.2
