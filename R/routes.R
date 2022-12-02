@@ -179,11 +179,13 @@ emptyRoute <- function(ac, ap2, fat_map,
 #' options("quiet" = 4) #for heavy reporting
 #' # from Auckland to Christchurch
 #' ap2 <- make_AP2("NZAA","NZCH",airports)
+#' \dontrun{
 #' routes <- find_route(aircraft[4,],
 #'                     ap2,
 #'                     fat_map = NZ_buffer30,
 #'                     route_grid = NZ_grid,
 #'                     ap_loc = airports)
+#' }
 #'
 #' @export
 find_routes <- function(ac_ids, ap2_ids, aircraft, airports, ...){
@@ -287,11 +289,14 @@ find_routes <- function(ac_ids, ap2_ids, aircraft, airports, ...){
 #' options("quiet" = 4) #for heavy reporting
 #' # from Auckland to Christchurch
 #' ap2 <- make_AP2("NZAA","NZCH",airports)
+#' # on some CRAN machines even this takes too long, so not run
+#' \dontrun{
 #' routes <- find_route(aircraft[4,],
 #'                     ap2,
 #'                     fat_map = NZ_buffer30,
 #'                     route_grid = NZ_grid,
 #'                     ap_loc = airports)
+#' }
 #'
 #' @export
 find_route <- function(ac, ap2, fat_map, avoid=NA, route_grid, cf_subsonic=NA,

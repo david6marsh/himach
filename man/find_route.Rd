@@ -103,10 +103,13 @@ airports <- make_airports(crs = sf::st_crs(NZ_buffer30))
 options("quiet" = 4) #for heavy reporting
 # from Auckland to Christchurch
 ap2 <- make_AP2("NZAA","NZCH",airports)
+# on some CRAN machines even this takes too long, so not run
+\dontrun{
 routes <- find_route(aircraft[4,],
                     ap2,
                     fat_map = NZ_buffer30,
                     route_grid = NZ_grid,
                     ap_loc = airports)
+}
 
 }
