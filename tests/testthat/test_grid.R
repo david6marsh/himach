@@ -8,7 +8,8 @@ old_quiet <- getOption("quiet", default=0)
 NZ_buffer30 <- hm_get_test("buffer")
 
 test_that("Using s2", {
-  expect_true(sf_use_s2())
+  z <- sf::sf_use_s2()
+  expect_true(z)
 })
 
 test_that("Grid creation", {
