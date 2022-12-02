@@ -18,9 +18,8 @@ land.
 In this version of `himach`, ‘good’ usually means the fastest, so the
 key indicator is time advantage over flying in a subsonic aircraft.
 
-<figure>
-<img src="vignettes/three_routes.png" style="width:80.0%" alt="Three example routes, including a refuel stop in Anchorage. (Original map: www.naturalearthdata.com)" /><figcaption aria-hidden="true">Three example routes, including a refuel stop in Anchorage. (Original map: www.naturalearthdata.com)</figcaption>
-</figure>
+![Three example routes, including a refuel stop in Anchorage. (Original
+map: www.naturalearthdata.com)](vignettes/three_routes.png)
 
 It is not an operational tool. Please don’t fly these routes, which do
 not allow for wind or other atmospheric conditions, and are based on a
@@ -55,20 +54,20 @@ development (taking Concorde to be the first generation). These will
 normally fly supersonic over the ocean, and subsonic over land. So their
 routes are *not* well-approximated by a great circle.
 
--   Market study: If you want to estimate demand for these aircraft,
-    then a key selling point is the time savings they bring. `himach`
-    calculates this time advantage.
--   Emissions modelling: If you want to model some aspects of emissions,
-    then you need to know the duration and length of flights (as well as
-    the size of the market): `himach` helps with this, at least for the
-    en route phase.
--   Airspace impact: If you want to see which areas of the airspace
-    might be affected, then routes from `himach` will help, though not
-    around airports in this version.
--   Flying a supersonic aircraft: No, not `himach`. You’re going to need
-    something with a much more precise model of aircraft performance,
-    not to mention information on weather, route and airspace
-    availability, runways in use etc.
+- Market study: If you want to estimate demand for these aircraft, then
+  a key selling point is the time savings they bring. `himach`
+  calculates this time advantage.
+- Emissions modelling: If you want to model some aspects of emissions,
+  then you need to know the duration and length of flights (as well as
+  the size of the market): `himach` helps with this, at least for the en
+  route phase.
+- Airspace impact: If you want to see which areas of the airspace might
+  be affected, then routes from `himach` will help, though not around
+  airports in this version.
+- Flying a supersonic aircraft: No, not `himach`. You’re going to need
+  something with a much more precise model of aircraft performance, not
+  to mention information on weather, route and airspace availability,
+  runways in use etc.
 
 A route from `himach` looks something like this, shown in green on the
 map. The great-circle route is shown in thin light blue, for comparison.
@@ -82,7 +81,10 @@ If we plot a speed view of the same thing, we see that the route
 maximises the distance over which supersonic speeds may be maintained.
 
 <figure>
-<img src="vignettes/EDDF_KBOS_speed.png" style="width:70.0%" alt="Example route between Boston &amp; Frankfurt, this time showing speed" /><figcaption aria-hidden="true">Example route between Boston &amp; Frankfurt, this time showing speed</figcaption>
+<img src="vignettes/EDDF_KBOS_speed.png" style="width:70.0%"
+alt="Example route between Boston &amp; Frankfurt, this time showing speed" />
+<figcaption aria-hidden="true">Example route between Boston &amp;
+Frankfurt, this time showing speed</figcaption>
 </figure>
 
 Compared to some of the larger subsonic passenger jets, the second
@@ -92,31 +94,30 @@ modelling process. This map shows some examples (the results depend on
 which airports you make available as possible re-fuelling points).
 
 <figure>
-<img src="vignettes/refuel_examples_pacific.png" style="width:80.0%" alt="Example routes, with refuelling points" /><figcaption aria-hidden="true">Example routes, with refuelling points</figcaption>
+<img src="vignettes/refuel_examples_pacific.png" style="width:80.0%"
+alt="Example routes, with refuelling points" />
+<figcaption aria-hidden="true">Example routes, with refuelling
+points</figcaption>
 </figure>
 
 Other useful features of `himach` include:
 
--   one-stop calculation of hundreds of routes, with functions then to
-    plot and summarise;
--   summary indicators such as average speed and circuity, to help
-    filter out routes where the aircraft is not likely to have an
-    advantage;
--   time advantage is calculated by default against a Mach0.84 subsonic
-    aircraft, but subsonic aircraft can be routed to provide alternative
-    comparisons;
--   option to close off airspace where overflights are not allowed or
-    not advised;
--   map plotting using four quick-view coordinate reference systems
-    (Atlantic, Pacific and 2 polar views), and ability to use other
-    ‘CRS’ if required;
--   plotting of route-range envelopes, to help understand routing
-    options (why didn’t it stay over the ocean here? why didn’t it
-    refuel there?).
+- one-stop calculation of hundreds of routes, with functions then to
+  plot and summarise;
+- summary indicators such as average speed and circuity, to help filter
+  out routes where the aircraft is not likely to have an advantage;
+- time advantage is calculated by default against a Mach0.84 subsonic
+  aircraft, but subsonic aircraft can be routed to provide alternative
+  comparisons;
+- option to close off airspace where overflights are not allowed or not
+  advised;
+- map plotting using four quick-view coordinate reference systems
+  (Atlantic, Pacific and 2 polar views), and ability to use other ‘CRS’
+  if required;
+- plotting of route-range envelopes, to help understand routing options
+  (why didn’t it stay over the ocean here? why didn’t it refuel there?).
 
-<figure>
-<img src="vignettes/polar_examples.png" style="width:50.0%" alt="Example polar view" /><figcaption aria-hidden="true">Example polar view</figcaption>
-</figure>
+![Example polar view](vignettes/polar_examples.png)
 
 ## Getting Started
 

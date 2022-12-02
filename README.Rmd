@@ -15,7 +15,7 @@ The goal of `himach` ("high Mach") is to support modelling and analysis of the m
 
 In this version of `himach`, 'good' usually means the fastest, so the key indicator is time advantage over flying in a subsonic aircraft. 
 
-![Three example routes, including a refuel stop in Anchorage. (Original map: www.naturalearthdata.com)](vignettes/three_routes.png){width=80%}
+![Three example routes, including a refuel stop in Anchorage. (Original map: www.naturalearthdata.com)](vignettes/three_routes.png)
 
 It is not an operational tool. Please don't fly these routes, which do not allow for wind or other atmospheric conditions, and are based on a very simple model of aircraft performance.
 
@@ -66,7 +66,7 @@ Other useful features of `himach` include:
 * map plotting using four quick-view coordinate reference systems (Atlantic, Pacific and 2 polar views), and ability to use other 'CRS' if required;
 * plotting of route-range envelopes, to help understand routing options (why didn't it stay over the ocean here? why didn't it refuel there?).
 
-![Example polar view](vignettes/polar_examples.png){width=50%}
+![Example polar view](vignettes/polar_examples.png)
 
 ## Getting Started
 
