@@ -1,4 +1,4 @@
-# himach (development version)
+# himach 0.3.1
 
 * Bug fixes: Prettier cutting of background map at dateline.
 * Dependency upgrades
