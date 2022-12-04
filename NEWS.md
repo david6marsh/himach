@@ -1,5 +1,10 @@
 # himach (development version)
 
+* Bug fixes: Prettier cutting of background map at dateline.
+* Dependency upgrades
+ + using edition 3 of testthat
+ + removing deprecated syntax in tidyverse
+
 # himach 0.3.0
 
 * New graphics options: in `map_routes` colour lines by a flight frequency variable or by number of accelerations to supersonic; now can also plot a simple speed/distance/time/altitude profile with `profile_routes`.
