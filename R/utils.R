@@ -7,7 +7,9 @@ utils::globalVariables(c("crs_Pacific", "crs_longlat"))
 # extra questions for releasing the package
 release_questions <- function() {
   c(
-    "Have you done check_rhub(platforms = c('solaris-x86-patched'), interactive = FALSE)"
+ # remove need for solaris now
+   # "Have you done check_rhub(platforms = c('solaris-x86-patched'), interactive = FALSE)",
+    "Have you done BOTH devtools::check_win_devel() AND devtools::check_win_release()"
   )
 }
 

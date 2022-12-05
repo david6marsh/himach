@@ -1,4 +1,4 @@
-# Version 0.3.1 fixes issues with latest testthat and dplyr
+# Version 0.3.1 is a patch for issues with latest testthat and dplyr
 
 ## R CMD check results
 
@@ -10,8 +10,13 @@ There are no downstream dependencies listed on CRAN.
 
 ## Test environments
 
+ * macos Ventura (local) OK
  * check_win_release.  OK
- * windows-x86_64-release. rhub. OK
- * macos-highsierra-release-cran. rhub. OK
- * ubuntu-gcc-release. rhub. OK
- 
+ * check_win_devel. OK
+ * Github: 
+  + macOS-latest (release) OK
+  + windows-latest (release) OK
+  + ubuntu-latest (devel) OK
+  + ubuntu-latest (release) OK
+  + ubuntu-latest (oldrel-1) OK
+
