@@ -19,9 +19,9 @@ summarise_routes_for_test <- function(r){
     sf::st_drop_geometry() |>
     dplyr::group_by(fullRouteID) |>
     # test on key outputs, not on detail of table
-    dplyr::summarise(dplyr::across(c(time_h, gc_length, crow, envelope), sum, na.rm = TRUE)) |>
+    dplyr::summarise(dplyr::across(c(time_h, gc_length, crow, envelope), \(x) sum(x, na.rm = TRUE))) |>
     # and round to 3 sig figs
-    dplyr::mutate(dplyr::across(c(time_h, gc_length, crow, envelope), signif, 3))
+    dplyr::mutate(dplyr::across(c(time_h, gc_length, crow, envelope), \(x) signif(x, 3)))
 }
 
 test_that("Route envelope", {

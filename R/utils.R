@@ -362,7 +362,7 @@ hm_get_test <- function(item = c("coast", "buffer", "nofly", "grid", "route")){
   if (item == "r"){
     z <- NZ_routes %>%
       mutate(across(c("gc", "crow", "envelope"),
-                    reassert_crs, crs_longlat))
+                    \(x) reassert_crs(x, crs = crs_longlat)))
   }
   return(z)
 }
