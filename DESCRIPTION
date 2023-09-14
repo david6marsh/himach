@@ -14,7 +14,7 @@ Authors@R:
     person(family = "EUROCONTROL",
     role = c("fnd", "cph")))
 Description: For supersonic aircraft, flying subsonic over land,
-    High Mach finds the best route between airports. Allows for coastal buffer and
+    himach finds the best route between airports. Allows for coastal buffer and
     potentially closed regions. Uses a minimal model of aircraft
     performance: the focus is on time saved versus subsonic flight, rather
     than on vertical flight profile. For modelling and forecasting, not for planning your
@@ -57,4 +57,4 @@ Encoding: UTF-8
 LazyData: true
 Language: en-GB
 Config/testthat/edition: 3
-RoxygenNote: 7.2.2
+RoxygenNote: 7.2.3
