@@ -77,7 +77,6 @@ plot_map <- function(msf,
 # achievable range from a point
 # not used for route finding
 #' @import sf
-#' @importFrom geosphere geodesic
 make_range_envelope <- function(ac, ap, ap_locs = make_airports(),
                                 envelope_points=70){
   #range envelope shows how far from an airport you can go  with a given range
