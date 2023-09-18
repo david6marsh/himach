@@ -5,7 +5,7 @@
 crs_longlat <- "EPSG:4326"
 
 #two map projections
-#54030 is not in the rgdal::make_EPSG() database, so define Robinson
+#54030 is not in the standard EPSG database, so define Robinson
 crs_Atlantic <- "+proj=robin +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
 #same as Robinson, but centred on long +180
 crs_Pacific <- "+proj=robin +lon_0=180 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
