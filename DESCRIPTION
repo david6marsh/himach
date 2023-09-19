@@ -14,8 +14,8 @@ Authors@R:
     person(family = "EUROCONTROL",
     role = c("fnd", "cph")))
 Description: For supersonic aircraft, flying subsonic over land,
-    himach finds the best route between airports. Allows for coastal buffer and
-    potentially closed regions. Uses a minimal model of aircraft
+    find the best route between airports. Allow for coastal buffer and
+    potentially closed regions. Use a minimal model of aircraft
     performance: the focus is on time saved versus subsonic flight, rather
     than on vertical flight profile. For modelling and forecasting, not for planning your
     flight!
