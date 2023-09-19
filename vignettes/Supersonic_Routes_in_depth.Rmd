@@ -12,7 +12,7 @@ vignette: >
 
 [Supersonic Routes](Supersonic_Routes.html) provides a quick end-to-end introduction to using the `himach` package and is the place to start. This vignette provides advice on more advanced use, explaining details that the introduction skates over.
 
-Much of this vignette is optional or for occasional use, but the advice on saving and reading the cache is likely to be _essential_ for a speedy workflow. 
+Much of this vignette is optional or for occasional use, but the advice on saving and reading the cache is likely to be _essential_ for a speedy workflow, so that is described first. 
 
 
 ```{r, include = FALSE}
@@ -38,7 +38,7 @@ NZ_routes <- hm_get_test("route")
 ```
 
 
-# Cache {#cache}
+# Cache Management {#cache}
 
 `himach` uses caching to speed things up. Legs are cached in `route_cache` and arrival-departure links to airports are cached in `star_cache` (STAR is short for standard arrival route, its counterpart being SID the standard instrument departure).
 
@@ -94,7 +94,7 @@ The cache just works invisibly in the background - you will notice it speeds up 
 
 Incidentally, if you add a new refuelling point, then the cache remains _valid_ because only **legs are cached, not routes**. With a new refuelling point, `find_route` will check both old legs and new (to the new refuelling points), gaining where the legs are cached, before selecting the best combination of legs to make the route.
 
-## Cache Housekeeping (advanced)
+## Cache housekeeping (advanced)
 
 There may be times when you have built a large cache, of several thousand routes for a handful of aircraft. If you want to make a change to the performance of one aircraft, say, you either need to `hm_clean_cache()` and start everything again, or do a bit of housekeeping. The same is true if an airport location needs correcting: ideally we delete all references to just that airport.
 
@@ -129,7 +129,144 @@ length(star_cache)
 save("route_cache", "star_cache", file = full_filename)
 ```
 
-# No-fly zones
+# Extra Plots
+## Route density plots {#route_density}
+
+The function `map_routes` does a reasonable job of showing where the supersonic aircraft will fly, but it has two notable limitations. Firstly, when you have scores or hundreds of routes, the overlapping of routes begins to reduce the readability of the map. Secondly, some routes are likely to be flown more often than others: Paris-New York once a day, perhaps, while Copenhagen-New York only twice per week.
+
+In this vignette, we show how to plot the _density_ of routes, taking into account overlap and flight frequency. While a density map might serve some needs, a simpler bar chart is a fairly clear way to summarise total quantity (of flown hours) by, say, latitude, which can be of interest for atmospheric modelling.
+
+The process is fairly mechanical. We'll either do a latitude or a longitude bar chart, using a single function. We assume you've calculated a set of routes, in which you have only one 'best' route per `acID` and `routeID` (so have got rid of any different refuelling options, for example).
+
+The frequency of each is '1' by default. Given the label 'hours per week', this corresponds to 1 flight per week. If you want different frequencies for each route, you need to pass a dataframe with 3 columns: identifiers `acID` and `routeID`, and a value for flights per week in `flights_w` which does not have to be an integer. See the parameters for how to drop `acID`, say. If you want flight hours per year, say, then you need to switch the values in and name of `freq_var`.
+
+If you're running a forecast, you will have different routes and frequencies in different years and different scenarios. The plot will be faceted by `year` and `scen_ord`. These variables should also be in your frequency dataset, and for faceting should be factors or integer. We use `scen_ord` rather than `scenario` to indicate an ordered factor, so that they can always be plotted in 'low, base, high' order rather than alphabetical.
+
+```{r define_density_plot_fn}
+
+hm_latlong_density <- function(rt, # route dataset created earlier
+                               ll = "lat", #lat or long chart?
+                               # frequency data, either 1 or
+                               # dataset with at least 5 columns
+                               freq = 1, 
+                               # 2 for joining
+                               join_var = c("acID", "routeID"),
+                               # 1 for value
+                               freq_var = flights_w,
+                               freq_lab = "Hours per week",
+                               # and 2 for faceting
+                               facet_rows = vars(year), #or use NULL
+                               facet_cols = vars(scen_ord, acID),
+                               # other plot configuration elements
+                               bar_deg = 3, # width of bar plotted in degrees
+                               resolution_deg = 1, # granularity of analysis, keep small
+                               # ignore when flights are stationary (refuelling)
+                               drop_zero = TRUE,
+                               # return a graph, or a set of data
+                               return_data = FALSE){
+  # graph of lat or long?
+  sel_coord <- ifelse(ll |> 
+                        stringr::str_to_upper() |> 
+                        stringr::str_sub(1, 2) == "LA",
+                      2, 1)
+  coord_label <- ifelse(sel_coord == 2, "Latitude (deg)", "Longitude (deg)")
+  
+  rt <- rt |>
+    ungroup() |> #just in case supplied dataset is grouped
+    # standard route dataset will have all of these
+    # each row is a great circle segment
+    # in particular time_h is the flight time in hours for the segment
+    select(phase, phaseID, gc, acID, routeID, speed_kph, time_h, crow) |>
+    mutate(seg = row_number()) # note this is ungrouped
+  # this is a graph of flight time, so ignore time spent on the ground refuelling
+  if (drop_zero) rt <- rt |>
+    filter(speed_kph > 0)
+  
+  if (is.data.frame(freq)) {
+    # zoom in on the variables we need
+    freq <- freq |>
+      ungroup() |>
+      select(all_of(join_var), {{freq_var}}, scen_ord, year)
+    
+    rt <- rt |>
+      inner_join(freq, by = join_var, relationship = "many-to-many")
+  } else {
+    rt <- rt |>
+      mutate(flights_w = 1)
+    facet_rows <- NULL
+    facet_cols <- vars(acID)
+  }
+  
+  # split the great circle arcs into the graph resolution
+  rt <- rt |>
+    # ensure fine resolution
+    sf::st_segmentize(units::set_units(resolution_deg, degree)) |>
+    # drop the sf geometry, without dropping the gc column
+    sf::st_set_geometry("crow") |> # we only kept this to sacrifice it here
+    sf::st_drop_geometry() |>
+    group_by(across(!gc)) |> #don't want to lose any var in the reframe
+    # the reframe is to pull out either lat or long coordinate
+    reframe(coord = st_coordinates(gc)[ , sel_coord]) |>
+    group_by(across(any_of(c("seg", "scen_ord", "year")))) |> # now keep one entry per segment/resolution
+    # drop the last row if there's more than one, because we want to count line segments really
+    slice(1:max(1, n()-1)) |>
+    #round to the graph resolution
+    mutate(coord = resolution_deg * floor(coord / resolution_deg)) |>
+    distinct() |>
+    # time_h is the flight time in hours for the great circle segment
+    # now shared, after st_segmentize, amongst n() subsegments
+    mutate(time_h = {{freq_var}} * time_h / n(),
+           bar_coord = bar_deg * round(coord/bar_deg))
+  
+  # then use geom_bar to add up the times, across all flights
+  g <- ggplot(rt, aes(bar_coord,
+                      fill = phase,
+                      weight = time_h)) +
+    geom_bar()  +
+    facet_grid(rows = facet_rows, cols = facet_cols) +
+    labs(y = freq_lab, x = coord_label)
+  # orient appropriately for long or lat
+  if (sel_coord == 2) g <- g +
+    coord_flip()
+  
+  if (return_data) return(rt) else return(g)
+}
+```
+
+We'll show an example or two and then explain in a bit more detail how the graph ends up showing flight hours.
+
+```{r density_examples}
+# simple case with default 1 flight/week frequency
+hm_latlong_density(NZ_routes, facet_rows = NULL, facet_cols = vars(acID),
+                   bar_deg = 0.5, resolution_deg = 0.1)
+
+# make up a forecast of frequencies
+freq_fc <- NZ_routes |> 
+  # get the ac & routes we need the forecast for
+  select(acID, routeID) |> 
+  st_drop_geometry() |> # convert from sf to tibble
+  distinct() |> 
+  # add in some forecast years
+  tidyr::crossing(tibble(year = c(2040L, 2050L))) |> 
+  # add in some scenarios
+  tidyr::crossing(tibble(scen_ord = ordered(c("low", "base", "high"), 
+                                            levels = c("low", "base", "high")))) |> 
+  # and some flights per week (that don't make a lot of sense)
+  arrange(year, scen_ord) |> 
+  mutate(flights_w = row_number()) 
+  
+hm_latlong_density(NZ_routes, ll = "long", 
+                   freq = freq_fc,
+                   bar_deg = 0.5, resolution_deg = 0.1)
+
+```
+
+These illustrate strong (mode) peak of flight demand around 41 degrees South and 174 degrees East.
+
+To get the flight hours per week we use the `time_h` property in the routes data. This gives the duration, in hours, to fly the great circle arc in this row of the data. For graphing purposes, we split each great circle row into multiple sub-arcs using `reframe`, which is like `summarise` but you can end up with more rows than you started with. We aim for significantly smaller sub-arcs than the bar bin width (a sub-arc is just an arc). We share `time_h` equally amongst those sub-arcs and extract the start (lat or long) coordinate of the sub-arc. Multiply by the flight frequency to get hours per week for each sub-arc. The `geom_bar` then just adds up the hours per week for all the sub-arcs (starting) in that bin. All this is summarised in the comments in the function.
+
+# Route-finding details
+## No-fly zones
 
 It is not unusual for parts of the airspace to be closed, or be considered unsafe for flying. `himach` allows regions to be marked as 'avoid'. They will not feature in the grid, so routes will avoid them, with one exception: an arrival or departure airport can be inside a no-fly zone, as long as at least one connection point to the grid is outside. So they might more precisely be called 'no-overfly' zones.
 
@@ -181,7 +318,7 @@ map_routes(NZ_coast, routes, show_route = "aircraft",
 
 ```
 
-# Why do I have `NA` routes?
+## Why do I have `NA` routes?
 
 After a call to `find_routes`, the output can have `NA` entries in some columns for some routes. There are two reasons for this:
 
@@ -190,7 +327,7 @@ After a call to `find_routes`, the output can have `NA` entries in some columns 
 
 So these appear when the specified route is not possible.
 
-# Too many ocean routes: Buffer widths and projections {#bufferaccuracy}
+## Too many ocean routes: Buffer widths and projections {#bufferaccuracy}
 
 Above 60 or 70 (North or South), the approximations used by the `st_buffer` function begin to show signs of exceeding their limits. In particular, if you're adding a 50km coastal buffer, for example, there are separations between Canadian islands which are just under 100km. Borden and Ellef Ringnes are examples. A buffer generated by `st_buffer` shows the strait between them as open water, where it should be closed. 
 
