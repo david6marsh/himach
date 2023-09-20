@@ -18,8 +18,12 @@ land.
 In this version of `himach`, ‘good’ usually means the fastest, so the
 key indicator is time advantage over flying in a subsonic aircraft.
 
-![Three example routes, including a refuel stop in Anchorage. (Original
-map: www.naturalearthdata.com)](vignettes/three_routes.png)
+<figure>
+<img src="vignettes/three_routes.png"
+alt="Three example routes, including a refuel stop in Anchorage. (Original map: www.naturalearthdata.com)" />
+<figcaption aria-hidden="true">Three example routes, including a refuel
+stop in Anchorage. (Original map: www.naturalearthdata.com)</figcaption>
+</figure>
 
 It is not an operational tool. Please don’t fly these routes, which do
 not allow for wind or other atmospheric conditions, and are based on a
@@ -74,8 +78,12 @@ map. The great-circle route is shown in thin light blue, for comparison.
 To avoid that the sonic boom reaches land, we have added a buffer around
 the coast, shown in dark grey.
 
-![Example route between Boston &
-Frankfurt](vignettes/EDDF_KBOS_time.png)
+<figure>
+<img src="vignettes/EDDF_KBOS_time.png"
+alt="Example route between Boston &amp; Frankfurt" />
+<figcaption aria-hidden="true">Example route between Boston &amp;
+Frankfurt</figcaption>
+</figure>
 
 If we plot a speed view of the same thing, we see that the route
 maximises the distance over which supersonic speeds may be maintained.
@@ -115,9 +123,15 @@ Other useful features of `himach` include:
   (Atlantic, Pacific and 2 polar views), and ability to use other ‘CRS’
   if required;
 - plotting of route-range envelopes, to help understand routing options
-  (why didn’t it stay over the ocean here? why didn’t it refuel there?).
+  (why didn’t it stay over the ocean here? why didn’t it refuel there?);
+- looking at density of flights, when you factor in a forecast where the
+  frequency of flights varies by route and by year (see the advanced
+  vignette).
 
-![Example polar view](vignettes/polar_examples.png)
+<figure>
+<img src="vignettes/polar_examples.png" alt="Example polar view" />
+<figcaption aria-hidden="true">Example polar view</figcaption>
+</figure>
 
 ## Getting Started
 

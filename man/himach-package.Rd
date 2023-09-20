@@ -6,7 +6,7 @@
 \alias{himach-package}
 \title{himach: High Mach Finds Routes for Supersonic Aircraft}
 \description{
-For supersonic aircraft, flying subsonic over land, himach finds the best route between airports. Allows for coastal buffer and potentially closed regions. Uses a minimal model of aircraft performance: the focus is on time saved versus subsonic flight, rather than on vertical flight profile. For modelling and forecasting, not for planning your flight!
+For supersonic aircraft, flying subsonic over land, find the best route between airports. Allow for coastal buffer and potentially closed regions. Use a minimal model of aircraft performance: the focus is on time saved versus subsonic flight, rather than on vertical flight profile. For modelling and forecasting, not for planning your flight!
 }
 \seealso{
 Useful links:

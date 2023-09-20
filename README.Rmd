@@ -64,7 +64,8 @@ Other useful features of `himach` include:
 * time advantage is calculated by default against a Mach0.84 subsonic aircraft, but subsonic aircraft can be routed to provide alternative comparisons;
 * option to close off airspace where overflights are not allowed or not advised;
 * map plotting using four quick-view coordinate reference systems (Atlantic, Pacific and 2 polar views), and ability to use other 'CRS' if required;
-* plotting of route-range envelopes, to help understand routing options (why didn't it stay over the ocean here? why didn't it refuel there?).
+* plotting of route-range envelopes, to help understand routing options (why didn't it stay over the ocean here? why didn't it refuel there?);
+* looking at density of flights, when you factor in a forecast where the frequency of flights varies by route and by year (see the advanced vignette).
 
 ![Example polar view](vignettes/polar_examples.png)
 
