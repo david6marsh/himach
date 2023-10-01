@@ -15,7 +15,7 @@ The goal of `himach` ("high Mach") is to support modelling and analysis of the m
 
 In this version of `himach`, 'good' usually means the fastest, so the key indicator is time advantage over flying in a subsonic aircraft. 
 
-![Three example routes, including a refuel stop in Anchorage. (Original map: www.naturalearthdata.com)](vignettes/three_routes.png)
+![Three example routes, including a refuel stop in Anchorage. (Original map: www.naturalearthdata.com)](man/figures/three_routes.png)
 
 It is not an operational tool. Please don't fly these routes, which do not allow for wind or other atmospheric conditions, and are based on a very simple model of aircraft performance.
 
@@ -47,15 +47,15 @@ A second generation of supersonic passenger aircraft is under development (takin
 
 A route from `himach` looks something like this, shown in green on the map. The great-circle route is shown in thin light blue, for comparison. To avoid that the sonic boom reaches land, we have added a buffer around the coast, shown in dark grey.
 
-![Example route between Boston & Frankfurt](vignettes/EDDF_KBOS_time.png)
+![Example route between Boston & Frankfurt](man/figures/EDDF_KBOS_time.png)
 
 If we plot a speed view of the same thing, we see that the route maximises the distance over which supersonic speeds may be maintained. 
 
-![Example route between Boston & Frankfurt, this time showing speed](vignettes/EDDF_KBOS_speed.png){width=70%}
+![Example route between Boston & Frankfurt, this time showing speed](man/figures/EDDF_KBOS_speed.png){width=70%}
 
 Compared to some of the larger subsonic passenger jets, the second generation supersonics are expected to have relatively short range. So finding efficient re-fuelling points is an essential part of the modelling process. This map shows some examples (the results depend on which airports you make available as possible re-fuelling points).
 
-![Example routes, with refuelling points](vignettes/refuel_examples_pacific.png){width=80%}
+![Example routes, with refuelling points](man/figures/refuel_examples_pacific.png){width=80%}
 
 Other useful features of `himach` include:
 
@@ -67,7 +67,7 @@ Other useful features of `himach` include:
 * plotting of route-range envelopes, to help understand routing options (why didn't it stay over the ocean here? why didn't it refuel there?);
 * looking at density of flights, when you factor in a forecast where the frequency of flights varies by route and by year (see the advanced vignette).
 
-![Example polar view](vignettes/polar_examples.png)
+![Example polar view](man/figures/polar_examples.png)
 
 ## Getting Started
 
