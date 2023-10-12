@@ -235,7 +235,7 @@ hm_latlong_density <- function(rt, # route dataset created earlier
 
 We'll show an example or two and then explain in a bit more detail how the graph ends up showing flight hours.
 
-```{r density_examples, fig.width=6}
+```{r density_examples, fig.width=7}
 # simple case with default 1 flight/week frequency
 hm_latlong_density(NZ_routes, facet_rows = NULL, facet_cols = vars(acID),
                    bar_deg = 0.5, resolution_deg = 0.1)
