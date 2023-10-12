@@ -1,6 +1,6 @@
 Type: Package
 Package: himach
-Title: High Mach Finds Routes for Supersonic Aircraft 
+Title: Find Routes for Supersonic Aircraft 
 Version: 0.3.2.9000
 Authors@R: 
     c(person(given = "David",
@@ -21,7 +21,7 @@ Description: For supersonic aircraft, flying subsonic over land,
     flight!
 License: MIT + file LICENSE
 URL: https://github.com/david6marsh/himach,
-    https://dmarsh.github.io/himach/
+    https://david6marsh.github.io/himach/
 BugReports: https://github.com/david6marsh/himach/issues
 Depends: 
     R (>= 3.5.0)
