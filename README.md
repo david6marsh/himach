@@ -19,7 +19,7 @@ In this version of `himach`, ‘good’ usually means the fastest, so the
 key indicator is time advantage over flying in a subsonic aircraft.
 
 <figure>
-<img src="vignettes/three_routes.png"
+<img src="man/figures/three_routes.png"
 alt="Three example routes, including a refuel stop in Anchorage. (Original map: www.naturalearthdata.com)" />
 <figcaption aria-hidden="true">Three example routes, including a refuel
 stop in Anchorage. (Original map: www.naturalearthdata.com)</figcaption>
@@ -79,7 +79,7 @@ To avoid that the sonic boom reaches land, we have added a buffer around
 the coast, shown in dark grey.
 
 <figure>
-<img src="vignettes/EDDF_KBOS_time.png"
+<img src="man/figures/EDDF_KBOS_time.png"
 alt="Example route between Boston &amp; Frankfurt" />
 <figcaption aria-hidden="true">Example route between Boston &amp;
 Frankfurt</figcaption>
@@ -89,7 +89,7 @@ If we plot a speed view of the same thing, we see that the route
 maximises the distance over which supersonic speeds may be maintained.
 
 <figure>
-<img src="vignettes/EDDF_KBOS_speed.png" style="width:70.0%"
+<img src="man/figures/EDDF_KBOS_speed.png" style="width:70.0%"
 alt="Example route between Boston &amp; Frankfurt, this time showing speed" />
 <figcaption aria-hidden="true">Example route between Boston &amp;
 Frankfurt, this time showing speed</figcaption>
@@ -102,7 +102,7 @@ modelling process. This map shows some examples (the results depend on
 which airports you make available as possible re-fuelling points).
 
 <figure>
-<img src="vignettes/refuel_examples_pacific.png" style="width:80.0%"
+<img src="man/figures/refuel_examples_pacific.png" style="width:80.0%"
 alt="Example routes, with refuelling points" />
 <figcaption aria-hidden="true">Example routes, with refuelling
 points</figcaption>
@@ -129,7 +129,7 @@ Other useful features of `himach` include:
   vignette).
 
 <figure>
-<img src="vignettes/polar_examples.png" alt="Example polar view" />
+<img src="man/figures/polar_examples.png" alt="Example polar view" />
 <figcaption aria-hidden="true">Example polar view</figcaption>
 </figure>
 

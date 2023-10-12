@@ -12,6 +12,7 @@ For supersonic aircraft, flying subsonic over land, find the best route between 
 Useful links:
 \itemize{
   \item \url{https://github.com/david6marsh/himach}
+  \item \url{https://espinielli.github.io/himach/}
   \item Report bugs at \url{https://github.com/david6marsh/himach/issues}
 }
 
