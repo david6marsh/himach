@@ -137,7 +137,7 @@ make_route_grid <- function(fat_map, name,
     mutate(xy = st_cast(st_transform(st_sfc(st_multipoint(matrix(c(.data$long, .data$lat), ncol=2)),
                                             crs= crs_longlat),
                                      crs=st_crs(fat_map)),'POINT'))
-  if (getOption("quiet", default=0)>0) message("Made the grid:", round(Sys.time() - tstart, 1))
+  if (getOption("himach.verbosity", default=0)>0) message("Made the grid:", round(Sys.time() - tstart, 1))
 
   #and also the lattice
   #we need 4 neighbours,  1- next one with the same lat and higher long (roughly E)
@@ -145,7 +145,7 @@ make_route_grid <- function(fat_map, name,
   #add a 4th for safety.
   # wrap this in a split - map - map_dfr framework, and show tick on the first mutate statement
   # big ll_grid_seed (30km) has 500,000 elements, so 1,000 chunks should be plenty
-  if (getOption("quiet",default=0)>0) message("Making the basic lattice:")
+  if (getOption("himach.verbosity",default=0)>0) message("Making the basic lattice:")
   sample_n <- nrow(ll_grid_seed)
   grp_size <- 1000
   # pb <- progress_estimated(sample_n , min_time = 3)
@@ -196,10 +196,10 @@ make_route_grid <- function(fat_map, name,
     ) %>%
     purrr::map_dfr(~ as.data.frame(.)) %>%
     select(-"grp")
-  if (getOption("quiet",default=0)>0) message("") #new line
+  if (getOption("himach.verbosity",default=0)>0) message("") #new line
 
 
-  if (getOption("quiet", default=0)>0) message("Adding geo & distance to the lattice...")
+  if (getOption("himach.verbosity", default=0)>0) message("Adding geo & distance to the lattice...")
   pb <- progress::progress_bar$new(total = nrow(ll_lattice),
                                    format = "[:bar] :percent :eta")
   g@lattice <- ll_lattice %>%
@@ -210,13 +210,13 @@ make_route_grid <- function(fat_map, name,
            geometry = sf::st_transform(.data$geometry, crs = st_crs(fat_map))) %>%
     select("from", "to", "geometry", "dist_km", "wrap")
   message("")
-  if (getOption("quiet", default=0)>0) message("Added geo & distance to the lattice:",round(Sys.time() - tstart,1))
+  if (getOption("himach.verbosity", default=0)>0) message("Added geo & distance to the lattice:",round(Sys.time() - tstart,1))
 
   #classify the points as sea or not
   if (classify){
-    if (getOption("quiet", default=0)>0) message("Classifying points in the lattice as land.")
+    if (getOption("himach.verbosity", default=0)>0) message("Classifying points in the lattice as land.")
     g@points$land <- as.vector(st_within(g@points$xy, fat_map, sparse=FALSE, prepared = TRUE))
-    if (getOption("quiet",default=0)>0) message("Classified as land:", round(Sys.time() - tstart,1))
+    if (getOption("himach.verbosity",default=0)>0) message("Classified as land:", round(Sys.time() - tstart,1))
     id_land <- g@points %>%
       as.data.frame() %>%
       select("id", "land")
@@ -226,9 +226,9 @@ make_route_grid <- function(fat_map, name,
   #st_intersects is faster than st_within
   #simpler than old version, since only pure-sea and sea-land is of real interest
   if (classify) {
-    if (getOption("quiet", default=0)>0) message("Classifying lines in the lattice as land.")
+    if (getOption("himach.verbosity", default=0)>0) message("Classifying lines in the lattice as land.")
     g@lattice$Xland <- as.vector(st_intersects(g@lattice$geometry, fat_map, sparse=FALSE, prepared = TRUE))
-    if (getOption("quiet",default=0)>0) message("Classified as land:", round(Sys.time() - tstart,1))
+    if (getOption("himach.verbosity",default=0)>0) message("Classified as land:", round(Sys.time() - tstart,1))
     z <- g@lattice %>%
       left_join(id_land, by=c("from"="id")) %>%
       left_join(id_land, by=c("to"="id"), suffix=c("_1","_2")) %>%
@@ -238,13 +238,13 @@ make_route_grid <- function(fat_map, name,
         TRUE ~ "transition"
       ),
       phase = factor(.data$ph, levels = phases))
-    if (getOption("quiet",default=0)>0) message("Calculated all phases:",round(Sys.time() - tstart,1))
+    if (getOption("himach.verbosity",default=0)>0) message("Calculated all phases:",round(Sys.time() - tstart,1))
     g@lattice<- g@lattice %>%
       mutate(phase = z$phase) %>%
       select(-"Xland")
   }
 
-  if (getOption("quiet", default=0)>0) message("Converting points and lattice to data table.")
+  if (getOption("himach.verbosity", default=0)>0) message("Converting points and lattice to data table.")
   g@points <- data.table::as.data.table(g@points)
   g@lattice <- data.table::as.data.table(g@lattice)
 

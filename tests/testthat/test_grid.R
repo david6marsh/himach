@@ -1,5 +1,5 @@
 
-old_quiet <- getOption("quiet", default=0)
+old_verbosity <- getOption("himach.verbosity", default=0)
 # given some solaris CMD Check errors (old GDAl?)
 # redefine crs_Pacific
 #same as Robinson, but centred on long +180
@@ -13,7 +13,7 @@ test_that("Using s2", {
 })
 
 test_that("Grid creation", {
-  options("quiet" = 0) #for no reporting
+  options("himach.verbosity" = 0) #for no reporting
 
   # We project the in-built test maps
   rg <- make_route_grid(NZ_buffer30, "NZ lat-long at 500km",
@@ -32,7 +32,7 @@ test_that("Grid creation", {
 # in testthat v3, drop the checking of this messaging, which is hardly critical if the results are ok
 test_that("Grid creation messaging", {
 
-  options("quiet" = 1)
+  options("himach.verbosity" = 1)
   # check messaging comes on - all the messages contain one of these words
   suppressMessages(
     expect_message(make_route_grid(NZ_buffer30, "NZ lat-long at 300km",
@@ -44,4 +44,4 @@ test_that("Grid creation messaging", {
 })
 
 
-options("quiet" = old_quiet)
+options("himach.verbosity" = old_verbosity)

@@ -55,7 +55,7 @@ hm_clean_cache() #start without cache
 aircraft <- make_aircraft(warn = FALSE)
 airports <- make_airports(crs = crs_Pacific)
 
-options("quiet"= 2) # for a little reporting
+options("himach.verbosity"= 2) # for a little reporting
 # how long does it take with an empty cache?
 system.time(
   routes <- find_route(aircraft[1, ],
@@ -290,7 +290,7 @@ aircraft <- make_aircraft(warn = FALSE)
 airports <- make_airports(crs = crs_Pacific)
 
 # run the same route, but with the avoid region
-options("quiet"= 2) #just the progress bar
+options("himach.verbosity"= 2) #just the progress bar
 ac <- aircraft[c(1, 4), ]$id
 routes <- find_routes(ac, 
                       data.frame(ADEP = "NZAA", ADES = "NZDN"),

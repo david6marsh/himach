@@ -223,10 +223,10 @@ Finally we're ready to do some routing of aircraft.
 
 The result is a little coarse, because we have used a coarse grid. `himach` simplifies sections of route to great circles where it can, but all points where two great-circle segments join will be vertices of this grid. You can experiment by using the built-in `NZ_grid` instead. That has a 30km resolution, but is built on the same `NZ_buffer` map, so nothing else needs to change.
 
-You can control the amount of reporting during the creation of routes with the `quiet` option, cumulatively you get: 0) nothing, 1) route & legs, 2) major stages (envelope, phases, shortcuts) 3) use of cache, route stages & some timings. 
+You can control the amount of reporting during the creation of routes with the `himach.verbosity` option, cumulatively you get: 0) nothing, 1) route & legs, 2) major stages (envelope, phases, shortcuts) 3) use of cache, route stages & some timings. 
 
 ```{r simple_route}
-options("quiet" = 4) #for some output
+options("himach.verbosity" = 4) #for some output
 # from Auckland to Christchurch
 ap2 <- make_AP2("NZAA","NZCH",airports)
 
@@ -247,7 +247,7 @@ In fact, normally you'll want to run a selection of routes in one batch. While `
 There is a progress bar, though this interacts with the progress messaging and the remaining time estimate tends to be too high because calculation speeds up as the cache fills up.
 
 ```{r find_multiple_routes}
-options("quiet" = 2) # anything more than 1 is messy, because of the progress bar
+options("himach.verbosity" = 2) # anything more than 1 is messy, because of the progress bar
 ap2 <- matrix(c("NZAA","NZCH","NZAA","NZDN","NZGS","NZCH"), 
               ncol = 2, byrow = TRUE)
 ac <- aircraft[c(1,4), ]$id

@@ -57,14 +57,14 @@ test_that("Route summary", {
 })
 
 test_that("find_leg catches input error",{
-  old_quiet <- getOption("quiet", default=0)
-  options("quiet" = 0) #for no reporting
+  old_verbosity <- getOption("himach.verbosity", default=0)
+  options("himach.verbosity" = 0) #for no reporting
   hm_clean_cache() #start without cache
   # need to load some of the built-in data
   aircraft <- make_aircraft(warn = FALSE)
   # airports <- make_airports()
   airports <- make_airports(crs = crs_Pacific, warn = FALSE)
-  options("quiet" = old_quiet)
+  options("himach.verbosity" = old_verbosity)
   # for visual check:
   # ggplot(NZ_buffer30) + geom_sf() + geom_sf(data = routes$gc)
 
@@ -79,8 +79,8 @@ test_that("find_leg catches input error",{
 
 
 test_that("find_route works with subsonic option",{
-  old_quiet <- getOption("quiet", default = 0)
-  options("quiet" = 3) #for full reporting
+  old_verbosity <- getOption("himach.verbosity", default = 0)
+  options("himach.verbosity" = 3) #for full reporting
   hm_clean_cache() #start without cache
   # need to load some of the built-in data
   aircraft <- make_aircraft(warn = FALSE)
@@ -111,12 +111,12 @@ test_that("find_route works with subsonic option",{
   expect_true(length(.hm_cache$star_cache) == 4)
   unlink(full_filename) # remove the temporary cache file to pass CRAN test
 
-  options("quiet" = old_quiet)
+  options("himach.verbosity" = old_verbosity)
 })
 
 test_that("Find multiple routes for multiple aircraft",{
-  old_quiet <- getOption("quiet", default=0)
-  options("quiet" = 0) #for no reporting
+  old_verbosity <- getOption("himach.verbosity", default=0)
+  options("himach.verbosity" = 0) #for no reporting
   hm_clean_cache() #start without cache
   # need to load some of the built-in data
   aircraft <- make_aircraft(warn = FALSE)
@@ -160,5 +160,5 @@ test_that("Find multiple routes for multiple aircraft",{
                              route_grid = NZ_grid),
                "unknown")
 
-  options("quiet" = old_quiet)
+  options("himach.verbosity" = old_verbosity)
 })

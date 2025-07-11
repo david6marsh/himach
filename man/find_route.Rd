@@ -100,7 +100,7 @@ NZ_buffer30 <- hm_get_test("buffer")
 NZ_grid <- hm_get_test("grid")
 airports <- make_airports(crs = sf::st_crs(NZ_buffer30))
 
-options("quiet" = 4) #for heavy reporting
+options("himach.verbosity" = 4) #for heavy reporting
 # from Auckland to Christchurch
 ap2 <- make_AP2("NZAA","NZCH",airports)
 # on some CRAN machines even this takes too long, so not run

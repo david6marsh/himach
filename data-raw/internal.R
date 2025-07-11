@@ -74,7 +74,7 @@ aps <- rbind(make_AP2("NZAA","NZCH",airports), make_AP2("NZAA","NZDN",airports),
              make_AP2("NZAA","NZQN",airports), make_AP2("NZWN","NZQN",airports),
              make_AP2("NZGS","NZCH",airports))
 
-options("quiet"= 1)
+options("himach.verbosity"= 1)
 NZ_routes <- purrr::reduce(lapply(
   1:nrow(aps),
   function(x) find_route(ac[4,],

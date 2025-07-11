@@ -45,7 +45,7 @@ distFromLand <- function(long, lat, land){
 #
 findGC <- function(subp, withMap_s2, avoidMap_s2, max_depth = 250){
 
-  if(getOption("quiet", default=0)>2) message("  ",first(subp$phase), " ",
+  if(getOption("himach.verbosity", default=0)>2) message("  ",first(subp$phase), " ",
                                              first(subp$phaseID), "  ", nrow(subp))
   # check if recursed too far
   too_deep <- FALSE
@@ -176,7 +176,7 @@ emptyRoute <- function(ac, ap2, fat_map,
 #' NZ_buffer30 <- hm_get_test("buffer")
 #' NZ_grid <- hm_get_test("grid")
 #'
-#' options("quiet" = 4) #for heavy reporting
+#' options("himach.verbosity" = 4) #for heavy reporting
 #' # from Auckland to Christchurch
 #' ap2 <- make_AP2("NZAA","NZCH",airports)
 #' \dontrun{
@@ -207,7 +207,7 @@ find_routes <- function(ac_ids, ap2_ids, aircraft, airports, ...){
                                    r <- find_route(ac, ap2,
                                                    ap_loc = airports, ...)
                                    pb$tick()
-                                   if (getOption("quiet", default=0)>0) message("") # new line
+                                   if (getOption("himach.verbosity", default=0)>0) message("") # new line
                                    return(r)
                                  }
   ),
@@ -286,7 +286,7 @@ find_routes <- function(ac_ids, ap2_ids, aircraft, airports, ...){
 #' NZ_grid <- hm_get_test("grid")
 #' airports <- make_airports(crs = sf::st_crs(NZ_buffer30))
 #'
-#' options("quiet" = 4) #for heavy reporting
+#' options("himach.verbosity" = 4) #for heavy reporting
 #' # from Auckland to Christchurch
 #' ap2 <- make_AP2("NZAA","NZCH",airports)
 #' # on some CRAN machines even this takes too long, so not run
@@ -308,7 +308,7 @@ find_route <- function(ac, ap2, fat_map, avoid=NA, route_grid, cf_subsonic=NA,
   #cf_subsonic is either NA or a line from the ac dataframe, like ac itself
   #refuel is either NA or a dataframe list APICAO, lat, long at least, with ap_locs
 
-  if (getOption("quiet", default=0)>0) message("Route:-", ap2$AP2,"----") #route header v refuel subroutes
+  if (getOption("himach.verbosity", default=0)>0) message("Route:-", ap2$AP2,"----") #route header v refuel subroutes
 
   # # check for unknown airport
   # if (is.na(ap2$gcdist_km)){
@@ -336,14 +336,14 @@ find_route <- function(ac, ap2, fat_map, avoid=NA, route_grid, cf_subsonic=NA,
   if (ap2range_ok) routes <- find_leg(ac, ap2, ap_loc = ap_loc,
                                              fat_map=fat_map, route_grid = route_grid, avoid = avoid, ...)
   else {
-    if (getOption("quiet", default=0)>1) message(" Too far for one leg.")
+    if (getOption("himach.verbosity", default=0)>1) message(" Too far for one leg.")
     routes <- emptyRoute(ac, ap2, fat_map)
   }
 
   #do a parallel run for a subsonic aircraft - a true baseline?
   #not advised - just use the M084 estimate
   if (is.data.frame(cf_subsonic)) {
-    if (getOption("quiet", default=0)>1) message(" Adding subsonic, without range bounds.")
+    if (getOption("himach.verbosity", default=0)>1) message(" Adding subsonic, without range bounds.")
     r_subsonic <- find_leg(cf_subsonic, ap2, ap_loc = ap_loc,
                                   enforce_range = FALSE,
                                   fat_map=fat_map, route_grid = route_grid, avoid=avoid, ...)
@@ -494,7 +494,7 @@ findToCToD <- function(ap, route_grid, fat_map, ac,
   if ((attr(.hm_cache$star_cache,"map") != route_grid@name) ||
       (attr(.hm_cache$star_cache,"aircraftSet") != attr(ac,"aircraftSet"))) {
     # if map = "" then already clean, so no need for message
-    if (getOption("quiet", default=0) > 0 &
+    if (getOption("himach.verbosity", default=0) > 0 &
         attr(.hm_cache$star_cache,"map") != "") message("Map or aircraft have changed, so clearing star cache.")
     hm_clean_cache("star")
     attr(.hm_cache$star_cache,"map") <- route_grid@name
@@ -506,7 +506,7 @@ findToCToD <- function(ap, route_grid, fat_map, ac,
 
   #if this query has not already been cached, calculate its value
   if (!exists(cache_as, envir=.hm_cache$star_cache, inherits=F)) {
-    if (getOption("quiet", default=0)>2) message("  TOC/TOD not cached: calculating...")
+    if (getOption("himach.verbosity", default=0)>2) message("  TOC/TOD not cached: calculating...")
     assign(cache_as, findToCToD_really(ap, route_grid, fat_map, ac,
                                        ad_dist_m, ad_nearest), .hm_cache$star_cache)
   }
@@ -655,7 +655,7 @@ pathToGC <- function(path, route_grid,
         select(-"phaseChange")
     }
 
-    if(getOption("quiet", default=0)>1) message(" Calculated phase changes")
+    if(getOption("himach.verbosity", default=0)>1) message(" Calculated phase changes")
     fat_map_s2 <- st_as_s2(fat_map) # do this conversion only once
     if (is.list(avoid)) avoid_s2 <- st_as_s2(avoid)
     else
@@ -685,7 +685,7 @@ pathToGC <- function(path, route_grid,
     #loop for each phase
     #trim path to list of id pairs, each of which can be joined by a GC
     #reduce collapes a list of data.frames to a data.frame
-    if (getOption("quiet", default=0)>2) message("  Ready to recurse")
+    if (getOption("himach.verbosity", default=0)>2) message("  Ready to recurse")
 
     gcid <- purrr::reduce(lapply(unique(p$phaseID), function(i, m) findGC(p[p$phaseID==i,],
                                                                           fat_map_s2, avoid_s2)),
@@ -697,7 +697,7 @@ pathToGC <- function(path, route_grid,
       filter(! .data$from == .data$to) # not sure why it occasionally churns these out
 
 
-    if (getOption("quiet", default=0)>1) message(" Done recursion")
+    if (getOption("himach.verbosity", default=0)>1) message(" Done recursion")
 
     #code is split just because there's less to highlight in the debugger
     gcid <- gcid %>%
@@ -719,7 +719,7 @@ pathToGC <- function(path, route_grid,
 
     # loop to look for great-circle shortcuts
     if (shortcuts) {
-      if (getOption("quiet", default=0)>1) message(" Checking Shortcuts")
+      if (getOption("himach.verbosity", default=0)>1) message(" Checking Shortcuts")
       baseID <- 1
       while (baseID < nrow(gcid)-1) {
         #skip this baseID if not 'sea' or 'land'
@@ -741,7 +741,7 @@ pathToGC <- function(path, route_grid,
               }
               all_sea <- ! s2::s2_intersects(test_line, use_map)
               if (all_sea) {
-                if (getOption("quiet", default=0)>2) message("  Shortcut from ", baseID, " to ", farID)
+                if (getOption("himach.verbosity", default=0)>2) message("  Shortcut from ", baseID, " to ", farID)
                 #shift the intermediate points onto the new shortcut line
                 interm <- (baseID+1):farID
                 old_pts <- s2::s2_lnglat(gcid[interm, ]$from_long, gcid[interm, ]$from_lat)
@@ -878,7 +878,7 @@ pathToGC <- function(path, route_grid,
 #' NZ_buffer30 <- hm_get_test("buffer")
 #' NZ_grid <- hm_get_test("grid")
 #'
-#' options("quiet" = 4) #for heavy reporting
+#' options("himach.verbosity" = 4) #for heavy reporting
 #' # from Auckland to Christchurch
 #' ap2 <- make_AP2("NZAA","NZCH",airports)
 #' routes <- find_leg(aircraft[4,],
@@ -904,7 +904,7 @@ find_leg <- function(ac, ap2, route_grid, fat_map, ap_loc,
   #if cache doesn't match create it as a child of Global (so persists outside this function!)
   if ((attr(.hm_cache$route_cache,"map") != route_grid@name)) {
     # if map = "" then already empty so no need for message
-    if (getOption("quiet", default=0) > 0 &
+    if (getOption("himach.verbosity", default=0) > 0 &
         attr(.hm_cache$route_cache,"map") != "") message("Map used by grid has changed, so clearing route cache.")
     hm_clean_cache("route") # empty cache
     attr(.hm_cache$route_cache,"map") <- route_grid@name
@@ -926,7 +926,7 @@ find_leg <- function(ac, ap2, route_grid, fat_map, ap_loc,
 
   #if this query has not already been cached, calculate its value
   if (!exists(cache_as, envir=.hm_cache$route_cache, inherits=F)) {
-    if (getOption("quiet", default=0)>2) message("  Not cached: calculating...")
+    if (getOption("himach.verbosity", default=0)>2) message("  Not cached: calculating...")
     r <- find_leg_really(ac, ap2, route_grid, fat_map, ap_loc, avoid,
                                 enforce_range, best_by_time, grace_km,
                                 shortcuts, ad_dist_m, ad_nearest, max_leg_circuity, ...)
@@ -963,7 +963,7 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
   tstart <- Sys.time()
   stopifnot(class(route_grid)=="GridLat")
 
-  if (getOption("quiet", default=0)>0) message("Leg: ", ap2$AP2, " Aircraft: ", ac$type)
+  if (getOption("himach.verbosity", default=0)>0) message("Leg: ", ap2$AP2, " Aircraft: ", ac$type)
 
   #get crow-flies
   crow <- st_gcIntermediate(p1=c(ap2$from_long, ap2$from_lat),
@@ -976,7 +976,7 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
                     c(ap2$to_long, ap2$to_lat))/1000
 
   if ((gcdist > ac$range_km) & enforce_range) {
-    if (getOption("quiet", default=0)>0) message("Distance ", round(gcdist,1), "km exceeds range ",
+    if (getOption("himach.verbosity", default=0)>0) message("Distance ", round(gcdist,1), "km exceeds range ",
                                                 round(ac$range_km,1), "km.")
     #return something mostly empty
     return(emptyRoute(ac, ap2, fat_map))
@@ -994,7 +994,7 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
     avoid <- st_union(avoid)
   }
 
-  if (getOption("quiet", default=0)>2) message("  Starting envelope: ",round(Sys.time() - tstart,1))
+  if (getOption("himach.verbosity", default=0)>2) message("  Starting envelope: ",round(Sys.time() - tstart,1))
   #make the envelope - so can plot even if don't enforce it
   #we work with the envelope in map CRS, then save at last stage in crs_longlat
   envelope <-  st_sfc(st_polygon(), crs=use_crs) #null by default
@@ -1031,7 +1031,7 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
         data.table::as.data.table()
       # crop map to envelope, too
       fat_map <- st_intersection(fat_map, envelope)
-      if (getOption("quiet", default=0)>1) message(" Cut envelope from lattice: ",round(Sys.time() - tstart,1))
+      if (getOption("himach.verbosity", default=0)>1) message(" Cut envelope from lattice: ",round(Sys.time() - tstart,1))
     }
   }
 
@@ -1078,7 +1078,7 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
       }
     }
 
-    if (getOption("quiet", default=0)>2) message("  Adjusted for avoid areas: ", round(Sys.time() - tstart,1))
+    if (getOption("himach.verbosity", default=0)>2) message("  Adjusted for avoid areas: ", round(Sys.time() - tstart,1))
     #and for non-overseas flight, also need to avoid 'avoid'
   }
 
@@ -1100,7 +1100,7 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
     mutate(cost = .data$dist_km)  %>%
     data.table::as.data.table()#if !bytime, just use distance..
   }
-  if (getOption("quiet", default=0)>2) message("  Got costed lattice: ",round(Sys.time() - tstart,1))
+  if (getOption("himach.verbosity", default=0)>2) message("  Got costed lattice: ",round(Sys.time() - tstart,1))
 
 
   gr <- makegraph(costed_lattice %>% select("from", "to", "cost"),
@@ -1111,15 +1111,15 @@ find_leg_really <- function(ac, ap2, route_grid, fat_map,
   #then get the grid route
   # path <- get_path_pair(gr, nearest_id(route_grid, c(ap2$from_long, ap2$from_lat)),
   #                       nearest_id(route_grid, c(ap2$to_long, ap2$to_lat)))
-  if (getOption("quiet", default = 0) < 2) {
+  if (getOption("himach.verbosity", default = 0) < 2) {
     suppressMessages(path <- get_path_pair(gr, ap2$ADEP, ap2$ADES))
   } else path <- get_path_pair(gr, ap2$ADEP, ap2$ADES)
 
   if (length(path[[1]])>1) {
-    if(getOption("quiet", default=0)>2) message("  Got path: ",round(Sys.time() - tstart,1))
+    if(getOption("himach.verbosity", default=0)>2) message("  Got path: ",round(Sys.time() - tstart,1))
   }
   else if (length(path[[1]])<2 ) {
-    if (getOption("quiet", default=0)>0) {message("Failed to find path for ", ap2$AP2,
+    if (getOption("himach.verbosity", default=0)>0) {message("Failed to find path for ", ap2$AP2,
                                                  " (too far, or higher envelope_points)")}
     #return something mostly empty
     return(emptyRoute(ac, ap2, fat_map))

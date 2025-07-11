@@ -85,7 +85,7 @@ airports <- make_airports(crs = crs_Pacific)
 NZ_buffer30 <- hm_get_test("buffer")
 NZ_grid <- hm_get_test("grid")
 
-options("quiet" = 4) #for heavy reporting
+options("himach.verbosity" = 4) #for heavy reporting
 # from Auckland to Christchurch
 ap2 <- make_AP2("NZAA","NZCH",airports)
 routes <- find_leg(aircraft[4,],
