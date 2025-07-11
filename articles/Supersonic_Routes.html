@@ -350,7 +350,7 @@ limited set, it can be visualised.</p>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;    user  system elapsed </span></span>
-<span><span class="co">#&gt;   0.622   0.016   0.639</span></span>
+<span><span class="co">#&gt;   0.618   0.016   0.634</span></span>
 <span></span>
 <span><span class="co"># whether this map is useful depends on the target_km v the overall size of the map</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">NZ_buffer30</span><span class="op">)</span> <span class="op">+</span></span>
@@ -374,11 +374,11 @@ vertices of this grid. You can experiment by using the built-in
 on the same <code>NZ_buffer</code> map, so nothing else needs to
 change.</p>
 <p>You can control the amount of reporting during the creation of routes
-with the <code>quiet</code> option, cumulatively you get: 0) nothing, 1)
-route &amp; legs, 2) major stages (envelope, phases, shortcuts) 3) use
-of cache, route stages &amp; some timings.</p>
+with the <code>himach.verbosity</code> option, cumulatively you get: 0)
+nothing, 1) route &amp; legs, 2) major stages (envelope, phases,
+shortcuts) 3) use of cache, route stages &amp; some timings.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span><span class="st">"quiet"</span> <span class="op">=</span> <span class="fl">4</span><span class="op">)</span> <span class="co">#for some output</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span><span class="st">"himach.verbosity"</span> <span class="op">=</span> <span class="fl">4</span><span class="op">)</span> <span class="co">#for some output</span></span>
 <span><span class="co"># from Auckland to Christchurch</span></span>
 <span><span class="va">ap2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/make_AP2.html">make_AP2</a></span><span class="op">(</span><span class="st">"NZAA"</span>,<span class="st">"NZCH"</span>,<span class="va">airports</span><span class="op">)</span></span>
 <span></span>
@@ -418,7 +418,7 @@ called <code>find_routes</code>.</p>
 messaging and the remaining time estimate tends to be too high because
 calculation speeds up as the cache fills up.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span><span class="st">"quiet"</span> <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="co"># anything more than 1 is messy, because of the progress bar</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span><span class="st">"himach.verbosity"</span> <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="co"># anything more than 1 is messy, because of the progress bar</span></span>
 <span><span class="va">ap2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"NZAA"</span>,<span class="st">"NZCH"</span>,<span class="st">"NZAA"</span>,<span class="st">"NZDN"</span>,<span class="st">"NZGS"</span>,<span class="st">"NZCH"</span><span class="op">)</span>, </span>
 <span>              ncol <span class="op">=</span> <span class="fl">2</span>, byrow <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="va">ac</span> <span class="op">&lt;-</span> <span class="va">aircraft</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">4</span><span class="op">)</span>, <span class="op">]</span><span class="op">$</span><span class="va">id</span></span>
