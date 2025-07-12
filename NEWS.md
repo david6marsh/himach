@@ -1,4 +1,8 @@
-# himach (development version)
+# himach 1.0.0
+
+* Upgrade to major release, because _himach_ has been mature and stable for quite a while.
+* Dependency upgrade: replace use of 'quiet' option.
+* Bug fixes: out-dated link in vignette, dependency on R for pipe.
 
 # himach 0.3.2
 
