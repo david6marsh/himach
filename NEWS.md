@@ -1,3 +1,5 @@
+# himach (development version)
+
 # himach 1.0.0
 
 * Upgrade to major release, because _himach_ has been mature and stable for quite a while.
