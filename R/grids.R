@@ -2,7 +2,7 @@
 #
 # grid-related functions
 
-utils::globalVariables(c(".", "crs_longlat"))
+utils::globalVariables(c(".", "crs_longlat", "id"))
 
 # round longitude back to -180 <= x < 180
 mod_long <- function(x){
