@@ -843,7 +843,7 @@ pathToGC <- function(path, route_grid,
 #'
 #' Legs are automatically saved in \code{route_cache} and retrieved from here if
 #' available rather than re-calculated. See
-#' \href{../doc/Supersonic_routes_in_depth.html#cache}{vignette on caching} for cache
+#' \href{../doc/Supersonic_Routes_in_depth.html#cache}{vignette on caching} for cache
 #' management.
 #
 #'
