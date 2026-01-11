@@ -100,7 +100,7 @@ In fact `find_leg` finds up to 4 versions of the path:
 
 Legs are automatically saved in `route_cache` and retrieved from here if
 available rather than re-calculated. See [vignette on
-caching](https://david6marsh.github.io/himach/doc/Supersonic_routes_in_depth.html#cache)
+caching](https://david6marsh.github.io/himach/doc/Supersonic_Routes_in_depth.html#cache)
 for cache management.
 
 ## Examples

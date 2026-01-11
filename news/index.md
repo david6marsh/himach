@@ -1,6 +1,12 @@
 # Changelog
 
-## himach (development version)
+## himach 1.0.1
+
+## himach 1.0.1
+
+- Patch of missing global declaration, previously hidden by use of
+  dplyr.
+- Fix typo in reference to vignette.
 
 ## himach 1.0.0
 

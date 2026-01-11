@@ -76,7 +76,7 @@ system.time(
 #>  Done recursion
 #>  Checking Shortcuts
 #>    user  system elapsed 
-#>   0.664   0.022   0.686
+#>   0.956   0.024   0.978
 
 # test saving of cache to a disposable directory
 tmp_dir <- tempdir()
