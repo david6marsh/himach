@@ -23,7 +23,6 @@ hm_clean_cache()
 
 }
 \seealso{
-For more details see the cache section in the vignette:
-  \code{vignette("Supersonic_Routes_in_depth", package = "himach")}. or
-  \href{../doc/Supersonic_Routes_in_depth.html#cache}{Vignette on caching}
+For more details see the cache section in the
+  `vignette("Supersonic_Routes_in_depth")`.
 }

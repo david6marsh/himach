@@ -72,9 +72,8 @@ In fact \code{find_leg} finds up to 4 versions of the path:
 }
 
 Legs are automatically saved in \code{route_cache} and retrieved from here if
-available rather than re-calculated. See
-\href{../doc/Supersonic_Routes_in_depth.html#cache}{vignette on caching} for cache
-management.
+available rather than re-calculated.
+See `vignette("Supersonic_Routes_in_depth")` for cache anagement.
 }
 \examples{
 # need to load some of the built-in data (not run)
