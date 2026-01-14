@@ -99,9 +99,8 @@ In fact `find_leg` finds up to 4 versions of the path:
     Dijkstra results, which are \_not\_ shortest great circle.
 
 Legs are automatically saved in `route_cache` and retrieved from here if
-available rather than re-calculated. See [vignette on
-caching](https://david6marsh.github.io/himach/doc/Supersonic_Routes_in_depth.html#cache)
-for cache management.
+available rather than re-calculated. See
+\`vignette("Supersonic_Routes_in_depth")\` for cache anagement.
 
 ## Examples
 
