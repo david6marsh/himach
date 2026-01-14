@@ -1,13 +1,11 @@
 # cache management functions
 
-
 #' Clean the route and SID-STAR cache.
 #'
 #' Empties the cache.
 #'
-#' @seealso For more details see the cache section in the vignette:
-#'   \code{vignette("Supersonic_Routes_in_depth", package = "himach")}. or
-#'   \href{../doc/Supersonic_Routes_in_depth.html#cache}{Vignette on caching}
+#' @seealso For more details see the cache section in the
+#'   `vignette("Supersonic_Routes_in_depth")`.
 #'
 #' @param cache Which caches to clear. Default is both \code{c("route",
 #'   "star")}.
@@ -20,15 +18,15 @@
 #'
 #' hm_clean_cache()
 #'
-hm_clean_cache <- function(cache = c("route", "star")){
-  stopifnot(length(intersect(c("route", "star"), cache))>0)
+hm_clean_cache <- function(cache = c("route", "star")) {
+  stopifnot(length(intersect(c("route", "star"), cache)) > 0)
   if ("route" %in% cache) {
-    rm(list = ls(.hm_cache$route_cache), pos=.hm_cache$route_cache)
-    attr(.hm_cache$route_cache,"map") <- ""
+    rm(list = ls(.hm_cache$route_cache), pos = .hm_cache$route_cache)
+    attr(.hm_cache$route_cache, "map") <- ""
   }
   if ("star" %in% cache) {
-    rm(list = ls(.hm_cache$star_cache), pos=.hm_cache$star_cache)
-    attr(.hm_cache$star_cache,"map") <- ""
+    rm(list = ls(.hm_cache$star_cache), pos = .hm_cache$star_cache)
+    attr(.hm_cache$star_cache, "map") <- ""
   }
   invisible(TRUE)
 }
@@ -51,9 +49,8 @@ hm_clean_cache <- function(cache = c("route", "star")){
 #'   "aircraftSet")} will be added to the filename.
 #' @param path By default \code{"data/"}, where the file will be saved.
 #'
-#' @seealso For more details see the cache section in the vignette:
-#'   \code{vignette("Supersonic_Routes_in_depth", package = "himach")}. or
-#'   \href{../doc/Supersonic_Routes_in_depth.html#cache}{Vignette on caching}
+#' @seealso For more details see the cache section in
+#'   `vignette("Supersonic_Routes_in_depth")`.
 #'
 #'
 #' @return Invisible true
@@ -64,18 +61,18 @@ hm_clean_cache <- function(cache = c("route", "star")){
 #' # hm_save_cache("v2", grid, ac) #save here
 #'
 #'
-hm_save_cache <- function(id, grid, aircraft, path = "data/"){
-  filename <- paste0("route_star_cache_",
-                     id,
-                     "_",
-                     grid@name,
-                     "_",
-                     attr(aircraft, "aircraftSet"),
-                     ".rda")
+hm_save_cache <- function(id, grid, aircraft, path = "data/") {
+  filename <- paste0(
+    "route_star_cache_",
+    id,
+    "_",
+    grid@name,
+    "_",
+    attr(aircraft, "aircraftSet"),
+    ".rda"
+  )
   full_filename <- paste0(path, stringr::str_replace_all(filename, "\\s", "_"))
-  save("route_cache", "star_cache",
-       envir = .hm_cache,
-       file = full_filename)
+  save("route_cache", "star_cache", envir = .hm_cache, file = full_filename)
   invisible(full_filename)
 }
 
@@ -85,9 +82,8 @@ hm_save_cache <- function(id, grid, aircraft, path = "data/"){
 #'
 #' @param file Including the path.
 #'
-#' @seealso For more details see the cache section in the vignette:
-#'   \code{vignette("Supersonic_Routes_in_depth", package = "himach")}. or
-#'   \href{../doc/Supersonic_Routes_in_depth.html#cache}{Vignette on caching}
+#' @seealso For more details see the cache section in
+#'    `vignette("Supersonic_Routes_in_depth")`.
 #'
 #' @return Invisible true
 #' @export
@@ -96,6 +92,6 @@ hm_save_cache <- function(id, grid, aircraft, path = "data/"){
 #' # not run
 #' # hm_load_cache(file="") #load from this file
 #'
-hm_load_cache <- function(file){
+hm_load_cache <- function(file) {
   load(file, envir = .hm_cache)
 }
