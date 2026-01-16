@@ -1,6 +1,7 @@
-# Version 1.0.0 marks the stability of the package. 
+# Version 1.0.1 is a very minor patch. 
 
-It solves the recent 'quiet' option problem in devel-linux and M1mac (deadline 24 July), and corrects dependency on R for the pipe.
+It solves the NOTEs on Debian due to the improved CRAN checks. 
+Also solves an issue with the devel version of dplyr.
 
 ## R CMD check results
 
@@ -12,7 +13,7 @@ There are no downstream dependencies listed on CRAN.
 
 ## Test environments
 
- * macos Ventura (local) OK
+ * macos Sequoia (local) OK
  * check_win_devel() OK
  * Github: 
   + macOS-latest (release) OK
